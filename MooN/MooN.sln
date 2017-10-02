@@ -1,0 +1,82 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MooN", "MooN\MooN.vcxproj", "{44FA93E7-F341-4548-AA92-CEDB33BC2E79}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		DebugCommercial|x64 = DebugCommercial|x64
+		DebugCommercial|x86 = DebugCommercial|x86
+		DebugGProof|x64 = DebugGProof|x64
+		DebugGProof|x86 = DebugGProof|x86
+		DebugJava|x64 = DebugJava|x64
+		DebugJava|x86 = DebugJava|x86
+		DebugOpenssl|x64 = DebugOpenssl|x64
+		DebugOpenssl|x86 = DebugOpenssl|x86
+		Memento|x64 = Memento|x64
+		Memento|x86 = Memento|x86
+		MementoCommercial|x64 = MementoCommercial|x64
+		MementoCommercial|x86 = MementoCommercial|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+		ReleaseCommercial|x64 = ReleaseCommercial|x64
+		ReleaseCommercial|x86 = ReleaseCommercial|x86
+		ReleaseJava|x64 = ReleaseJava|x64
+		ReleaseJava|x86 = ReleaseJava|x86
+		ReleaseOpenssl|x64 = ReleaseOpenssl|x64
+		ReleaseOpenssl|x86 = ReleaseOpenssl|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Debug|x64.ActiveCfg = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Debug|x64.Build.0 = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Debug|x86.ActiveCfg = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Debug|x86.Build.0 = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugCommercial|x64.ActiveCfg = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugCommercial|x64.Build.0 = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugCommercial|x86.ActiveCfg = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugCommercial|x86.Build.0 = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugGProof|x64.ActiveCfg = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugGProof|x64.Build.0 = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugGProof|x86.ActiveCfg = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugGProof|x86.Build.0 = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugJava|x64.ActiveCfg = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugJava|x64.Build.0 = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugJava|x86.ActiveCfg = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugJava|x86.Build.0 = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugOpenssl|x64.ActiveCfg = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugOpenssl|x64.Build.0 = Debug|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugOpenssl|x86.ActiveCfg = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.DebugOpenssl|x86.Build.0 = Debug|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Memento|x64.ActiveCfg = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Memento|x64.Build.0 = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Memento|x86.ActiveCfg = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Memento|x86.Build.0 = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.MementoCommercial|x64.ActiveCfg = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.MementoCommercial|x64.Build.0 = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.MementoCommercial|x86.ActiveCfg = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.MementoCommercial|x86.Build.0 = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Release|x64.ActiveCfg = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Release|x64.Build.0 = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Release|x86.ActiveCfg = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.Release|x86.Build.0 = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseCommercial|x64.ActiveCfg = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseCommercial|x64.Build.0 = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseCommercial|x86.ActiveCfg = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseCommercial|x86.Build.0 = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseJava|x64.ActiveCfg = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseJava|x64.Build.0 = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseJava|x86.ActiveCfg = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseJava|x86.Build.0 = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseOpenssl|x64.ActiveCfg = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseOpenssl|x64.Build.0 = Release|x64
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseOpenssl|x86.ActiveCfg = Release|Win32
+		{44FA93E7-F341-4548-AA92-CEDB33BC2E79}.ReleaseOpenssl|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

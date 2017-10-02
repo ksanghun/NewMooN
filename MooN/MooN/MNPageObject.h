@@ -1,0 +1,120 @@
+#pragma once
+#include "math_tool.h"
+#include "MNCVMng.h"
+
+#define DEFAULT_PAGE_SIZE 500
+#define MAX_CAM_HIGHTLEVEL 5000
+#define Z_TRANS 70000
+
+struct stMatchInfo
+{
+	POINT3D pos;
+	COLORf color;
+	cv::Rect rect;
+	CString strAccracy;
+	CString strCode;
+
+	unsigned int searchId;
+	float accuracy;
+	bool IsAdded;
+
+	_CUTINFO cInfo;
+//	IplImage* pImg;
+
+};
+
+
+class CMNPageObject
+{
+public:
+	CMNPageObject();
+	~CMNPageObject();
+
+	// Setter //
+	void SetName(CString _strpath, CString _strpname, CString _strname, unsigned long _code, unsigned long _pcode);
+	void SetSize(unsigned short _w, unsigned short _h, float _size);
+	void SetRendomPos();
+	void SetCandidate(bool isCan) { m_bCandidate = isCan; m_pos.z = 0.0f; };
+	void SetIsNear(bool isnear) { m_bIsNear = isnear; }
+	void SetIsSearched(bool _IsSearch) { m_bIsSearching = _IsSearch; }
+	void SetSelMatchItem(int _selid);// { m_selMatchItemId = _selid; }
+
+	// Getter //
+	GLuint GetTexId() { return m_texId; };
+	GLuint GetThumbnailTex() { return m_thumbnailTexId; };
+	POINT3D GetPos() { return m_pos; };
+	unsigned short GetImgWidth() { return m_nImgWidth; };
+	unsigned short GetImgHeight() { return m_nImgHeight; };
+	unsigned long GetCode() { return nCode; }
+	unsigned long GetPCode() { return parentCode; }
+	CString GetPath() { return strPath; };
+	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
+	bool GetPosByMatchID(int mid, POINT3D& pos);
+	void ClearMatchResult();
+
+	bool IsCandidate() { return m_bCandidate; }
+	RECT2D ConvertVec3DtoImgateCoord(POINT3D v1, POINT3D v2);
+
+	void AnimatePos(bool IsZvalue);
+	bool LoadThumbImage(unsigned short resolution);
+	GLuint LoadFullImage();
+	GLuint ConvertGLTexSize(int _size);
+	void UploadThumbImage();
+
+	// Draw Functions ======================//
+	void DrawThumbNail(float fAlpha);
+	void DrawMatchItem();
+	void DrawForPicking();
+	void DrawMatchItemForPick();
+	//====================================//
+
+	void RotatePos(float fSpeed);
+	float SetSelectionPosition(int nSlot, float xOffset, float yOffset, bool IsAni);
+	void SetSelection(bool _isSel);
+	bool AddMatchedPoint(stMatchInfo info, int search_size);
+	bool IsDuplicate(stMatchInfo& info, int search_size);
+private:
+	// Basic Information //
+	CString strPath;
+	CString strPName;
+	CString strName;
+	unsigned long parentCode;
+	unsigned long nCode;
+
+	GLuint m_thumbnailTexId;
+	GLuint m_texId;
+//	GLuint m_texIdforExtract;
+
+	RECT2D m_ImgPlaneSize;
+	RECT2D m_ImgRectSize;
+
+	unsigned short m_nImgWidth;
+	unsigned short m_nImgHeight;
+	float m_fARatio;
+
+	// Geometry Data ================//
+	POINT3D m_vertex[4];
+	POINT3D m_vertexBg[4];
+	POINT2D m_texcoord[4];
+	POINT3D m_vBgColor;
+	bool	m_bIsSelected;
+	bool	m_bIsSearching;
+
+	float m_fXScale, m_fYScale;
+
+	POINT3D m_pos;
+	POINT3D m_targetPos;
+	//================================//
+
+	bool m_bAniPos;
+	POINT3D m_MoveVec;
+	short m_nAniCnt;
+
+	bool m_bCandidate;
+	bool m_bIsNear;
+
+	std::vector<stMatchInfo> m_matched_pos;
+	cv::Mat m_thumbImg;
+	int m_selMatchItemId;
+};
+
