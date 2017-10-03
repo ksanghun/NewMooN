@@ -3,7 +3,7 @@
 #include "MNDataManager.h"
 #include "MainFrm.h"
 
-enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH};
+enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION};
 #define DEFAULT_X_OFFSET -5800;
 #define DEFAULT_Y_OFFSET 2500;
 
@@ -83,6 +83,7 @@ void CMNView::InitGLview(int _nWidth, int _nHeight)
 		TRACE("OCR Error");
 	}
 //	m_OCRMng.TestFunc();
+//	m_Extractor.TestFunc();
 }
 
 void CMNView::InitCamera(bool movexy)
@@ -170,6 +171,7 @@ void CMNView::DrawBGPageAni()
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->RotatePos(1.0f);
 		vecImg[i]->DrawMatchItem();
+		vecImg[i]->DrawParagraph();
 	}
 	glPointSize(1);
 }
@@ -180,6 +182,7 @@ void CMNView::DrawBGPage()
 	for (size_t i = 0; i < vecImg.size(); i++) {
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->DrawMatchItem();
+		vecImg[i]->DrawParagraph();
 	}
 	glPointSize(1);
 }
@@ -320,6 +323,24 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			pM->ResizeListColSize(SINGLETON_DataMng::GetInstance()->GetMaxCutWidth());
 		}
 	}
+
+	else if (nIDEvent == _DO_EXTRACTION) {
+		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+		float complete = (float)m_addImgCnt / (float)m_loadedImgCnt;
+		CString str;
+		str.Format(_T("Extraction.....%d"), int(complete * 100));
+		str += _T("%");
+		str += _T(" completed.");
+
+		pM->AddOutputString(str, true);
+
+		// End of thread //
+		if (m_addImgCnt == m_loadedImgCnt) {
+			m_addImgCnt = 0;
+			KillTimer(_DO_EXTRACTION);
+		}
+	}
+
 	else if (nIDEvent == _MOVECAMANI) {
 
 		float fDelta = SINGLETON_DataMng::GetInstance()->GetAniAcceration(m_nAniCnt);
@@ -643,6 +664,65 @@ void CMNView::ProcGenerateThumbnail()
 	//GenerateThumbnail();
 
 }
+
+
+void CMNView::DoExtractBoundary()
+{
+	std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+	m_addImgCnt = 0;
+	m_loadedImgCnt = vecImg.size();
+	int i;
+	for (i = 0; i < (int)vecImg.size(); i++) {
+		CString strpath = vecImg[i]->GetPath();
+		cv::Mat srcImg;
+		if (SINGLETON_DataMng::GetInstance()->LoadImageData(strpath, srcImg, true)) {
+			cv::threshold(srcImg, srcImg, 125, 255, cv::THRESH_OTSU);
+			cv::bitwise_not(srcImg, srcImg);
+
+			std::vector<_extractBox> vecBox;
+			m_Extractor.ExtractParagraph(srcImg, srcImg.cols, srcImg.cols, vecBox, _ALPHABETIC);
+
+			for (size_t j = 0; j < vecBox.size(); j++) {
+				// Calculate Deskew //
+				m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
+				cv::Mat para = srcImg(vecBox[j].textbox);
+				_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
+				float deskew = m_Extractor.DeSkewImg(para);
+
+				TRACE(L"Deskew Angle: %3.2f\n", deskew);
+				vecImg[i]->AddParagraph(vecBox[j].textbox, align, deskew);
+
+			}
+			vecBox.clear();
+			srcImg.release();
+		}
+
+		vecImg[i]->SetIsSearched(true);
+		if (i > 0) {
+			vecImg[i - 1]->SetIsSearched(false);
+		}
+
+		m_addImgCnt++;
+	}
+	
+	vecImg[i - 1]->SetIsSearched(false);
+}
+
+void CMNView::ProcExtractBoundary()
+{
+	InitCamera(false);
+	CWinThread* pl;
+	m_bIsThreadEnd = false;
+	pl = AfxBeginThread(ThreadDoExtraction, this);
+
+	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+	for (size_t i = 0; i < imgVec.size(); i++) {
+		imgVec[i]->SetIsSearched(false);
+	}
+
+	SetTimer(_DO_EXTRACTION, 100, NULL);
+}
+
 void CMNView::ProcDoSearch()
 {
 	InitCamera(false);	
@@ -788,5 +868,12 @@ static UINT ThreadDoSearch(LPVOID lpParam)
 {
 	CMNView* pClass = (CMNView*)lpParam;
 	pClass->DoSearch();
+	return 0L;
+}
+
+static UINT ThreadDoExtraction(LPVOID lpParam)
+{
+	CMNView* pClass = (CMNView*)lpParam;
+	pClass->DoExtractBoundary();
 	return 0L;
 }

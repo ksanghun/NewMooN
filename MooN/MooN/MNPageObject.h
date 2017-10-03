@@ -19,8 +19,15 @@ struct stMatchInfo
 	bool IsAdded;
 
 	_CUTINFO cInfo;
-//	IplImage* pImg;
+};
 
+struct stParapgraphInfo
+{
+	cv::Rect rect;
+	cv::Rect deskewRect;
+	float deSkewAngle;
+	_ALIGHN_TYPE alignType;
+	POINT3D color;
 };
 
 
@@ -66,12 +73,14 @@ public:
 	void DrawMatchItem();
 	void DrawForPicking();
 	void DrawMatchItemForPick();
+	void DrawParagraph();
 	//====================================//
 
 	void RotatePos(float fSpeed);
 	float SetSelectionPosition(int nSlot, float xOffset, float yOffset, bool IsAni);
 	void SetSelection(bool _isSel);
 	bool AddMatchedPoint(stMatchInfo info, int search_size);
+	void AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew);
 	bool IsDuplicate(stMatchInfo& info, int search_size);
 private:
 	// Basic Information //
@@ -114,6 +123,7 @@ private:
 	bool m_bIsNear;
 
 	std::vector<stMatchInfo> m_matched_pos;
+	std::vector<stParapgraphInfo> m_paragraph;
 	cv::Mat m_thumbImg;
 	int m_selMatchItemId;
 };

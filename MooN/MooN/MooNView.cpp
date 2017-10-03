@@ -316,6 +316,13 @@ void CMooNView::DoCurNSearch()
 	}
 }
 
+void CMooNView::DoExtractBoundary()
+{
+	if ((m_pViewImage)) {
+		m_pViewImage->ProcExtractBoundary();
+	}
+}
+
 void CMooNView::SetPositionByList(CString strPid, CString strMid)
 {
 	CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(_ttoi(strPid));

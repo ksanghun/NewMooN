@@ -194,6 +194,7 @@
     <ClInclude Include="DockFormView.h" />
     <ClInclude Include="DockProperties.h" />
     <ClInclude Include="DragDropTreeCtrl.h" />
+    <ClInclude Include="Extractor.h" />
     <ClInclude Include="FileView.h" />
     <ClInclude Include="FormListView.h" />
     <ClInclude Include="FormProperties.h" />
@@ -223,6 +224,7 @@
     <ClCompile Include="DockFormView.cpp" />
     <ClCompile Include="DockProperties.cpp" />
     <ClCompile Include="DragDropTreeCtrl.cpp" />
+    <ClCompile Include="Extractor.cpp" />
     <ClCompile Include="FileView.cpp" />
     <ClCompile Include="FormListView.cpp" />
     <ClCompile Include="FormProperties.cpp" />

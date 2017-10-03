@@ -3,12 +3,14 @@
 #include "OGLWnd.h"
 #include "MNPageObject.h"
 #include "OCRMng.h"
+#include "Extractor.h"
 
 enum _PICKMODE { _PICK_SELECT = 0 };
 #define SEL_BUFF_SIZE 1024
 
 static UINT ThreadGenThumbnailImg(LPVOID lpParam);
 static UINT ThreadDoSearch(LPVOID lpParam);
+static UINT ThreadDoExtraction(LPVOID lpParam);
 static bool  m_bIsThreadEnd;
 
 
@@ -21,8 +23,10 @@ public:
 	// Thread Functions===========//
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
+	void ProcExtractBoundary();
 	void GenerateThumbnail();
 	bool DoSearch();
+	void DoExtractBoundary();
 	//============================//
 
 	void InitGLview(int _nWidth, int _nHeight);
@@ -100,6 +104,7 @@ private:
 
 	CMNPageObject* m_pSelectPageForCNS;
 	COCRMng m_OCRMng;
+	CExtractor m_Extractor;
 public:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);

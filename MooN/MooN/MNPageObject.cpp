@@ -383,6 +383,43 @@ void CMNPageObject::SetSelMatchItem(int _selid)
 	m_selMatchItemId = _selid; 
 }
 
+void CMNPageObject::DrawParagraph()
+{
+	glPushMatrix();
+	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
+
+	if (m_paragraph.size() > 0) {
+		// Draw detected position //
+		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+		glPushMatrix();
+		glScalef(m_fXScale, m_fYScale, 1.0f);
+		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
+
+		//if (m_bIsNear){		
+		glLineWidth(3);
+		
+		for (int i = 0; i < m_paragraph.size(); i++) {			
+
+			glColor3f(m_paragraph[i].color.x, m_paragraph[i].color.y, m_paragraph[i].color.z);
+			glBegin(GL_LINE_STRIP);
+			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+			glVertex3f(m_paragraph[i].rect.x,						          m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[i].rect.x,								  m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width,	  m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width,	  m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[i].rect.x,								  m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glEnd();
+		}
+		glPopMatrix();
+	}
+
+	glPointSize(1);
+	glPopMatrix();
+	glLineWidth(1);
+}
+
+
+
 void CMNPageObject::DrawMatchItem()
 {
 	glPushMatrix();
@@ -401,14 +438,14 @@ void CMNPageObject::DrawMatchItem()
 		glLineWidth(3);
 		for (int i = 0; i < m_matched_pos.size(); i++) {
 
-		//	if (m_matched_pos[i].searchId == m_selMatchItemId) {
-			if(i==m_selMatchItemId){
+			//	if (m_matched_pos[i].searchId == m_selMatchItemId) {
+			if (i == m_selMatchItemId) {
 				glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
 				glBegin(GL_QUADS);
-				glVertex3f(m_matched_pos[i].rect.x,									m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x,									m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width,	m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width,	m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
 				glEnd();
 			}
 
@@ -416,11 +453,11 @@ void CMNPageObject::DrawMatchItem()
 			glColor4f(m_matched_pos[i].color.r, m_matched_pos[i].color.g, m_matched_pos[i].color.b, 0.5f);
 			glBegin(GL_LINE_STRIP);
 			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-			glVertex3f(m_matched_pos[i].rect.x,						          m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-			glVertex3f(m_matched_pos[i].rect.x,								  m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+			glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+			glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
 			glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
 			glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-			glVertex3f(m_matched_pos[i].rect.x,								  m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+			glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
 			glEnd();
 		}
 		glPopMatrix();
@@ -430,6 +467,7 @@ void CMNPageObject::DrawMatchItem()
 	glPopMatrix();
 	glLineWidth(1);
 }
+
 
 void CMNPageObject::DrawForPicking()
 {
@@ -584,4 +622,26 @@ bool CMNPageObject::GetPosByMatchID(int mid, POINT3D& pos)
 void CMNPageObject::ClearMatchResult()
 {
 	m_matched_pos.clear();
+}
+
+void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
+{
+	stParapgraphInfo para;
+	para.deSkewAngle = deskew;
+	para.deskewRect = rect;
+	para.rect = rect;
+	para.alignType = type;
+
+	if (type == _UNKNOWN_ALIGN) {
+		mtSetPoint3D(&para.color, 0.5f, 0.5f, 0.5f);
+	}
+	else if (type == _HORIZON_ALIGN) {
+		mtSetPoint3D(&para.color, 1.0f, 0.0f, 0.0f);
+	}
+	else {
+		mtSetPoint3D(&para.color, 0.0f, 0.0f, 1.0f);
+	}
+
+
+	m_paragraph.push_back(para);
 }

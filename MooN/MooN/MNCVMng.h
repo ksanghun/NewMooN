@@ -7,6 +7,10 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
+enum _LANGUAGE_TYPE { _ALPHABETIC, _NONALPHABETIC };
+enum _ALIGHN_TYPE { _UNKNOWN_ALIGN, _HORIZON_ALIGN, _VERTICAL_ALIGN };
+#define _MAX_EXTRACT_ITERATION 10
+
 class CMNCVMng
 {
 public:

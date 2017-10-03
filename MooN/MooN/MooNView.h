@@ -23,6 +23,7 @@ public:
 	short SetSelectedItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl, float& offset);
 	void EnableCutSearchMode();
 	void DoCurNSearch();
+	void DoExtractBoundary();
 
 	void AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt);
 	void InitCamera(bool bInit);
