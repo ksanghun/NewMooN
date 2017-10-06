@@ -30,6 +30,15 @@ struct stParapgraphInfo
 	POINT3D color;
 };
 
+//struct stParapgraphInfo
+//{
+//	cv::Rect rect;
+//	cv::Rect deskewRect;
+//	float deSkewAngle;
+//	_ALIGHN_TYPE alignType;
+//	POINT3D color;
+//};
+
 
 class CMNPageObject
 {
@@ -45,6 +54,8 @@ public:
 	void SetIsNear(bool isnear) { m_bIsNear = isnear; }
 	void SetIsSearched(bool _IsSearch) { m_bIsSearching = _IsSearch; }
 	void SetSelMatchItem(int _selid);// { m_selMatchItemId = _selid; }
+	void DeSkewImg();
+	void UpdateTexture();
 
 	// Getter //
 	GLuint GetTexId() { return m_texId; };
@@ -58,6 +69,8 @@ public:
 	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
 	bool GetPosByMatchID(int mid, POINT3D& pos);
 	void ClearMatchResult();
+	cv::Mat& GetSrcPageImg() { return m_thumbImg; }
+	cv::Mat& GetSrcPageGrayImg() { return m_srcGrayImg; }
 
 	bool IsCandidate() { return m_bCandidate; }
 	RECT2D ConvertVec3DtoImgateCoord(POINT3D v1, POINT3D v2);
@@ -124,7 +137,10 @@ private:
 
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;
+
+
 	cv::Mat m_thumbImg;
+	cv::Mat m_srcGrayImg;
 	int m_selMatchItemId;
 };
 

@@ -35,6 +35,15 @@ CMNPageObject::CMNPageObject()
 
 CMNPageObject::~CMNPageObject()
 {
+	if (m_texId > 0) {
+		glDeleteTextures(1, &m_texId);
+	}
+
+
+	ClearMatchResult();
+
+	m_thumbImg.release();
+	m_srcGrayImg.release();
 }
 
 void CMNPageObject::SetRendomPos()
@@ -159,7 +168,11 @@ GLuint CMNPageObject::LoadFullImage()
 }
 bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 {
-	if (m_thumbnailTexId != 0) {
+	//if (m_thumbnailTexId != 0) {
+	//	return false;
+	//}
+
+	if (m_thumbImg.ptr() != NULL) {
 		return false;
 	}
 
@@ -167,8 +180,13 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
-		// resizeing //
-		cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
+
+
+		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
+		//cv::bitwise_not(m_binaryImg, m_binaryImg);
+		//// resizeing //
+		//cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
 
 		// glupload Image - Thumnail image=======================================================//
 		//glGenTextures(1, &m_thumbnailTexId);
@@ -189,20 +207,46 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 
 void CMNPageObject::UploadThumbImage()
 {
-	if (m_thumbnailTexId != 0) {
+	//if (m_thumbnailTexId != 0) {
+	//	return;
+	//}
+
+	//glGenTextures(1, &m_thumbnailTexId);
+	//glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
+
+	//gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
+//	m_thumbImg.release();
+
+
+	if (m_texId != 0) {
 		return;
 	}
+	if (m_thumbImg.ptr()) {
+		// Save original size //
+		m_nImgHeight = m_thumbImg.rows;
+		m_nImgWidth = m_thumbImg.cols;
+		// resize for texture //
+		int w = ConvertGLTexSize(m_thumbImg.cols);
+		int h = ConvertGLTexSize(m_thumbImg.rows);
+		cv::resize(m_thumbImg, m_thumbImg, cvSize(w, h));
 
-	glGenTextures(1, &m_thumbnailTexId);
-	glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glGenTextures(1, &m_texId);
+		glBindTexture(GL_TEXTURE_2D, m_texId);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
 
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
-	m_thumbImg.release();
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.ptr());
+
+		cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
+	}
 
 }
 
@@ -234,7 +278,7 @@ void CMNPageObject::AnimatePos(bool IsZvalue)
 
 void CMNPageObject::DrawThumbNail(float fAlpha)
 {
-	if (m_thumbnailTexId == 0) {
+	if (m_texId == 0) {
 		return;
 	}
 	if (m_bCandidate) {
@@ -263,12 +307,12 @@ void CMNPageObject::DrawThumbNail(float fAlpha)
 
 
 	glEnable(GL_TEXTURE_2D);
-	if (m_texId == 0) {		
-		glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-	}
-	else {
+	//if (m_texId == 0) {		
+	//	glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
+	//}
+	//else {
 		glBindTexture(GL_TEXTURE_2D, m_texId);
-	}
+	//}
 
 
 	glColor4f(1.0f, 1.0f, 1.0f, fAlpha);
@@ -396,11 +440,11 @@ void CMNPageObject::DrawParagraph()
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
 		//if (m_bIsNear){		
-		glLineWidth(3);
+		glLineWidth(1);
 		
 		for (int i = 0; i < m_paragraph.size(); i++) {			
 
-			glColor3f(m_paragraph[i].color.x, m_paragraph[i].color.y, m_paragraph[i].color.z);
+			glColor4f(m_paragraph[i].color.x, m_paragraph[i].color.y, m_paragraph[i].color.z, 0.5f);
 			glBegin(GL_LINE_STRIP);
 			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
 			glVertex3f(m_paragraph[i].rect.x,						          m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
@@ -632,16 +676,66 @@ void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
 	para.rect = rect;
 	para.alignType = type;
 
-	if (type == _UNKNOWN_ALIGN) {
-		mtSetPoint3D(&para.color, 0.5f, 0.5f, 0.5f);
-	}
-	else if (type == _HORIZON_ALIGN) {
+	//if (type == _UNKNOWN_ALIGN) {
+	//	mtSetPoint3D(&para.color, 0.5f, 0.5f, 0.5f);
+	//}
+	//else if (type == _HORIZON_ALIGN) {
 		mtSetPoint3D(&para.color, 1.0f, 0.0f, 0.0f);
-	}
-	else {
-		mtSetPoint3D(&para.color, 0.0f, 0.0f, 1.0f);
-	}
-
+	//}
+	//else {
+	//	mtSetPoint3D(&para.color, 0.0f, 0.0f, 1.0f);
+	//}
 
 	m_paragraph.push_back(para);
+}
+
+void CMNPageObject::DeSkewImg()
+{
+	
+
+	for (int i = 0; i < m_paragraph.size(); i++) {
+		// Rotate Image //
+		cv::Mat para = m_thumbImg(m_paragraph[i].rect);
+		cv::Mat rotMat, rotatedFrame, invRot;
+		rotMat = getRotationMatrix2D(cv::Point2f(0, 0), m_paragraph[i].deSkewAngle, 1);
+		cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+
+		// Fill White color //
+		//m_thumbImg(m_paragraph[i].rect).setTo(cv::Scalar(255,255,255));
+		rotatedFrame.copyTo(m_thumbImg(m_paragraph[i].rect));
+	}
+
+//	m_thumbImg.setTo(cv::Scalar(255, 0, 0));
+
+	UpdateTexture();
+}
+
+void CMNPageObject::UpdateTexture()
+{
+	if (m_texId > 0) {
+		glDeleteTextures(1, &m_texId);
+		m_texId = 0;
+	}
+
+	if (m_thumbImg.ptr()) {
+		// Save original size //
+		m_nImgHeight = m_thumbImg.rows;
+		m_nImgWidth = m_thumbImg.cols;
+		// resize for texture //
+		int w = ConvertGLTexSize(m_thumbImg.cols);
+		int h = ConvertGLTexSize(m_thumbImg.rows);
+		cv::resize(m_thumbImg, m_thumbImg, cvSize(w, h));
+
+		glGenTextures(1, &m_texId);
+		glBindTexture(GL_TEXTURE_2D, m_texId);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
+
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.ptr());
+
+		cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
+	}
 }

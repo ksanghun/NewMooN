@@ -338,6 +338,11 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 		if (m_addImgCnt == m_loadedImgCnt) {
 			m_addImgCnt = 0;
 			KillTimer(_DO_EXTRACTION);
+
+			// Rotate Page //
+			//wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
+			//SINGLETON_DataMng::GetInstance()->ApplyDeskewPage();
+
 		}
 	}
 
@@ -607,8 +612,9 @@ bool CMNView::DoSearch()
 	size_t i = 0;
 	for (i = 0; i < imgVec.size(); i++) {
 
-		cv::Mat grayImg;
-		if (SINGLETON_DataMng::GetInstance()->LoadImageData(imgVec[i]->GetPath(), grayImg, true)) {
+		cv::Mat grayImg = imgVec[i]->GetSrcPageGrayImg();
+		//if (SINGLETON_DataMng::GetInstance()->LoadImageData(imgVec[i]->GetPath(), grayImg, true)) {
+		if (grayImg.ptr()) {
 			int result_cols = grayImg.cols - m_pCut.cols + 1;
 			int result_rows = grayImg.rows - m_pCut.rows + 1;
 			cv::Mat result(result_rows, result_cols, CV_32FC1);
@@ -636,7 +642,7 @@ bool CMNView::DoSearch()
 					}
 				}
 			}
-			grayImg.release();
+			//grayImg.release();
 			result.release();
 
 			imgVec[i]->SetIsSearched(true);
@@ -668,29 +674,93 @@ void CMNView::ProcGenerateThumbnail()
 
 void CMNView::DoExtractBoundary()
 {
+	//cv::Mat hHisto;
+	//cv::Mat vHisto;
+
 	std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	m_addImgCnt = 0;
 	m_loadedImgCnt = vecImg.size();
 	int i;
 	for (i = 0; i < (int)vecImg.size(); i++) {
 		CString strpath = vecImg[i]->GetPath();
-		cv::Mat srcImg;
-		if (SINGLETON_DataMng::GetInstance()->LoadImageData(strpath, srcImg, true)) {
+		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg();
+		if (srcImg.ptr()) {
+
+		//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
 			cv::threshold(srcImg, srcImg, 125, 255, cv::THRESH_OTSU);
+		//	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
 			cv::bitwise_not(srcImg, srcImg);
 
+			int fsize = (int)m_extractionSetting.engSize;
+
+			// Detect text block //
+			_ALIGHN_TYPE align; 
 			std::vector<_extractBox> vecBox;
-			m_Extractor.ExtractParagraph(srcImg, srcImg.cols, srcImg.cols, vecBox, _ALPHABETIC);
+			if (m_extractionSetting.nAlign == 0) {
+				m_Extractor.Extraction(srcImg, fsize*2, -1, vecBox, _ALPHABETIC, _UNKNOWN_ALIGN);
+				align = _HORIZON_ALIGN;
+			}
+			else {
+				m_Extractor.Extraction(srcImg, -1, fsize * 2, vecBox, _NONALPHABETIC, _UNKNOWN_ALIGN);
+				align = _VERTICAL_ALIGN;
+			}
 
 			for (size_t j = 0; j < vecBox.size(); j++) {
 				// Calculate Deskew //
-				m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
+				//m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
 				cv::Mat para = srcImg(vecBox[j].textbox);
-				_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
+				//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
+				
 				float deskew = m_Extractor.DeSkewImg(para);
-
 				TRACE(L"Deskew Angle: %3.2f\n", deskew);
 				vecImg[i]->AddParagraph(vecBox[j].textbox, align, deskew);
+			
+
+				// Rotate Image //
+
+			//	if (deskew < -3.0f) deskew = -3.0f;
+			//	if (deskew > 3.0f) deskew = 3.0f;
+			//	cv::Mat rotMat, rotatedFrame, invRot;
+			//	rotMat = getRotationMatrix2D(cv::Point2f(0, 0), deskew, 1);
+			////	invRot = getRotationMatrix2D(cv::Point2f(0, 0), -deskew, 1);
+			//	cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC);
+
+				//CString strTitle;
+				//strTitle.Format(L"desket %d", j);
+				//USES_CONVERSION;
+				//char* sz = T2A(strTitle);
+				//cv::imshow(sz, rotatedFrame);
+
+				// Line Detection //
+				//std::vector<_extractBox> vecLines;
+
+				//if (align == _HORIZON_ALIGN) {
+				//	m_Extractor.Extraction(rotatedFrame, 16, -1, vecLines, _ALPHABETIC, align);
+				//}
+				//else {
+				//	m_Extractor.Extraction(rotatedFrame, 0, 16, vecLines, _NONALPHABETIC, align);
+				//}
+
+				//
+				//for (size_t k = 0; k < vecLines.size(); k++) {
+				//	cv::Rect r = vecLines[k].textbox;
+				//	cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(r.x, r.y), cv::Size2f(r.width, r.height), deskew);
+				//	cv::Point2f vertices[4];
+				//	rRect.points(vertices);
+
+				//	r.x += vecBox[j].textbox.x;
+				//	r.y += vecBox[j].textbox.y;
+
+				//	vecImg[i]->AddParagraph(r, align, deskew);
+				//}
+
+
+				//cv::Mat hHisto = m_Extractor.GetLinesbyHistogram(rotatedFrame, vecLines,0);
+				//cv::Mat vHisto = m_Extractor.GetLinesbyHistogram(rotatedFrame, vecLines, 1);
+				//cv::imshow("origin", rotatedFrame);
+				//cv::imshow("hh", hHisto);
+				//cv::imshow("vv", vHisto);
+
 
 			}
 			vecBox.clear();
@@ -708,12 +778,16 @@ void CMNView::DoExtractBoundary()
 	vecImg[i - 1]->SetIsSearched(false);
 }
 
-void CMNView::ProcExtractBoundary()
+void CMNView::ProcExtractBoundary(_stExtractionSetting _info)
 {
-	InitCamera(false);
+	m_extractionSetting = _info;
+//	InitCamera(false);
 	CWinThread* pl;
 	m_bIsThreadEnd = false;
 	pl = AfxBeginThread(ThreadDoExtraction, this);
+
+	//DoExtractBoundary();
+
 
 	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	for (size_t i = 0; i < imgVec.size(); i++) {
@@ -730,12 +804,16 @@ void CMNView::ProcDoSearch()
 
 		// Prepare Cut&Search ==========================================//
 		RECT2D rect = GetSelectedAreaForCNS();
+
+		// Update Font Size ==//
+		m_Extractor.SetFontSize(rect.width, rect.height);
+
 		if (m_pCut.ptr() != NULL) {
 			m_pCut.release();
 		}
 		CString strpath = m_pSelectPageForCNS->GetPath();
-		cv::Mat srcImg;
-		if (SINGLETON_DataMng::GetInstance()->LoadImageData(strpath, srcImg, true)) {
+		cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();;
+		if (srcImg.ptr()) {
 			m_pCut = srcImg(cv::Rect(rect.x1, rect.y1, rect.width, rect.height));
 		}
 

@@ -583,7 +583,7 @@ void CMainFrame::OnToolsClearresult()
 void CMainFrame::OnAnalyzeExtracttextboundary()
 {
 	// TODO: Add your command handler code here
-	pView->DoExtractBoundary();
+	//pView->DoExtractBoundary();
 }
 
 

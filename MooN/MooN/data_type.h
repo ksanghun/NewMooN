@@ -451,4 +451,27 @@ struct _CUTINFO{
 };
 
 
+struct _stExtractionSetting {
+	bool isEng;
+	bool isChi;
+	bool isKor;
+	bool nAlign;
+
+	int engSize;
+	int chiSize;
+	int korSize;
+
+	void init()
+	{
+		isEng = false;
+		isChi = false;
+		isKor = false;
+		nAlign = 0;
+
+		engSize = 1;
+		chiSize = 1;
+		korSize = 1;
+	};
+};
+
 #pragma pack()

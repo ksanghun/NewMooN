@@ -23,7 +23,7 @@ public:
 	short SetSelectedItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl, float& offset);
 	void EnableCutSearchMode();
 	void DoCurNSearch();
-	void DoExtractBoundary();
+	void DoExtractBoundary(_stExtractionSetting _info);
 
 	void AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt);
 	void InitCamera(bool bInit);
@@ -34,6 +34,7 @@ public:
 
 	//void SetThresholdValue(float _th);
 	//void SetResultColor(int R, int G, int B);
+	RECT2D GetSelectedAreaForCNS();
 
 // Overrides
 public:

@@ -316,10 +316,10 @@ void CMooNView::DoCurNSearch()
 	}
 }
 
-void CMooNView::DoExtractBoundary()
+void CMooNView::DoExtractBoundary(_stExtractionSetting _info)
 {
 	if ((m_pViewImage)) {
-		m_pViewImage->ProcExtractBoundary();
+		m_pViewImage->ProcExtractBoundary(_info);
 	}
 }
 
@@ -334,6 +334,11 @@ void CMooNView::SetPositionByList(CString strPid, CString strMid)
 			m_pViewImage->MoveCameraPos(tPos, 200);
 		}
 	}
+}
+
+RECT2D CMooNView::GetSelectedAreaForCNS()
+{
+	return m_pViewImage->GetSelectedAreaForCNS();
 }
 
 //void CMooNView::SetThresholdValue(float _th)

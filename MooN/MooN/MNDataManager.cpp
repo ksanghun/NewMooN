@@ -273,6 +273,13 @@ short CMNDataManager::SelectPages(unsigned long cCode)
 	return res;
 }
 
+void CMNDataManager::ApplyDeskewPage()
+{
+	for (size_t i = 0; i < m_vecImgData.size(); i++) {
+		m_vecImgData[i]->DeSkewImg();
+	}
+}
+
 float CMNDataManager::GetAniAcceration(int idx)
 {
 	if (idx < ANI_FRAME_CNT)
@@ -413,8 +420,10 @@ void CMNDataManager::SetMatchingResults()
 		std::vector<stMatchInfo>& matches = m_vecImgData[i]->GetMatchResult();
 		if (matches.size() > 0) {
 			unsigned int matchFile = getHashCode((CStringA)m_vecImgData[i]->GetPath());
-			cv::Mat srcImg;
-			if (LoadImageData(m_vecImgData[i]->GetPath(), srcImg, false)) {
+		
+			cv::Mat srcImg = m_vecImgData[i]->GetSrcPageImg();
+	//		if (LoadImageData(m_vecImgData[i]->GetPath(), srcImg, false)) {
+			if (srcImg.ptr()) {
 
 				for (int j = 0; j < matches.size(); j++) {
 
@@ -548,7 +557,7 @@ CString CMNDataManager::base64_encode(unsigned char const* bytes_to_encode, unsi
 
 CMNPageObject* CMNDataManager::GetPageByID(int pid)
 {
-	if (pid <= (int)m_vecImgData.size()) {
+	if ((m_vecImgData.size()>0) && (pid <= (int)m_vecImgData.size())) {
 		return m_vecImgData[pid];
 	}
 	else {

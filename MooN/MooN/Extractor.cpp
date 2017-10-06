@@ -5,6 +5,8 @@
 
 CExtractor::CExtractor()
 {
+	m_fontSize.width = 0; 
+	m_fontSize.height = 0;
 }
 
 
@@ -111,11 +113,13 @@ _ALIGHN_TYPE CExtractor::AllHoriVertLines(cv::Mat& binaryImg)
 	 }	
 }
 
-void CExtractor::ExtractParagraph(cv::Mat& binaryImg, int mergeWidth, int mergeHeight, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType)
+void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
 {
+	
+
 	contours_poly.clear();
-	std::vector<std::vector<cv::Point> > contours;
-	std::vector<cv::Vec4i> hierarchy;
+	contours.clear();
+	hierarchy.clear();
 	/// Find contours
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles
@@ -123,26 +127,108 @@ void CExtractor::ExtractParagraph(cv::Mat& binaryImg, int mergeWidth, int mergeH
 	contours_poly.resize(contours.size());
 	for (int i = 0; i < contours.size(); i++){
 		cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 1, true);
+		_extractBox textBox;
+		textBox.init();
+		textBox.textbox = cv::boundingRect(cv::Mat(contours_poly[i]));
+		textBox.setExtendBox(xMargin, yMargin);
+
+		
+
+		vecBox.push_back(textBox);
 	}
-	// Detect Paragraphs //
-	DetectBoundary(contours_poly, vecBox, binaryImg.cols, binaryImg.rows, 16,16, languageType);
 
-
-	// Deskew page //
-	
-
+	int depth = 0;
+	MeargingtBoundaryBox(vecBox, depth);
 }
 
-void CExtractor::DetectBoundary(std::vector<std::vector<cv::Point> >& contour, std::vector<_extractBox>& vecBox, int maxWidth, int maxHeight, int extX, int extY, _LANGUAGE_TYPE languageType)
+bool CExtractor::MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth)
 {
-	int minSize = 10;
+	std::vector<_extractBox> tmp = vecBox;
+	vecBox = std::vector<_extractBox>();
+
+	int nWidth = 0, nHeight = 0;
+	bool IsMerged = false;
+	_extractBox resBox;
+	for (int i = 0; i < tmp.size(); i++) {
+		//	for (int i = tmp.size()-1; i >=0; i--){
+		if (tmp[i].IsMerged) continue;		
+
+		for (int j = i + 1; j < tmp.size(); j++) {
+			cv::Rect andRect_overlap = (tmp[i].textboxForCheck & tmp[j].textboxForCheck);
+
+			if (andRect_overlap.area() > 1) {		// intersected
+				cv::Rect checkBox = (tmp[i].textboxForCheck | tmp[j].textboxForCheck);
+				cv::Rect mergeBox = (tmp[i].textbox | tmp[j].textbox);
+
+				tmp[i].textbox = mergeBox;
+				tmp[i].textboxForCheck = checkBox;
+				tmp[j].IsMerged = true;
+				IsMerged = true;
+			}
+		}
+	}
+
+	for (int i = 0; i < tmp.size(); i++) {
+		// Add merged box //
+		int minSize = 4;
+		float arw = (float)tmp[i].textbox.width / (float)tmp[i].textbox.height;
+		float arh = (float)tmp[i].textbox.height / (float)tmp[i].textbox.width;
+		if ((tmp[i].textbox.width < minSize) || (tmp[i].textbox.height < minSize)) {
+			if ((arw<0.2f) || (arh<0.2f)) {
+				continue;
+			}
+		}
+		if (tmp[i].textbox.area() > 16) {
+			if (tmp[i].IsMerged == false) {
+				vecBox.push_back(tmp[i]);
+			}
+		}
+	}
+	tmp.clear();
+
+	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
+		depth++;
+		MeargingtBoundaryBox(vecBox, depth);
+		TRACE("Recursive: %d\n", depth);
+	}
+	return true;
+}
+
+
+
+
+void CExtractor::ExtractLines(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
+{
+	contours_poly.clear();
+	std::vector<std::vector<cv::Point> > contours;
+	std::vector<cv::Vec4i> hierarchy;
+	/// Find contours
+	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
+	/// Approximate contours to polygons + get bounding rects and circles
+	contours_poly.resize(contours.size());
+	for (int i = 0; i < contours.size(); i++) {
+		cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 1, true);
+
+		
+	}
+
+
+
+
+	// Detect Paragraphs //
+	//DetectBoundary(contours_poly, vecBox, xMargin, yMargin, languageType, align);
+}
+
+void CExtractor::DetectBoundary(std::vector<std::vector<cv::Point> >& contour, std::vector<_extractBox>& vecBox, int xMargin, int yMargin, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
+{
+	int minSize = 4;
 	for (int i = 0; i < contour.size(); i++) {
 		cv::Rect r = cv::boundingRect(cv::Mat(contour[i]));
 
 		_extractBox textBox;
 		textBox.init();
 		textBox.textbox = r;
-		textBox.setExtendBox(extX, extY);
+		textBox.setExtendBox(xMargin, yMargin);
 
 		if (textBox.textbox.area() < minSize) continue;
 
@@ -159,33 +245,48 @@ void CExtractor::DetectBoundary(std::vector<std::vector<cv::Point> >& contour, s
 		}
 		if (inside)continue;
 
-		if ((textBox.textbox.width < maxWidth*2.0f) && (textBox.textbox.height < maxHeight*2.0f)) {
-			textBox.textbox.x -= 1;
-			textBox.textbox.width += 2;
-			textBox.textbox.y -= 1;
-			textBox.textbox.height += 2;
+		//if ((textBox.textbox.width < maxWidth*2.0f) && (textBox.textbox.height < maxHeight*2.0f)) {
+		//	textBox.textbox.x -= 1;
+		//	textBox.textbox.width += 2;
+		//	textBox.textbox.y -= 1;
+		//	textBox.textbox.height += 2;
 			vecBox.push_back(textBox);
-		}
+		//}
 	}
 	// Initial extraction //
 	int depth = 0;
-	RcvMeargingtBoundaryBox(maxWidth, maxHeight, vecBox, depth, extX, extY, languageType);
+
+	float xth, yth;
+	switch (align)
+	{
+	case _UNKNOWN_ALIGN:
+		xth = 10.0f;
+		yth = 10.0f;
+		break;
+	case _HORIZON_ALIGN:
+		xth = 1000.0f;
+		yth = 1.2f;
+		yMargin = 0;
+		xMargin = 10;
+		break;
+	case _VERTICAL_ALIGN:
+		xth = 1.2f;
+		yth = 10.0f;
+		languageType = _NONALPHABETIC;
+	default:
+		break;
+	}
+	//RcvMeargingtBoundaryBox(vecBox, depth, xth, yth, xMargin, yMargin, languageType);		// Test for horizontal case
 }
 
-bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vector<_extractBox>& vecBox, int& depth, int extX, int extY, _LANGUAGE_TYPE languageType)
+bool CExtractor::RcvMeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth, float xTh, float yTh, int xMargin, int yMargin, _LANGUAGE_TYPE languageType)
 {
-	int minArea = maxwidth*maxwidth;
-	if (maxheight < maxwidth)
-		minArea = maxheight*maxheight;
-
+	int minArea = m_fontSize.width*m_fontSize.width;
+	if (m_fontSize.height < m_fontSize.width)
+		minArea = m_fontSize.height*m_fontSize.height;
 
 	std::vector<_extractBox> tmp = vecBox;
 	vecBox = std::vector<_extractBox>();
-
-	//m_averTextSize.width = 0;
-	//m_averTextSize.height = 0;
-	int addcnt = 0;
-
 
 	int nWidth = 0, nHeight = 0;
 	bool IsMerged = false;
@@ -195,7 +296,7 @@ bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vecto
 		if (tmp[i].IsMerged) continue;
 
 		resBox.init();
-		int sid = FindOptimalBox(tmp, i, maxwidth, maxheight, resBox);
+		int sid = FindOptimalBox(tmp, i, xTh, yTh, resBox);
 		if (sid >= 0) {
 			tmp[i].textbox.x = resBox.textbox.x;
 			tmp[i].textbox.y = resBox.textbox.y;
@@ -214,31 +315,31 @@ bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vecto
 			_extractBox tbox;
 			tbox.init();
 			tbox.textbox = tmp[i].textbox;
-			tbox.setExtendBox(extX, extY);
+			tbox.setExtendBox(xMargin, yMargin);
 			//			tbox.textSphere.setbyRect(tbox.textbox);
 
 			// Filtering line//
 			float arw = (float)tbox.textbox.width / (float)tbox.textbox.height;
 			float arh = (float)tbox.textbox.height / (float)tbox.textbox.width;
-			if ((tbox.textbox.height > maxheight*2.0f) || (tbox.textbox.width > maxwidth*2.0f))
-			{
+			//if ((tbox.textbox.height > maxheight*2.0f) || (tbox.textbox.width > maxwidth*2.0f))
+			//{
 
 				if ((arw<0.1f) || (arh<0.1f)) {
 					continue;
 				}
-			}
+			//}
 
 			// Adjust Size=====================================//  In case of Chinese, Korean
 			if ((languageType == _NONALPHABETIC)) {		// character detection
 				if (arw > 3) {  // " --- "
-					if (extY < 4) {
+					if (yMargin< 4) {
 						int delta = 2;
 						tbox.textboxForCheck.y -= delta;
 						tbox.textboxForCheck.height += delta * 2;
 					}
 				}
 				if (arh > 3) { // " | " 
-					if (extX < 4) {
+					if (xMargin < 4) {
 						int delta = 2;
 						tbox.textboxForCheck.x -= delta;
 						tbox.textboxForCheck.width += delta * 2;
@@ -246,12 +347,12 @@ bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vecto
 				}
 
 				if (tbox.textbox.area() < minArea*0.5f) {
-					if (extY < 4) {
+					if (yMargin < 4) {
 						int delta = 1;
 						tbox.textboxForCheck.y -= delta;
 						tbox.textboxForCheck.height += delta * 2;
 					}
-					if (extX < 4) {
+					if (xMargin < 4) {
 						int delta = 1;
 						tbox.textboxForCheck.x -= delta;
 						tbox.textboxForCheck.width += delta * 2;
@@ -260,10 +361,6 @@ bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vecto
 			}
 			//=====================================================================//
 			vecBox.push_back(tbox);
-
-			//m_averTextSize.width += tmp[i].textbox.width;
-			//m_averTextSize.height += tmp[i].textbox.height;
-			addcnt++;
 		}
 	}
 	tmp.clear();
@@ -277,7 +374,7 @@ bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vecto
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;
 
-		RcvMeargingtBoundaryBox(maxwidth, maxheight, vecBox, depth, extX, extY, languageType);
+		RcvMeargingtBoundaryBox(vecBox, depth, xTh, yTh, xMargin, yMargin,languageType);
 		TRACE("Recursive: %d\n", depth);
 	}
 
@@ -285,7 +382,7 @@ bool CExtractor::RcvMeargingtBoundaryBox(int maxwidth, int maxheight, std::vecto
 }
 
 
-int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, int maxwidth, int maxheight, _extractBox& resBox)
+int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, float xTh, float yTh, _extractBox& resBox)
 {
 	int x, y, x2, y2;
 	float width, height;
@@ -317,8 +414,9 @@ int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, int maxwidt
 				width = x2 - x;
 				height = y2 - y;
 
+				//if((height < m_fontSize.height * yTh) && (width < m_fontSize.width * xTh)){
 				//	if ((width < (maxwidth*1.25f)) && (height < (maxheight*1.25f))){
-				if ((width < (maxwidth*1.05f)) && (height < (maxheight*1.05f))) {
+				//if ((width < (maxwidth*1.05f)) && (height < (maxheight*1.05f))) {
 					// case of V_ORDER //
 					//	if (maxOveralp <  overlap){
 					selectdId = j;
@@ -330,7 +428,10 @@ int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, int maxwidt
 					resBox.textbox.height = height;
 					break;
 					//	}
-				}
+				//}
+				//else {
+				//	int a = 0;
+				//}
 			}
 		}
 	}
@@ -368,5 +469,53 @@ void CExtractor::verifyImgSize(cv::Rect& rect, int imgwidth, int imgheight)
 	if (rect.y + rect.height >= imgheight) {
 		rect.height = imgheight - rect.y;
 	}
+
+}
+
+cv::Mat CExtractor::GetLinesbyHistogram(cv::Mat& img, std::vector<_extractBox>& vecline, int t)
+{
+	//col or row histogram?
+	int sz = (t) ? img.rows : img.cols;
+	cv::Mat mhist = cv::Mat::zeros(1, sz, CV_8U);
+
+	//count nonzero value and check max V
+	int max = -100;
+	for (int j = 0; j < sz; ++j)
+	{
+		cv::Mat data = (t) ? img.row(j) : img.col(j);
+		int v = cv::countNonZero(data);
+		mhist.at< unsigned char >(j) = v;
+		if (v > max)
+			max = v;
+	}
+
+	cv::Mat histo;
+	int width, height;
+	if (t)
+	{
+		width = max;
+		height = sz;
+		histo = cv::Mat::zeros(cv::Size(width, height), CV_8U);
+
+		for (int i = 0; i < height; ++i)
+		{
+			for (int j = 0; j < mhist.at< unsigned char >(i); ++j)
+				histo.at< unsigned char >(i, j) = 255;
+		}
+
+	}
+	else {
+		width = sz;
+		height = max;
+		histo = cv::Mat::zeros(cv::Size(width, height), CV_8U);
+
+		for (int i = 0; i< width; ++i)
+		{
+			for (int j = 0; j< mhist.at< unsigned char >(i); ++j)
+				histo.at< unsigned char >(max - j - 1, i) = 255;
+		}
+	}
+
+	return histo;
 
 }

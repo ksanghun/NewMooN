@@ -23,7 +23,7 @@ public:
 	// Thread Functions===========//
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
-	void ProcExtractBoundary();
+	void ProcExtractBoundary(_stExtractionSetting _info);
 	void GenerateThumbnail();
 	bool DoSearch();
 	void DoExtractBoundary();
@@ -105,6 +105,7 @@ private:
 	CMNPageObject* m_pSelectPageForCNS;
 	COCRMng m_OCRMng;
 	CExtractor m_Extractor;
+	_stExtractionSetting m_extractionSetting;
 public:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);

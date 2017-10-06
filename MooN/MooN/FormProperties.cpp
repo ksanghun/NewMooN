@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "MooN.h"
 #include "FormProperties.h"
+#include "MooNView.h"
 
 
 // CFromProperties
@@ -13,6 +14,13 @@ IMPLEMENT_DYNCREATE(CFormProperties, CFormView)
 CFormProperties::CFormProperties()
 	: CFormView(IDD_FROMPROPERTIES)
 	, m_fEditTh(75.0f)
+	, m_bEnglish(TRUE)
+	, m_bChinese(FALSE)
+	, m_bKorean(FALSE)
+	, m_nEngFontSize(1)
+	, m_nChiFontSize(1)
+	, m_nKorFontSize(1)
+	, m_nAlign(0)
 {
 }
 
@@ -28,6 +36,16 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER1, m_sliderTh);
 	DDX_Text(pDX, IDC_MFCCOLORBUTTON1, m_colorTh);
 	DDX_Control(pDX, IDC_MFCCOLORBUTTON1, m_ctrlColorBtn);
+	DDX_Check(pDX, IDC_CHECK_ENG, m_bEnglish);
+	DDX_Check(pDX, IDC_CHECK_CHI, m_bChinese);
+	DDX_Check(pDX, IDC_CHECK_KOR, m_bKorean);
+	DDX_Text(pDX, IDC_EDIT_ENG_SIZE, m_nEngFontSize);
+	DDV_MinMaxUInt(pDX, m_nEngFontSize, 1, 1000);
+	DDX_Text(pDX, IDC_EDIT_CHI_SIZE, m_nChiFontSize);
+	DDV_MinMaxUInt(pDX, m_nChiFontSize, 1, 1000);
+	DDX_Text(pDX, IDC_EDIT_KOR_SIZE, m_nKorFontSize);
+	DDV_MinMaxUInt(pDX, m_nKorFontSize, 1, 1000);
+	DDX_Radio(pDX, IDC_RADIO_HORIZON, m_nAlign);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -35,6 +53,10 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_EN_CHANGE(IDC_EDIT1, &CFormProperties::OnEnChangeEdit1)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER1, &CFormProperties::OnNMCustomdrawSlider1)
 	ON_NOTIFY(NM_GETCUSTOMSPLITRECT, IDC_MFCCOLORBUTTON1, &CFormProperties::OnNMGetCustomSplitRectMfccolorbutton1)
+	ON_BN_CLICKED(IDC_BN_EXTRACTLINE, &CFormProperties::OnBnClickedBnExtractline)
+	ON_BN_CLICKED(IDC_BN_ENG_FONT, &CFormProperties::OnBnClickedBnEngFont)
+	ON_BN_CLICKED(IDC_BN_CHI_FONT, &CFormProperties::OnBnClickedBnChiFont)
+	ON_BN_CLICKED(IDC_BN_KOR_FONT, &CFormProperties::OnBnClickedBnKorFont)
 END_MESSAGE_MAP()
 
 
@@ -120,4 +142,53 @@ void CFormProperties::OnNMGetCustomSplitRectMfccolorbutton1(NMHDR *pNMHDR, LRESU
 {
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
+}
+
+
+void CFormProperties::OnBnClickedBnExtractline()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+
+	_stExtractionSetting extractonInfo;
+	extractonInfo.init();
+
+	extractonInfo.nAlign = m_nAlign;
+	extractonInfo.chiSize = m_nChiFontSize;
+	extractonInfo.engSize = m_nEngFontSize;
+	extractonInfo.korSize = m_nEngFontSize;
+	extractonInfo.isChi = m_bChinese;
+	extractonInfo.isEng = m_bEnglish;
+	extractonInfo.isKor = m_bKorean;
+
+
+	pView->DoExtractBoundary(extractonInfo);
+
+}
+
+
+void CFormProperties::OnBnClickedBnEngFont()
+{
+	// TODO: Add your control notification handler code here
+	RECT2D rect = pView->GetSelectedAreaForCNS();
+	m_nEngFontSize = rect.width > rect.height ? rect.width : rect.height;
+	UpdateData(FALSE);
+}
+
+
+void CFormProperties::OnBnClickedBnChiFont()
+{
+	// TODO: Add your control notification handler code here
+	RECT2D rect = pView->GetSelectedAreaForCNS();
+	m_nChiFontSize = rect.width > rect.height ? rect.width : rect.height;
+	UpdateData(FALSE);
+}
+
+
+void CFormProperties::OnBnClickedBnKorFont()
+{
+	// TODO: Add your control notification handler code here
+	RECT2D rect = pView->GetSelectedAreaForCNS();
+	m_nKorFontSize = rect.width > rect.height ? rect.width : rect.height;
+	UpdateData(FALSE);
 }
