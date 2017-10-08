@@ -67,6 +67,7 @@ public:
 	afx_msg void OnBnClickedBnDelPara();
 	afx_msg void OnBnClickedBnAddPara();
 	afx_msg void OnBnClickedBnReExtract();
+	afx_msg void OnBnClickedBnDelAlllinbes();
 };
 
 

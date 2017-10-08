@@ -4,6 +4,8 @@
 #include "MNDataManager.h"
 
 
+#define _MAX_WORD_SIZE 64
+
 
 CMNPageObject::CMNPageObject()
 {
@@ -30,11 +32,15 @@ CMNPageObject::CMNPageObject()
 	m_bIsSearching = false;
 
 	m_selMatchItemId = -1;
+	m_IsNeedToSave = false;
 }
 
 
 CMNPageObject::~CMNPageObject()
 {
+	WritePageInfo();
+
+
 	if (m_texId > 0) {
 		glDeleteTextures(1, &m_texId);
 	}
@@ -60,9 +66,9 @@ void CMNPageObject::SetRendomPos()
 
 void CMNPageObject::SetName(CString _strpath, CString _strpname, CString _strname, unsigned long _code, unsigned long _pcode)
 {
-	strPath = _strpath;
-	strPName = _strpname;
-	strName = _strname;
+	m_strPath = _strpath;
+	m_strPName = _strpname;
+	m_strName = _strname;
 	parentCode = _pcode;
 	nCode = _code;
 	//	mtSetPoint3D(&m_pos, 0.0f, 0.0f, 0.0f);
@@ -142,7 +148,7 @@ GLuint CMNPageObject::LoadFullImage()
 		return 0;
 	}
 	cv::Mat pimg;
-	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, pimg, false)) {
+	if (SINGLETON_DataMng::GetInstance()->LoadImageData(m_strPath, pimg, false)) {
 		// Save original size //
 		m_nImgHeight = pimg.rows;
 		m_nImgWidth = pimg.cols;
@@ -177,10 +183,13 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	}
 
 //	cv::Mat src;
-	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
+	if (SINGLETON_DataMng::GetInstance()->LoadImageData(m_strPath, m_thumbImg, false))
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
 		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+
+		LoadPageInfo();
+
 
 		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
 		//cv::bitwise_not(m_binaryImg, m_binaryImg);
@@ -463,6 +472,11 @@ void CMNPageObject::DrawOCRRes()
 }
 void CMNPageObject::DrawParagraph()
 {
+	if (m_ocrResult.size() > 0) {
+		return;
+	}
+
+
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
@@ -499,6 +513,10 @@ void CMNPageObject::DrawParagraph()
 
 void CMNPageObject::DrawSelectedParagraph(int selid)
 {
+	if (m_ocrResult.size() > 0) {
+		return;
+	}
+
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
@@ -760,11 +778,28 @@ void CMNPageObject::ClearMatchResult()
 	m_matched_pos.clear();
 }
 
+void CMNPageObject::ClearParagraph()
+{
+	m_paragraph.clear();
+}
+
+void CMNPageObject::ClearOCRResult()
+{
+	m_ocrResult.clear();
+}
+
+bool CMNPageObject::IsNeedToExtract()
+{
+	if (m_paragraph.size() == 0) {
+		return true;
+	}
+	return false;
+}
 void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
 {
+	m_IsNeedToSave = true;
 	stParapgraphInfo para;
 	para.deSkewAngle = deskew;
-	para.deskewRect = rect;
 	para.rect = rect;
 	para.alignType = type;
 	para.IsDeskewed = false;
@@ -784,6 +819,7 @@ void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
 
 void CMNPageObject::DeSkewImg(int pid, float fAngle)
 {
+	m_IsNeedToSave = true;
 	if ((pid < m_paragraph.size()) && (pid >= 0)) {
 
 		if (m_paragraph[pid].IsDeskewed == false) {
@@ -865,6 +901,7 @@ float CMNPageObject::GetDeskewParam(int pid)
 
 void CMNPageObject::DeleteSelPara(int selid)
 {	
+	m_IsNeedToSave = true;
 	if ((selid < m_paragraph.size())&&(selid >=0)) {
 		m_paragraph.erase(m_paragraph.begin() + selid);
 	}
@@ -880,5 +917,98 @@ cv::Rect CMNPageObject::GetSelParaRect(int selid)
 
 void CMNPageObject::AddOCRResult(_stOCRResult res)
 {
+	m_IsNeedToSave = true;
 	m_ocrResult.push_back(res);
+}
+
+CString CMNPageObject::GetPInfoPath()
+{
+	CString path;
+	int nIndex = m_strPath.ReverseFind(_T('.'));
+	if (nIndex > 0) {
+		path = m_strPath.Left(nIndex);
+	}
+	path += ".pinfo";
+	return path;
+}
+
+
+void CMNPageObject::LoadPageInfo()
+{
+	CString path = GetPInfoPath();
+	USES_CONVERSION;
+	char* sz = T2A(path);
+
+	FILE* fp = 0;
+	fopen_s(&fp, sz, "rb");
+	if (fp) {
+
+		_stParaInfoFormat data;
+		fread(&data, sizeof(_stParaInfoFormat), 1, fp);
+
+
+
+		//char char_str[_MAX_WORD_SIZE] = { 0, };
+		//wchar_t strUnicode[_MAX_WORD_SIZE] = { 0, };
+
+		//fread(char_str, _MAX_WORD_SIZE, 1, fp);
+
+		//// Multi to Unicode //
+		//int nLen = MultiByteToWideChar(CP_ACP, 0, &char_str[0], strlen(char_str), NULL, NULL);		
+		//MultiByteToWideChar(CP_ACP, 0, char_str, strlen(char_str), strUnicode, nLen);
+
+		//CString strRead = CString(strUnicode);
+
+		fclose(fp);
+	}
+
+}
+
+
+void CMNPageObject::WritePageInfo()
+{
+
+	//if (m_IsNeedToSave) {
+		CString path = GetPInfoPath();
+		USES_CONVERSION;
+		char* sz =  T2A(path);
+
+		FILE* fp = 0;
+		fopen_s(&fp, sz, "wb");
+		if (fp) {
+			//for (int i = 0; i < strFileName->size(); i++){
+
+			for (int i = 0; i < m_paragraph.size(); i++) {
+				_stParaInfoFormat data;
+				data.x = m_paragraph[i].rect.x;
+				data.y = m_paragraph[i].rect.y;
+				data.width = m_paragraph[i].rect.width;
+				data.height = m_paragraph[i].rect.height;
+				data.desKew = m_paragraph[i].deSkewAngle;
+				data.isDeskew = m_paragraph[i].IsDeskewed;
+				data.nAlign = m_paragraph[i].alignType;
+
+				fwrite(&data, sizeof(_stParaInfoFormat), 1, fp);
+			}
+
+		//		wchar_t* wchar_str;
+		//		char char_str[_MAX_WORD_SIZE];
+		//		memset(char_str, 0x00, sizeof(char_str));
+		//		int char_str_len;
+
+		//		// 1. CString to wchar * conversion
+		//		CString strTmp = L"TESTFILESAVEFUNCTIONîÜÔðÓðîÜ±è»óÈÆ";
+		//		wchar_str = strTmp.GetBuffer(strTmp.GetLength());
+
+
+		//		char_str_len = WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, NULL, 0, NULL, NULL);
+		////		char_str = new char[char_str_len];
+		//		// 2. wchar_t* to char* conversion
+		//		WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, char_str, char_str_len, 0, 0);
+		//		fwrite(char_str, _MAX_WORD_SIZE, 1, fp);
+
+				fclose(fp);
+		}
+		
+	//}
 }

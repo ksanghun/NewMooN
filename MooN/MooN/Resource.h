@@ -123,6 +123,8 @@
 #define IDC_BUTTON8                     1021
 #define IDC_BN_RE_EXTRACT               1021
 #define IDC_BN_EXTRACTLINE              1022
+#define IDC_BN_EXTRACTLINE2             1025
+#define IDC_BN_DEL_ALLLINBES            1025
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773

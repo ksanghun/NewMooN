@@ -68,6 +68,7 @@ public:
 
 	// Extraction Editing //
 	void DeleteSelParagraph();
+	void DeleteAllLines();
 	void AddParagraph();
 	void DeskewParagraph(float fAngle);
 	void UndoDeskewParagraph();

@@ -67,6 +67,7 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_BN_CLICKED(IDC_BN_DEL_PARA, &CFormProperties::OnBnClickedBnDelPara)
 	ON_BN_CLICKED(IDC_BN_ADD_PARA, &CFormProperties::OnBnClickedBnAddPara)
 	ON_BN_CLICKED(IDC_BN_RE_EXTRACT, &CFormProperties::OnBnClickedBnReExtract)
+	ON_BN_CLICKED(IDC_BN_DEL_ALLLINBES, &CFormProperties::OnBnClickedBnDelAlllinbes)
 END_MESSAGE_MAP()
 
 
@@ -249,4 +250,12 @@ void CFormProperties::OnBnClickedBnReExtract()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->ReExtractParagraph();
+}
+
+
+void CFormProperties::OnBnClickedBnDelAlllinbes()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteAllLines();
 }

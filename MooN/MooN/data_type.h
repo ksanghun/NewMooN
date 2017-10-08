@@ -481,4 +481,13 @@ struct _stOCRResult {
 	int type;  // 0 Eng, 1: chi
 };
 
+
+struct _stParaInfoFormat {
+	unsigned short x, y, width, height;	// position and size
+	float desKew;
+	unsigned char isDeskew;
+	unsigned short nAlign;
+};
+
+
 #pragma pack()

@@ -85,7 +85,7 @@ public:
 	void ResetResult();
 	void ResetMatchingResult();
 	void ApplyDeskewPage();
-	
+
 
 	CMNPageObject* GetPageByID(int pid);
 private:

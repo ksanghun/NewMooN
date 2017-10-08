@@ -585,3 +585,4 @@ void CMNDataManager::ResetMatchingResult()
 	}
 	m_mapMatchResults.clear();
 }
+

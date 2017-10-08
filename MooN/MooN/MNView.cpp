@@ -769,7 +769,6 @@ void CMNView::ProcGenerateThumbnail()
 	pl = AfxBeginThread(ThreadGenThumbnailImg, this);
 
 	SetTimer(_GEN_THUMBNAIL, 100, NULL);
-	//GenerateThumbnail();
 
 }
 
@@ -784,8 +783,13 @@ void CMNView::DoExtractBoundary()
 	m_loadedImgCnt = vecImg.size();
 	int i;
 	for (i = 0; i < (int)vecImg.size(); i++) {
+
+		if (vecImg[i]->IsNeedToExtract() == false)
+			continue;
+
+
 		CString strpath = vecImg[i]->GetPath();
-		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg();
+		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg().clone();
 		if (srcImg.ptr()) {
 
 		//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
@@ -866,7 +870,7 @@ void CMNView::DoExtractBoundary()
 
 			}
 			vecBox.clear();
-		//	srcImg.release();
+			srcImg.release();
 		}
 
 		vecImg[i]->SetIsSearched(true);
@@ -1068,6 +1072,15 @@ void CMNView::DeleteSelParagraph()
 		m_selParaId = -1;
 	}
 }
+
+void CMNView::DeleteAllLines()
+{
+	if ((m_pSelectPageForCNS)) {
+		m_pSelectPageForCNS->ClearParagraph();
+		m_selParaId = -1;
+	}
+}
+
 void CMNView::AddParagraph()
 {
 	RECT2D rect = GetSelectedAreaForCNS();

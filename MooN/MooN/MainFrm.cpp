@@ -652,6 +652,14 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		else if (nChar == 88) {	// excute search
 			pView->DoCurNSearch();
 		}
+
+		else if (nChar == 46) {		// Delete Key
+			if (pViewImage) {
+				pViewImage->DeleteSelParagraph();
+			}
+		}
+
+
 		//else if (nChar == 17) {	// ctrl key
 		//	if (pViewImage) {
 		//		pViewImage->SetAnimation(false);

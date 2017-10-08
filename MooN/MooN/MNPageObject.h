@@ -26,7 +26,6 @@ struct stMatchInfo
 struct stParapgraphInfo
 {
 	cv::Rect rect;
-	cv::Rect deskewRect;
 	float deSkewAngle;
 	bool IsDeskewed;
 	_ALIGHN_TYPE alignType;
@@ -73,8 +72,8 @@ public:
 	unsigned long GetPCode() { return parentCode; }
 	float GetfXScale() { return m_fXScale; }
 	float GetfYScale() { return m_fYScale; }
-	CString GetPath() { return strPath; };
-	CString GetName() { return strName; };
+	CString GetPath() { return m_strPath; };
+	CString GetName() { return m_strName; };
 	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
 	bool GetPosByMatchID(int mid, POINT3D& pos);
 	void ClearMatchResult();
@@ -119,11 +118,21 @@ public:
 	std::vector<_stOCRResult>& GetVecOCRResult() { return m_ocrResult; }
 	void AddOCRResult(_stOCRResult res);
 
+
+	CString GetPInfoPath();
+	void WritePageInfo();
+	void LoadPageInfo();
+
+	void ClearParagraph();
+	void ClearOCRResult();
+
+	bool IsNeedToExtract();
+
 private:
 	// Basic Information //
-	CString strPath;
-	CString strPName;
-	CString strName;
+	CString m_strPath;
+	CString m_strPName;
+	CString m_strName;
 	unsigned long parentCode;
 	unsigned long nCode;
 
@@ -158,6 +167,7 @@ private:
 
 	bool m_bCandidate;
 	bool m_bIsNear;
+	bool m_IsNeedToSave;
 
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;

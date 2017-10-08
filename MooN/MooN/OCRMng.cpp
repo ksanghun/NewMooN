@@ -27,7 +27,7 @@ bool COCRMng::InitOCRMng()
 		return false;
 	}
 
-	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
+	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
 //	m_tessEng.SetVariable("tessedit_char_whitelist", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmonpqrstuvwxyz~!@#$%^&*()_-+={}[]:;'<>?,./\|");
 
 
