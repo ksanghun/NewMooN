@@ -76,3 +76,10 @@ COLORREF CDockProperties::GetMatchingColor()
 		return RGB(0, 0, 0);
 	}
 }
+
+void CDockProperties::SetParagraphInfo(float fskew, CString strName)
+{
+	if (m_pProperties) {
+		return m_pProperties->SetParagraphInfo(fskew, strName);
+	}
+}

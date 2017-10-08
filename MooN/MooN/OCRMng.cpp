@@ -27,7 +27,7 @@ bool COCRMng::InitOCRMng()
 		return false;
 	}
 
-	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_WORD);
+	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
 //	m_tessEng.SetVariable("tessedit_char_whitelist", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmonpqrstuvwxyz~!@#$%^&*()_-+={}[]:;'<>?,./\|");
 
 
@@ -50,10 +50,24 @@ void COCRMng::SetOCRDetectMode(_DETECT_MODE mode)
 }
 
 
-float COCRMng::extractWithOCR(cv::Mat image, std::vector<_OCR_RES>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level)
+float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level)
 {	
-	//======================//
+	// Preprocessing before OCR ====//
 	float fScale = 1.0f;
+
+	//cv::threshold(image, image, 200, 255, cv::THRESH_OTSU);
+	//cv::Mat resizeImg;
+	//cv::resize(image, resizeImg, cv::Size(image.cols * fScale, image.rows * fScale));
+
+	//cv::imshow("resize1", resizeImg);
+	//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
+	//	cv::Size(3, 3),
+	//	cv::Point(-1, -1));
+	//cv::dilate(image, image, element);
+	//cv::imshow("resize2", resizeImg);
+
+	//======================//
+	
 
 	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
 	tess.Recognize(0);
@@ -94,7 +108,7 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_OCR_RES>& boundRect, t
 					h = y2 - y1;
 
 					if ((word) && (w > 2) && (h > 2)){
-						_OCR_RES res;
+						_stOCRResult res;
 						res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
 
 						res.fConfidence = conf*0.01f;
@@ -117,6 +131,8 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_OCR_RES>& boundRect, t
 			delete ri;
 	}
 	tess.Clear();
+
+//	resizeImg.release();
 
 	if (cnt > 0)
 		averConf /= cnt;
@@ -142,7 +158,7 @@ void COCRMng::TestFunc()
 		USES_CONVERSION;
 		char* sz = T2A(strFile);
 
-		std::vector<_OCR_RES> boundRect;
+		std::vector<_stOCRResult> boundRect;
 		cv::Mat image = cv::imread(sz);
 		cv::cvtColor(image, image, CV_BGR2GRAY);
 		cv::threshold(image, image, 125, 255, cv::THRESH_BINARY);

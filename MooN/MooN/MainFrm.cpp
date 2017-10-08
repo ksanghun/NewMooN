@@ -584,6 +584,7 @@ void CMainFrame::OnAnalyzeExtracttextboundary()
 {
 	// TODO: Add your command handler code here
 	//pView->DoExtractBoundary();
+	pView->DoOCR();
 }
 
 
@@ -692,4 +693,10 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CFrameWndEx::PreTranslateMessage(pMsg);
+}
+
+
+void CMainFrame::SetParagraphInfo(float fdeskew, CString strName)
+{
+	m_wndProperties.SetParagraphInfo(fdeskew, strName);
 }

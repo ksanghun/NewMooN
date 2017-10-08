@@ -29,7 +29,7 @@ bool CMNPDFConverter::LoadPDF(CString strpath, cv::Mat& pimg, bool IsGray)
 	doc = fz_open_document(ctx, sz);
 	pdf = pdf_specifics(ctx, doc);
 	fz_matrix page_ctm;
-	fz_scale(&page_ctm, 2.5, 2.5);
+	fz_scale(&page_ctm, 3, 3);
 
 	page = fz_load_page(ctx, doc, currentpage);
 	pix = fz_new_pixmap_from_page_contents(ctx, page, &page_ctm, fz_device_rgb(ctx), 0);

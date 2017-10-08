@@ -11,6 +11,8 @@ enum _PICKMODE { _PICK_SELECT = 0 };
 static UINT ThreadGenThumbnailImg(LPVOID lpParam);
 static UINT ThreadDoSearch(LPVOID lpParam);
 static UINT ThreadDoExtraction(LPVOID lpParam);
+static UINT ThreadDoOCR(LPVOID lpParam);
+
 static bool  m_bIsThreadEnd;
 
 
@@ -24,9 +26,11 @@ public:
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
 	void ProcExtractBoundary(_stExtractionSetting _info);
+	void ProcOCR();
 	void GenerateThumbnail();
 	bool DoSearch();
 	void DoExtractBoundary();
+	void DoOCR();
 	//============================//
 
 	void InitGLview(int _nWidth, int _nHeight);
@@ -41,6 +45,8 @@ public:
 	void DrawCNSRect(float r, float g, float b, float a);
 	void DrawBGPageAni();
 	void DrawBGPage();	
+	void DrawOCRRes();
+
 	void InitCamera(bool movexy = true);
 	int SelectObject3D(int x, int y, int rect_width, int rect_height, int selmode);
 	void IDragMap(int x, int y, short sFlag);
@@ -48,6 +54,7 @@ public:
 	// For Picking =============//
 	void DrawImageByOrderForPicking();
 	void DrawMatchItemForPicking();
+	void DrawParagrphForPicking();
 
 	// Set values ==================//
 	//void SetThreshold(float _th) {		m_fThreshold = _th;	}
@@ -58,6 +65,15 @@ public:
 	void MoveNextPage();
 	void MoveNextDown();
 	void MoveNextUp();
+
+	// Extraction Editing //
+	void DeleteSelParagraph();
+	void AddParagraph();
+	void DeskewParagraph(float fAngle);
+	void UndoDeskewParagraph();
+	void ReExtractParagraph();
+
+
 
 	RECT2D GetSelectedAreaForCNS();
 private:
@@ -101,6 +117,7 @@ private:
 
 	// For Extracting Box =====//
 	int m_cnsSearchId;
+	int m_selParaId;
 
 	CMNPageObject* m_pSelectPageForCNS;
 	COCRMng m_OCRMng;

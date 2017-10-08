@@ -28,6 +28,10 @@ public:
 	float GetThreshold() { return m_wndProperties.GetThreshold(); }
 	COLORREF GetMatchingColor() { return m_wndProperties.GetMatchingColor(); }
 
+	void SetParagraphInfo(float fdeskew, CString strName);
+
+
+
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);

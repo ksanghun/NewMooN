@@ -41,6 +41,7 @@ public:
 
 	float GetThreshold() { return m_fEditTh; }
 	COLORREF GetMatchingColor() { return m_ctrlColorBtn.GetColor(); }
+	void SetParagraphInfo(float fskew, CString strName);
 
 
 	CMFCColorButton m_ctrlColorBtn;
@@ -59,6 +60,13 @@ public:
 	afx_msg void OnBnClickedBnEngFont();
 	afx_msg void OnBnClickedBnChiFont();
 	afx_msg void OnBnClickedBnKorFont();
+	CString m_strPageName;
+	float m_fDeskew;
+	afx_msg void OnBnClickedBnAppDeskew();
+	afx_msg void OnBnClickedBnCancel();
+	afx_msg void OnBnClickedBnDelPara();
+	afx_msg void OnBnClickedBnAddPara();
+	afx_msg void OnBnClickedBnReExtract();
 };
 
 

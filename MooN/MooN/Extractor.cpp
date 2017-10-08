@@ -115,8 +115,6 @@ _ALIGHN_TYPE CExtractor::AllHoriVertLines(cv::Mat& binaryImg)
 
 void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
 {
-	
-
 	contours_poly.clear();
 	contours.clear();
 	hierarchy.clear();
@@ -131,8 +129,7 @@ void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::v
 		textBox.init();
 		textBox.textbox = cv::boundingRect(cv::Mat(contours_poly[i]));
 		textBox.setExtendBox(xMargin, yMargin);
-
-		
+			
 
 		vecBox.push_back(textBox);
 	}

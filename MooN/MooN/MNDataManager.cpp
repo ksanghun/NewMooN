@@ -269,15 +269,14 @@ short CMNDataManager::SelectPages(unsigned long cCode)
 			res = 2;
 		}
 	}
-
 	return res;
 }
 
 void CMNDataManager::ApplyDeskewPage()
 {
-	for (size_t i = 0; i < m_vecImgData.size(); i++) {
-		m_vecImgData[i]->DeSkewImg();
-	}
+	//for (size_t i = 0; i < m_vecImgData.size(); i++) {
+	//	m_vecImgData[i]->DeSkewImg();
+	//}
 }
 
 float CMNDataManager::GetAniAcceration(int idx)

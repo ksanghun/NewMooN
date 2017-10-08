@@ -21,6 +21,8 @@ CFormProperties::CFormProperties()
 	, m_nChiFontSize(1)
 	, m_nKorFontSize(1)
 	, m_nAlign(0)
+	, m_strPageName(_T(""))
+	, m_fDeskew(0)
 {
 }
 
@@ -46,6 +48,9 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_KOR_SIZE, m_nKorFontSize);
 	DDV_MinMaxUInt(pDX, m_nKorFontSize, 1, 1000);
 	DDX_Radio(pDX, IDC_RADIO_HORIZON, m_nAlign);
+	DDX_Text(pDX, IDC_EDIT_FILENAME, m_strPageName);
+	DDX_Text(pDX, IDC_EDIT_DESKEW, m_fDeskew);
+	DDV_MinMaxFloat(pDX, m_fDeskew, -90, 90);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -57,6 +62,11 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_BN_CLICKED(IDC_BN_ENG_FONT, &CFormProperties::OnBnClickedBnEngFont)
 	ON_BN_CLICKED(IDC_BN_CHI_FONT, &CFormProperties::OnBnClickedBnChiFont)
 	ON_BN_CLICKED(IDC_BN_KOR_FONT, &CFormProperties::OnBnClickedBnKorFont)
+	ON_BN_CLICKED(IDC_BN_APP_DESKEW, &CFormProperties::OnBnClickedBnAppDeskew)
+	ON_BN_CLICKED(IDC_BN_CANCEL, &CFormProperties::OnBnClickedBnCancel)
+	ON_BN_CLICKED(IDC_BN_DEL_PARA, &CFormProperties::OnBnClickedBnDelPara)
+	ON_BN_CLICKED(IDC_BN_ADD_PARA, &CFormProperties::OnBnClickedBnAddPara)
+	ON_BN_CLICKED(IDC_BN_RE_EXTRACT, &CFormProperties::OnBnClickedBnReExtract)
 END_MESSAGE_MAP()
 
 
@@ -191,4 +201,52 @@ void CFormProperties::OnBnClickedBnKorFont()
 	RECT2D rect = pView->GetSelectedAreaForCNS();
 	m_nKorFontSize = rect.width > rect.height ? rect.width : rect.height;
 	UpdateData(FALSE);
+}
+
+void CFormProperties::SetParagraphInfo(float fskew, CString strName)
+{
+	m_strPageName = strName;
+	m_fDeskew = fskew;
+	UpdateData(FALSE);
+}
+
+void CFormProperties::OnBnClickedBnAppDeskew()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	
+	UpdateData(TRUE);
+	pImgView->DeskewParagraph(m_fDeskew);
+}
+
+
+void CFormProperties::OnBnClickedBnCancel()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->UndoDeskewParagraph();
+}
+
+
+void CFormProperties::OnBnClickedBnDelPara()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteSelParagraph();
+}
+
+
+void CFormProperties::OnBnClickedBnAddPara()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->AddParagraph();
+}
+
+
+void CFormProperties::OnBnClickedBnReExtract()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->ReExtractParagraph();
 }

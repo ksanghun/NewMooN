@@ -6,6 +6,8 @@
 #define MAX_CAM_HIGHTLEVEL 5000
 #define Z_TRANS 70000
 
+enum PICKINGID { _PICK_PARA = 10000, _PICK_WORD = 1000000, _PICK_MATCH = 5000000 };
+
 struct stMatchInfo
 {
 	POINT3D pos;
@@ -26,6 +28,7 @@ struct stParapgraphInfo
 	cv::Rect rect;
 	cv::Rect deskewRect;
 	float deSkewAngle;
+	bool IsDeskewed;
 	_ALIGHN_TYPE alignType;
 	POINT3D color;
 };
@@ -54,8 +57,11 @@ public:
 	void SetIsNear(bool isnear) { m_bIsNear = isnear; }
 	void SetIsSearched(bool _IsSearch) { m_bIsSearching = _IsSearch; }
 	void SetSelMatchItem(int _selid);// { m_selMatchItemId = _selid; }
-	void DeSkewImg();
+	void DeSkewImg(int pid, float fAngle);
+	void UnDoDeSkewImg(int pid);
 	void UpdateTexture();
+
+	bool IsNear() { return m_bIsNear; }
 
 	// Getter //
 	GLuint GetTexId() { return m_texId; };
@@ -65,7 +71,10 @@ public:
 	unsigned short GetImgHeight() { return m_nImgHeight; };
 	unsigned long GetCode() { return nCode; }
 	unsigned long GetPCode() { return parentCode; }
+	float GetfXScale() { return m_fXScale; }
+	float GetfYScale() { return m_fYScale; }
 	CString GetPath() { return strPath; };
+	CString GetName() { return strName; };
 	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
 	bool GetPosByMatchID(int mid, POINT3D& pos);
 	void ClearMatchResult();
@@ -87,6 +96,9 @@ public:
 	void DrawForPicking();
 	void DrawMatchItemForPick();
 	void DrawParagraph();
+	void DrawOCRRes();
+	void DrawParagraphForPick();
+	void DrawSelectedParagraph(int selid);
 	//====================================//
 
 	void RotatePos(float fSpeed);
@@ -95,6 +107,18 @@ public:
 	bool AddMatchedPoint(stMatchInfo info, int search_size);
 	void AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew);
 	bool IsDuplicate(stMatchInfo& info, int search_size);
+
+	float GetDeskewParam(int pid);
+
+	// Edit Paragraph box //
+	void DeleteSelPara(int selid);
+	cv::Rect GetSelParaRect(int selid);
+
+	// OCR //
+	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }
+	std::vector<_stOCRResult>& GetVecOCRResult() { return m_ocrResult; }
+	void AddOCRResult(_stOCRResult res);
+
 private:
 	// Basic Information //
 	CString strPath;
@@ -137,6 +161,7 @@ private:
 
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;
+	std::vector<_stOCRResult> m_ocrResult;
 
 
 	cv::Mat m_thumbImg;

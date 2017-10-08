@@ -111,11 +111,17 @@
 #define IDC_EDIT_KOR_SIZE               1014
 #define IDC_EDIT_CHI_SIZE               1015
 #define IDC_EDIT6                       1016
+#define IDC_EDIT_DESKEW                 1016
 #define IDC_BUTTON4                     1017
+#define IDC_BN_APP_DESKEW               1017
 #define IDC_BUTTON5                     1018
+#define IDC_BN_CANCEL                   1018
 #define IDC_BUTTON6                     1019
+#define IDC_BN_DEL_PARA                 1019
 #define IDC_BUTTON7                     1020
+#define IDC_BN_ADD_PARA                 1020
 #define IDC_BUTTON8                     1021
+#define IDC_BN_RE_EXTRACT               1021
 #define IDC_BN_EXTRACTLINE              1022
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772

@@ -1,6 +1,6 @@
 #pragma once
 //#include "stdafx.h"
-
+#include "MNCVMng.h"
 
 #define MAX_TER_HEIGHT 500000
 #define PAGE_HSIZE 512
@@ -472,6 +472,13 @@ struct _stExtractionSetting {
 		chiSize = 1;
 		korSize = 1;
 	};
+};
+
+struct _stOCRResult {
+	cv::Rect rect;
+	float fConfidence;
+	CString strCode;
+	int type;  // 0 Eng, 1: chi
 };
 
 #pragma pack()

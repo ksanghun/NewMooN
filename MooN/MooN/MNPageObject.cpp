@@ -180,9 +180,8 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
-
-
 		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+
 		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
 		//cv::bitwise_not(m_binaryImg, m_binaryImg);
 		//// resizeing //
@@ -427,11 +426,47 @@ void CMNPageObject::SetSelMatchItem(int _selid)
 	m_selMatchItemId = _selid; 
 }
 
+void CMNPageObject::DrawOCRRes()
+{
+	glPushMatrix();
+	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
+
+	glLineWidth(2);
+	if (m_ocrResult.size() > 0) {
+		// Draw detected position //
+		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+		glPushMatrix();
+		glScalef(m_fXScale, m_fYScale, 1.0f);
+		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
+
+		//if (m_bIsNear){		
+		glLineWidth(1);
+
+		for (int i = 0; i < m_ocrResult.size(); i++) {
+
+			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
+			glBegin(GL_LINE_STRIP);
+			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
+			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
+			glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
+			glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
+			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
+			glEnd();
+		}
+		glPopMatrix();
+	}
+
+	glPointSize(1);
+	glPopMatrix();
+	glLineWidth(1);
+}
 void CMNPageObject::DrawParagraph()
 {
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
+	glPointSize(2);
 	if (m_paragraph.size() > 0) {
 		// Draw detected position //
 		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
@@ -458,6 +493,63 @@ void CMNPageObject::DrawParagraph()
 	}
 
 	glPointSize(1);
+	glPopMatrix();
+	glLineWidth(1);
+}
+
+void CMNPageObject::DrawSelectedParagraph(int selid)
+{
+	glPushMatrix();
+	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
+
+	if (selid < m_paragraph.size()) {
+		// Draw detected position //
+		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+		glPushMatrix();
+		glScalef(m_fXScale, m_fYScale, 1.0f);
+		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
+
+		int i = selid;
+		glColor4f(1.0f, 1.0f, 0.0f, 0.3f);
+		glBegin(GL_QUADS);
+		glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+		glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+		glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+		glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+		glEnd();
+
+		glPopMatrix();
+	}
+	glPopMatrix();
+	glLineWidth(1);
+}
+
+void CMNPageObject::DrawParagraphForPick()
+{
+	glPushMatrix();
+	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
+
+	if (m_paragraph.size() > 0) {
+		// Draw detected position //
+		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+		glPushMatrix();
+		glScalef(m_fXScale, m_fYScale, 1.0f);
+		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
+
+		
+		for (int i = 0; i < m_paragraph.size(); i++) {
+			glPushName(i + _PICK_PARA);
+			glBegin(GL_QUADS);
+			glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glEnd();
+			glPopName();
+		}
+		
+		glPopMatrix();
+	}
 	glPopMatrix();
 	glLineWidth(1);
 }
@@ -651,7 +743,7 @@ bool CMNPageObject::AddMatchedPoint(stMatchInfo info, int search_size)
 bool CMNPageObject::GetPosByMatchID(int mid, POINT3D& pos)
 {
 	mtSetPoint3D(&pos, 0.0f, 0.0f, 0.0f);
-	if (mid <= (int)m_matched_pos.size()) {
+	if ((mid>=0) &&(mid <= (int)m_matched_pos.size())) {
 		pos = m_matched_pos[mid].pos;
 
 		pos.x = (pos.x - m_nImgWidth*0.5f)*m_fXScale + m_pos.x;
@@ -675,6 +767,7 @@ void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
 	para.deskewRect = rect;
 	para.rect = rect;
 	para.alignType = type;
+	para.IsDeskewed = false;
 
 	//if (type == _UNKNOWN_ALIGN) {
 	//	mtSetPoint3D(&para.color, 0.5f, 0.5f, 0.5f);
@@ -689,24 +782,44 @@ void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
 	m_paragraph.push_back(para);
 }
 
-void CMNPageObject::DeSkewImg()
+void CMNPageObject::DeSkewImg(int pid, float fAngle)
 {
-	
+	if ((pid < m_paragraph.size()) && (pid >= 0)) {
 
-	for (int i = 0; i < m_paragraph.size(); i++) {
-		// Rotate Image //
-		cv::Mat para = m_thumbImg(m_paragraph[i].rect);
-		cv::Mat rotMat, rotatedFrame, invRot;
-		rotMat = getRotationMatrix2D(cv::Point2f(0, 0), m_paragraph[i].deSkewAngle, 1);
-		cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+		if (m_paragraph[pid].IsDeskewed == false) {
+			m_paragraph[pid].deSkewAngle = fAngle;
+			cv::Mat para = m_thumbImg(m_paragraph[pid].rect);
+			cv::Mat rotMat, rotatedFrame, invRot;
+			rotMat = getRotationMatrix2D(cv::Point2f(para.cols*0.5f, para.rows*0.5f), m_paragraph[pid].deSkewAngle, 1);
+			cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+			rotatedFrame.copyTo(m_thumbImg(m_paragraph[pid].rect));
 
-		// Fill White color //
-		//m_thumbImg(m_paragraph[i].rect).setTo(cv::Scalar(255,255,255));
-		rotatedFrame.copyTo(m_thumbImg(m_paragraph[i].rect));
+			// Update Gray Scale Image//
+			m_srcGrayImg.release();
+			cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+
+			m_paragraph[pid].IsDeskewed = true;
+			rotatedFrame.release();
+			UpdateTexture();
+		}
 	}
+	
+}
 
-//	m_thumbImg.setTo(cv::Scalar(255, 0, 0));
+void CMNPageObject::UnDoDeSkewImg(int pid)
+{
+	if ((pid < m_paragraph.size()) && (pid >= 0)) {
+		if (m_paragraph[pid].IsDeskewed) {
+			cv::Mat para = m_thumbImg(m_paragraph[pid].rect);
+			cv::Mat rotMat, rotatedFrame, invRot;
+			rotMat = getRotationMatrix2D(cv::Point2f(para.cols*0.5f, para.rows*0.5f), -m_paragraph[pid].deSkewAngle, 1);
+			cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+			rotatedFrame.copyTo(m_thumbImg(m_paragraph[pid].rect));
 
+			m_paragraph[pid].IsDeskewed = false;
+			rotatedFrame.release();
+		}		
+	}
 	UpdateTexture();
 }
 
@@ -719,12 +832,13 @@ void CMNPageObject::UpdateTexture()
 
 	if (m_thumbImg.ptr()) {
 		// Save original size //
+		cv::Mat timg = m_thumbImg.clone();
 		m_nImgHeight = m_thumbImg.rows;
 		m_nImgWidth = m_thumbImg.cols;
 		// resize for texture //
-		int w = ConvertGLTexSize(m_thumbImg.cols);
-		int h = ConvertGLTexSize(m_thumbImg.rows);
-		cv::resize(m_thumbImg, m_thumbImg, cvSize(w, h));
+		int w = ConvertGLTexSize(timg.cols);
+		int h = ConvertGLTexSize(timg.rows);
+		cv::resize(timg, timg, cvSize(w, h));
 
 		glGenTextures(1, &m_texId);
 		glBindTexture(GL_TEXTURE_2D, m_texId);
@@ -734,8 +848,37 @@ void CMNPageObject::UpdateTexture()
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
 
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.ptr());
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, timg.cols, timg.rows, GL_RGB, GL_UNSIGNED_BYTE, timg.ptr());
 
-		cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
+	//	cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
+		timg.release();
 	}
+}
+
+float CMNPageObject::GetDeskewParam(int pid)
+{
+	if (pid < m_paragraph.size()) {
+		return m_paragraph[pid].deSkewAngle;
+	}
+	return 0;
+}
+
+void CMNPageObject::DeleteSelPara(int selid)
+{	
+	if ((selid < m_paragraph.size())&&(selid >=0)) {
+		m_paragraph.erase(m_paragraph.begin() + selid);
+	}
+}
+
+cv::Rect CMNPageObject::GetSelParaRect(int selid)
+{
+	if ((selid < m_paragraph.size()) && (selid >= 0)) {
+		return m_paragraph[selid].rect;
+	}
+	return cv::Rect();
+}
+
+void CMNPageObject::AddOCRResult(_stOCRResult res)
+{
+	m_ocrResult.push_back(res);
 }

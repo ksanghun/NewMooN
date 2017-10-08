@@ -16,7 +16,7 @@ public:
 
 	float GetThreshold();// { return m_pProperties->GetThreshold(); }
 	COLORREF GetMatchingColor();// { return m_pProperties->GetMatchingColor(); }
-
+	void SetParagraphInfo(float fskew, CString strName);
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

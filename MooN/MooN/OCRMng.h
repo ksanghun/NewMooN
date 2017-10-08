@@ -10,12 +10,8 @@
 #include "data_type.h"
 
 
-typedef struct _OCR_RES{
-	cv::Rect rect;
-	float fConfidence;
-	CString strCode;
-	int type;  // 0 Eng, 1: chi
-}_OCR_RES;
+
+
 
 enum _DETECT_MODE { _DET_WORD, _DET_CHAR};
 
@@ -27,7 +23,7 @@ public:
 	~COCRMng();
 
 	bool InitOCRMng();
-	float COCRMng::extractWithOCR(cv::Mat image, std::vector<_OCR_RES>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level);
+	float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level);
 	wchar_t * Utf8ToUnicode(char* szU8);
 	void SetOCRDetectMode(_DETECT_MODE mode);
 
