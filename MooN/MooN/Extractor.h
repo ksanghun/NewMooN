@@ -42,7 +42,7 @@ public:
 	
 	void ExtractLines(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align);
 	void DetectBoundary(std::vector<std::vector<cv::Point> >& contour, std::vector<_extractBox>& vecBox, int xMargin, int yMargin, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align);
-	bool RcvMeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth, float xTh, float yTh, int xMargin, int yMargin, _LANGUAGE_TYPE languageType);
+//	bool RcvMeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth, float xTh, float yTh, int xMargin, int yMargin, _LANGUAGE_TYPE languageType);
 	int FindOptimalBox(std::vector<_extractBox>& tmp, int i, float xTh, float yTh, _extractBox& resBox);
 	int IsBoxToBoxIntersect(cv::Rect b1, cv::Rect b2);
 	void verifyImgSize(cv::Rect& rect, int imgwidth, int imgheight);
@@ -51,7 +51,7 @@ public:
 	cv::Mat GetLinesbyHistogram(cv::Mat& img, std::vector<_extractBox>& vecline, int t);
 
 	// Extraction //
-	void Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align);
+	void Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox);
 	bool MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth);
 
 

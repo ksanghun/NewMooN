@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FormProperties.h"
+//#include "data_type.h"
 // CDockProperties
 
 class CDockProperties : public CDockablePane
@@ -17,6 +18,9 @@ public:
 	float GetThreshold();// { return m_pProperties->GetThreshold(); }
 	COLORREF GetMatchingColor();// { return m_pProperties->GetMatchingColor(); }
 	void SetParagraphInfo(float fskew, CString strName);
+	void GetCurrSetting();
+
+	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

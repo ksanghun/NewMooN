@@ -47,7 +47,6 @@ bool CMNPDFConverter::LoadPDF(CString strpath, cv::Mat& pimg, bool IsGray)
 			cv::cvtColor(pimg, pimg, CV_BGR2GRAY);
 		}
 
-
 		fz_drop_page(ctx, page);
 		fz_drop_document(ctx, doc);
 		fz_drop_pixmap(ctx, pix);

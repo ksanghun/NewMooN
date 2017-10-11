@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "OCRMng.h"
 #include "MNCVMng.h"
+#include "MNDataManager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,28 +28,27 @@ bool COCRMng::InitOCRMng()
 		return false;
 	}
 
-	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
+//	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
 //	m_tessEng.SetVariable("tessedit_char_whitelist", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmonpqrstuvwxyz~!@#$%^&*()_-+={}[]:;'<>?,./\|");
-
-
-	m_tessChi.SetPageSegMode(tesseract::PSM_SINGLE_CHAR);
+//	m_tessChi.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
 //	m_tessChi.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
+
+	SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
+	SetOCRDetectModeChi(tesseract::PSM_SINGLE_LINE);
+
 	return true;
 }
 
 
-void COCRMng::SetOCRDetectMode(_DETECT_MODE mode)
+void COCRMng::SetOCRDetectModeEng(tesseract::PageSegMode mode)
 {
-	//if (mode == _DET_WORD){
-	//	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_WORD);
-	//	m_tessChi.SetPageSegMode(tesseract::PSM_SINGLE_WORD);
-	//}
-	//else if (mode == _DET_CHAR){
-	//	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_CHAR);
-	//	m_tessChi.SetPageSegMode(tesseract::PSM_SINGLE_CHAR);
-	//}
+	m_tessEng.SetPageSegMode(mode);
 }
 
+void COCRMng::SetOCRDetectModeChi(tesseract::PageSegMode mode)
+{
+	m_tessChi.SetPageSegMode(mode);
+}
 
 float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level)
 {	
@@ -109,16 +109,18 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 
 					if ((word) && (w > 2) && (h > 2)){
 						_stOCRResult res;
-						res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
+						memset(&res.strCode, 0x00, sizeof(res.strCode));
 
+						res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
 						res.fConfidence = conf*0.01f;
-						wchar_t* tword = Utf8ToUnicode(word);
-						res.strCode = tword;
+
+						Utf8ToUnicode(word, res.strCode);
+						//res.strCode = tword;						
+						//SINGLETON_DataMng::GetInstance()->MultiToUniCode(word, res.strCode);
 						boundRect.push_back(res);
 
 						TRACE(L"Confidence: %s - %3.2f\n", res.strCode, res.fConfidence);
 
-						delete[] tword;
 					}
 
 					averConf += conf;
@@ -140,13 +142,13 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 }
 
 
-wchar_t * COCRMng::Utf8ToUnicode(char* szU8)
+void COCRMng::Utf8ToUnicode(char* szU8, wchar_t* strwchar)
 {
 	int wcsLen = ::MultiByteToWideChar(CP_UTF8, NULL, szU8, strlen(szU8), NULL, 0);
-	wchar_t* wszString = new wchar_t[wcsLen + 1];
-	::MultiByteToWideChar(CP_UTF8, NULL, szU8, strlen(szU8), wszString, wcsLen);
-	wszString[wcsLen] = '\0';
-	return wszString;
+//	wchar_t* wszString = new wchar_t[wcsLen + 1];
+	::MultiByteToWideChar(CP_UTF8, NULL, szU8, strlen(szU8), strwchar, wcsLen);
+	strwchar[wcsLen] = '\0';
+//	return wszString;
 }
 
 

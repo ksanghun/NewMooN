@@ -249,8 +249,11 @@ HTREEITEM CFileView::ExtractFolder(CString strFolder, CString strName, _strlist&
 			else
 			{
 				strFileName = strFolder + ("\\") + file_find.GetFileName();
-				filelist.push_back(strFileName);
-				m_wndFileView.InsertItem(file_find.GetFileName(), 3, 3, hRes);
+
+				if (IsSupportFormat(strFileName)) {
+					filelist.push_back(strFileName);
+					m_wndFileView.InsertItem(file_find.GetFileName(), 3, 3, hRes);
+				}
 
 				//	nCount++;
 			}
@@ -265,4 +268,21 @@ HTREEITEM CFileView::ExtractFolder(CString strFolder, CString strName, _strlist&
 	}
 
 	return hRes;
+}
+
+
+bool CFileView::IsSupportFormat(CString strPath)
+{
+	CString str = PathFindExtension(strPath);
+
+	// Image File Filter ===============//
+	if ((str == L".pdf") || (str == L".PDF") ||
+		(str == L".jpg") || (str == L".JPG") ||
+		(str == L".bmp") || (str == L".BMP") ||
+		(str == L".png") || (str == L".PNG") ||
+		(str == L".tiff") || (str == L".TIFF"))
+	{
+		return true;
+	}
+	return false;
 }

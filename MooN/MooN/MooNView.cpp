@@ -326,7 +326,7 @@ void CMooNView::DoExtractBoundary(_stExtractionSetting _info)
 void CMooNView::DoOCR()
 {
 	if ((m_pViewImage)) {
-		m_pViewImage->ProcOCR();
+		m_pViewImage->ProcOCR(true);
 	}
 }
 

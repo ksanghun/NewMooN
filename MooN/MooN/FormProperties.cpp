@@ -5,6 +5,7 @@
 #include "MooN.h"
 #include "FormProperties.h"
 #include "MooNView.h"
+#include "MNDataManager.h"
 
 
 // CFromProperties
@@ -15,7 +16,7 @@ CFormProperties::CFormProperties()
 	: CFormView(IDD_FROMPROPERTIES)
 	, m_fEditTh(75.0f)
 	, m_bEnglish(TRUE)
-	, m_bChinese(FALSE)
+	, m_bChinese(TRUE)
 	, m_bKorean(FALSE)
 	, m_nEngFontSize(1)
 	, m_nChiFontSize(1)
@@ -23,6 +24,8 @@ CFormProperties::CFormProperties()
 	, m_nAlign(0)
 	, m_strPageName(_T(""))
 	, m_fDeskew(0)
+	, m_strCode(_T(""))
+	, m_fConfidence(0)
 {
 }
 
@@ -51,6 +54,9 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_FILENAME, m_strPageName);
 	DDX_Text(pDX, IDC_EDIT_DESKEW, m_fDeskew);
 	DDV_MinMaxFloat(pDX, m_fDeskew, -90, 90);
+	DDX_Text(pDX, IDC_EDIT_ENCODE, m_strCode);
+	DDX_Text(pDX, IDC_EDIT_CONFIDENCE, m_fConfidence);
+	DDX_Control(pDX, IDC_COMBO_LANG, m_comboLanguage);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -68,6 +74,12 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_BN_CLICKED(IDC_BN_ADD_PARA, &CFormProperties::OnBnClickedBnAddPara)
 	ON_BN_CLICKED(IDC_BN_RE_EXTRACT, &CFormProperties::OnBnClickedBnReExtract)
 	ON_BN_CLICKED(IDC_BN_DEL_ALLLINBES, &CFormProperties::OnBnClickedBnDelAlllinbes)
+	ON_BN_CLICKED(IDC_BN_DEL_ALLOCR, &CFormProperties::OnBnClickedBnDelAllocr)
+	ON_BN_CLICKED(IDC_BN_RUNOCR, &CFormProperties::OnBnClickedBnRunocr)
+	ON_BN_CLICKED(IDC_BN_DEL_OCRRES, &CFormProperties::OnBnClickedBnDelOcrres)
+	ON_BN_CLICKED(IDC_BN_ADD_MODIFYOCRRES, &CFormProperties::OnBnClickedBnAddModifyocrres)
+	ON_BN_CLICKED(IDC_BN_WORD_CONFIRM, &CFormProperties::OnBnClickedBnWordConfirm)
+	ON_BN_CLICKED(IDC_BN_ADD_OCRRES, &CFormProperties::OnBnClickedBnAddOcrres)
 END_MESSAGE_MAP()
 
 
@@ -109,6 +121,13 @@ void CFormProperties::OnInitialUpdate()
 	m_sliderTh.SetRange(0, 100, TRUE);
 	m_sliderTh.SetTicFreq(100);
 	m_sliderTh.SetPos(m_fEditTh);
+
+	m_comboLanguage.AddString(L"English");
+	m_comboLanguage.AddString(L"Chinese");
+	m_comboLanguage.AddString(L"Korean");
+	m_comboLanguage.SetCurSel(0);
+
+	UpdateData(FALSE);
 
 }
 
@@ -154,8 +173,23 @@ void CFormProperties::OnNMGetCustomSplitRectMfccolorbutton1(NMHDR *pNMHDR, LRESU
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
 }
+//
+void CFormProperties::GetCurrSetting()
+{
+	_stExtractionSetting extractonInfo;
+	extractonInfo.init();
 
+	extractonInfo.IsVerti = (bool)m_nAlign;
+	extractonInfo.chiSize = m_nChiFontSize;
+	extractonInfo.engSize = m_nEngFontSize;
+	extractonInfo.korSize = m_nEngFontSize;
+	extractonInfo.isChi = m_bChinese;
+	extractonInfo.isEng = m_bEnglish;
+	extractonInfo.isKor = m_bKorean;
 
+	SINGLETON_DataMng::GetInstance()->SetExtractionSetting(extractonInfo);
+
+}
 void CFormProperties::OnBnClickedBnExtractline()
 {
 	// TODO: Add your control notification handler code here
@@ -164,7 +198,7 @@ void CFormProperties::OnBnClickedBnExtractline()
 	_stExtractionSetting extractonInfo;
 	extractonInfo.init();
 
-	extractonInfo.nAlign = m_nAlign;
+	extractonInfo.IsVerti = (bool)m_nAlign;
 	extractonInfo.chiSize = m_nChiFontSize;
 	extractonInfo.engSize = m_nEngFontSize;
 	extractonInfo.korSize = m_nEngFontSize;
@@ -211,6 +245,14 @@ void CFormProperties::SetParagraphInfo(float fskew, CString strName)
 	UpdateData(FALSE);
 }
 
+void CFormProperties::SetOCRInfo(wchar_t* strCode, float fConfi, int lang)
+{
+	m_strCode = CString(strCode);
+	m_fConfidence = fConfi;
+	m_comboLanguage.SetCurSel(lang);
+	UpdateData(FALSE);
+}
+
 void CFormProperties::OnBnClickedBnAppDeskew()
 {
 	// TODO: Add your control notification handler code here
@@ -249,7 +291,7 @@ void CFormProperties::OnBnClickedBnReExtract()
 {
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
-	pImgView->ReExtractParagraph();
+	pImgView->ReExtractParagraph(__ENG, _HORIZON_ALIGN);
 }
 
 
@@ -258,4 +300,54 @@ void CFormProperties::OnBnClickedBnDelAlllinbes()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DeleteAllLines();
+}
+
+
+void CFormProperties::OnBnClickedBnDelAllocr()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteAllOCRRes();
+}
+
+
+void CFormProperties::OnBnClickedBnRunocr()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->ProcOCR(false);
+	
+}
+
+
+void CFormProperties::OnBnClickedBnDelOcrres()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteSelOCRRes();
+}
+
+
+void CFormProperties::OnBnClickedBnAddModifyocrres()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->UpdateOCRCode(m_strCode);
+}
+
+
+void CFormProperties::OnBnClickedBnWordConfirm()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->ConfirmOCRRes();
+}
+
+
+void CFormProperties::OnBnClickedBnAddOcrres()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->AddOCRRes();
 }

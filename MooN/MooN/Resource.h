@@ -88,6 +88,7 @@
 #define IDR_MENU1                       312
 #define IDR_MAINMENU                    312
 #define IDD_FROMPROPERTIES              313
+#define IDR_MENU_OCR                    316
 #define IDC_EDIT_SRCPATH                1000
 #define IDC_EDIT2                       1001
 #define IDC_EDIT_LOGPATH                1001
@@ -123,8 +124,18 @@
 #define IDC_BUTTON8                     1021
 #define IDC_BN_RE_EXTRACT               1021
 #define IDC_BN_EXTRACTLINE              1022
-#define IDC_BN_EXTRACTLINE2             1025
+#define IDC_EDIT_ENCODE                 1023
+#define IDC_COMBO_LANG                  1024
 #define IDC_BN_DEL_ALLLINBES            1025
+#define IDC_EDIT_CONFIDENCE             1026
+#define IDC_BN_ADD_MODIFYOCRRES         1027
+#define IDC_BN_DEL_OCRRES               1028
+#define IDC_EDIT3                       1029
+#define IDC_BN_KEYWORD_SEARCH           1030
+#define IDC_BN_RUNOCR                   1031
+#define IDC_BN_DEL_ALLOCR               1032
+#define IDC_BN_WORD_CONFIRM             1033
+#define IDC_BN_ADD_OCRRES               1034
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -139,14 +150,24 @@
 #define ID_PROJECT_CONFIGURATION        32782
 #define ID_VIEW_LOGVIEW                 32783
 #define ID_VIEW_LISTVIEW                32784
+#define ID_OCR_RECOGNIZEENGLISHWORD     32784
+#define ID_OCR_RECOGNIZEENGLISHCHARACTER 32785
+#define ID_OCR_SEARCH                   32786
+#define ID_OCR_ENGLISHWORD              32787
+#define ID_OCR_ENGLISHCHARACTER         32788
+#define ID_OCR_CHINISEWORD              32789
+#define ID_OCR_CHINESECHARACTER         32790
+#define ID_OCR_KOREANWORD               32791
+#define ID_OCR_KOREANCHARACTER          32792
+#define ID_OCR_CHINESEWORD              32793
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        316
-#define _APS_NEXT_COMMAND_VALUE         32784
-#define _APS_NEXT_CONTROL_VALUE         1023
+#define _APS_NEXT_RESOURCE_VALUE        317
+#define _APS_NEXT_COMMAND_VALUE         32794
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

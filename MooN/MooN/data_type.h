@@ -12,6 +12,7 @@
 
 
 #define _PAGE_RES 512
+#define _MAX_WORD_SIZE 32
 
 //#define _IMGICON_SIZE 100.0f
 //#define _MAX_TREE_DEPTH 7
@@ -455,7 +456,8 @@ struct _stExtractionSetting {
 	bool isEng;
 	bool isChi;
 	bool isKor;
-	bool nAlign;
+//	int nAlign;
+	bool IsVerti;
 
 	int engSize;
 	int chiSize;
@@ -466,7 +468,7 @@ struct _stExtractionSetting {
 		isEng = false;
 		isChi = false;
 		isKor = false;
-		nAlign = 0;
+		IsVerti = true;
 
 		engSize = 1;
 		chiSize = 1;
@@ -477,7 +479,7 @@ struct _stExtractionSetting {
 struct _stOCRResult {
 	cv::Rect rect;
 	float fConfidence;
-	CString strCode;
+	wchar_t strCode[_MAX_WORD_SIZE];
 	int type;  // 0 Eng, 1: chi
 };
 

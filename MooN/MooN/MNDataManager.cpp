@@ -100,7 +100,9 @@ bool CMNDataManager::LoadImageData(CString strPath, cv::Mat& pimg, bool IsGray)
 				cv::cvtColor(pimg, pimg, CV_BGR2GRAY);
 			}
 			else {
-				cv::cvtColor(pimg, pimg, CV_BGR2RGB);
+				if (str != L".jp2") {
+					cv::cvtColor(pimg, pimg, CV_BGR2RGB);
+				}
 			}
 			return true;
 		}
@@ -162,15 +164,15 @@ void CMNDataManager::PopImageDataSet(unsigned long _pcode)
 
 void CMNDataManager::PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode)
 {
-	CString str = PathFindExtension(_strName);
+	//CString str = PathFindExtension(_strName);
 
-	// Image File Filter ===============//
-	if ((str == L".pdf") || (str == L".PDF") ||
-		(str == L".jpg") || (str == L".JPG") ||
-		(str == L".bmp") || (str == L".BMP") ||
-		(str == L".png") || (str == L".PNG") ||
-		(str == L".tiff") || (str == L".TIFF")) 
-	{
+	//// Image File Filter ===============//
+	//if ((str == L".pdf") || (str == L".PDF") ||
+	//	(str == L".jpg") || (str == L".JPG") ||
+	//	(str == L".bmp") || (str == L".BMP") ||
+	//	(str == L".png") || (str == L".PNG") ||
+	//	(str == L".tiff") || (str == L".TIFF")) 
+	//{
 
 		std::map<unsigned long, stPageGroup>::iterator iter_gr;
 		std::map<unsigned long, CMNPageObject*>::iterator iter;
@@ -204,7 +206,7 @@ void CMNDataManager::PushImageDataSet(CString _strpath, CString _strPName, CStri
 		else {
 			delete pimg;
 		}
-	}
+//	}
 }
 
 int CMNDataManager::GetEmptySlot()
@@ -586,3 +588,11 @@ void CMNDataManager::ResetMatchingResult()
 	m_mapMatchResults.clear();
 }
 
+void CMNDataManager::MultiToUniCode(char* char_str, wchar_t* str_unicode)
+{
+	//char char_str[_MAX_WORD_SIZE] = { 0, };
+	//wchar_t strUnicode[_MAX_WORD_SIZE] = { 0, };
+	// Multi to Unicode //
+	int nLen = MultiByteToWideChar(CP_ACP, 0, &char_str[0], strlen(char_str), NULL, NULL);		
+	MultiByteToWideChar(CP_ACP, 0, char_str, strlen(char_str), str_unicode, nLen);
+}

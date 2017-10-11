@@ -26,11 +26,19 @@ public:
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
 	void ProcExtractBoundary(_stExtractionSetting _info);
-	void ProcOCR();
+	void ProcOCR(bool IsAll);
 	void GenerateThumbnail();
 	bool DoSearch();
 	void DoExtractBoundary();
 	void DoOCR();
+	void DoOCRForPage(CMNPageObject* pPage);
+
+	void OcrEnglishword();
+	void OcrChiChar();
+	void OcrChiWord();
+
+	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
+	void DoExtractBoundaryForSelected();
 	//============================//
 
 	void InitGLview(int _nWidth, int _nHeight);
@@ -55,6 +63,7 @@ public:
 	void DrawImageByOrderForPicking();
 	void DrawMatchItemForPicking();
 	void DrawParagrphForPicking();
+	void DrawOCRForPicking();
 
 	// Set values ==================//
 	//void SetThreshold(float _th) {		m_fThreshold = _th;	}
@@ -68,13 +77,18 @@ public:
 
 	// Extraction Editing //
 	void DeleteSelParagraph();
+	void DeleteSelOCRRes();
 	void DeleteAllLines();
+	void DeleteAllOCRRes();
+	void AddOCRRes();
 	void AddParagraph();
 	void DeskewParagraph(float fAngle);
 	void UndoDeskewParagraph();
-	void ReExtractParagraph();
+	void ReExtractParagraph(_LANGUAGE_TYPE lang, _ALIGHN_TYPE align);
+	void ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang);
 
-
+	void ConfirmOCRRes();
+	void UpdateOCRCode(CString _strCode);
 
 	RECT2D GetSelectedAreaForCNS();
 private:
@@ -119,9 +133,11 @@ private:
 	// For Extracting Box =====//
 	int m_cnsSearchId;
 	int m_selParaId;
+	int m_selOCRId;
 
 	CMNPageObject* m_pSelectPageForCNS;
 	COCRMng m_OCRMng;
+	bool m_bIsAllOCR;
 	CExtractor m_Extractor;
 	_stExtractionSetting m_extractionSetting;
 public:
@@ -134,5 +150,7 @@ public:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 };
 

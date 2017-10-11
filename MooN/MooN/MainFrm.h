@@ -29,8 +29,9 @@ public:
 	COLORREF GetMatchingColor() { return m_wndProperties.GetMatchingColor(); }
 
 	void SetParagraphInfo(float fdeskew, CString strName);
+	void GetCurrSetting() { return m_wndProperties.GetCurrSetting(); }
 
-
+	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
 
 private:
 	void InitConfituration();
@@ -91,6 +92,9 @@ public:
 	virtual BOOL OnShowPanes(BOOL bShow);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnOcrEnglishword();
+	afx_msg void OnOcrChinesecharacter();
+	afx_msg void OnOcrChineseword();
 };
 
 

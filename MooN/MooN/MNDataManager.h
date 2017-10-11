@@ -85,9 +85,13 @@ public:
 	void ResetResult();
 	void ResetMatchingResult();
 	void ApplyDeskewPage();
+	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
 
 
 	CMNPageObject* GetPageByID(int pid);
+
+	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
+	_stExtractionSetting GetExtractionSetting() { return m_extractonInfo; }
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -105,6 +109,8 @@ private:
 
 	// matching results //
 	std::map<unsigned long, stVecMatchResult> m_mapMatchResults;
+
+	_stExtractionSetting m_extractonInfo;
 };
 
 typedef CMNSingleton<CMNDataManager> SINGLETON_DataMng;

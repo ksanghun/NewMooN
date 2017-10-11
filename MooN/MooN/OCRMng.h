@@ -24,8 +24,9 @@ public:
 
 	bool InitOCRMng();
 	float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level);
-	wchar_t * Utf8ToUnicode(char* szU8);
-	void SetOCRDetectMode(_DETECT_MODE mode);
+	void Utf8ToUnicode(char* szU8, wchar_t* strwchar);
+	void SetOCRDetectModeEng(tesseract::PageSegMode mode);
+	void SetOCRDetectModeChi(tesseract::PageSegMode mode);
 
 	tesseract::TessBaseAPI& GetEngTess() { return m_tessEng; }
 	tesseract::TessBaseAPI& GetChiTess() { return m_tessChi; };

@@ -42,6 +42,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_ANALYZE_EXTRACTTEXTBOUNDARY, &CMainFrame::OnAnalyzeExtracttextboundary)
 	ON_COMMAND(ID_FILE_OPEN, &CMainFrame::OnFileOpen)
 	ON_WM_SHOWWINDOW()
+	ON_COMMAND(ID_OCR_ENGLISHWORD, &CMainFrame::OnOcrEnglishword)
+	ON_COMMAND(ID_OCR_CHINESECHARACTER, &CMainFrame::OnOcrChinesecharacter)
+	ON_COMMAND(ID_OCR_CHINESEWORD, &CMainFrame::OnOcrChineseword)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -656,6 +659,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		else if (nChar == 46) {		// Delete Key
 			if (pViewImage) {
 				pViewImage->DeleteSelParagraph();
+				pViewImage->DeleteSelOCRRes();
 			}
 		}
 
@@ -707,4 +711,32 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 void CMainFrame::SetParagraphInfo(float fdeskew, CString strName)
 {
 	m_wndProperties.SetParagraphInfo(fdeskew, strName);
+}
+
+void CMainFrame::SetOCRResInfo(wchar_t* strCode, float fConfi, int lang)
+{
+	m_wndProperties.SetOCRResInfo(strCode, fConfi, lang);
+}
+
+void CMainFrame::OnOcrEnglishword()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->OcrEnglishword();
+}
+
+
+void CMainFrame::OnOcrChinesecharacter()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->OcrChiChar();
+}
+
+
+void CMainFrame::OnOcrChineseword()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->OcrChiWord();
 }

@@ -77,9 +77,21 @@ COLORREF CDockProperties::GetMatchingColor()
 	}
 }
 
+void CDockProperties::GetCurrSetting()
+{
+	m_pProperties->GetCurrSetting();
+}
+
 void CDockProperties::SetParagraphInfo(float fskew, CString strName)
 {
 	if (m_pProperties) {
-		return m_pProperties->SetParagraphInfo(fskew, strName);
+		m_pProperties->SetParagraphInfo(fskew, strName);
+	}
+}
+
+void CDockProperties::SetOCRResInfo(wchar_t* strCode, float fConfi, int lang)
+{
+	if (m_pProperties) {
+		m_pProperties->SetOCRInfo(strCode, fConfi, lang);
 	}
 }

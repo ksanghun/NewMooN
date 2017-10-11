@@ -19,10 +19,11 @@ CExtractor::~CExtractor()
 void CExtractor::TestFunc()
 {
 //	cv::Mat input = cv::imread("D:/Untitled.bmp");
-	cv::Mat input = cv::imread("D:/Capture.JPG");
+	cv::Mat input = cv::imread("D:/17_212.jp2");
+	cv::imshow("kim", input);
 //	DeSkewImg(input);
-	AllHoriVertLines(input);
-	input.release();
+//	AllHoriVertLines(input);
+//	input.release();
 }
 
 float CExtractor::DeSkewImg(cv::Mat& img)
@@ -113,7 +114,7 @@ _ALIGHN_TYPE CExtractor::AllHoriVertLines(cv::Mat& binaryImg)
 	 }	
 }
 
-void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
+void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox)
 {
 	contours_poly.clear();
 	contours.clear();
@@ -204,9 +205,7 @@ void CExtractor::ExtractLines(cv::Mat& binaryImg, int xMargin, int yMargin, std:
 	/// Approximate contours to polygons + get bounding rects and circles
 	contours_poly.resize(contours.size());
 	for (int i = 0; i < contours.size(); i++) {
-		cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 1, true);
-
-		
+		cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 1, true);		
 	}
 
 
@@ -269,114 +268,114 @@ void CExtractor::DetectBoundary(std::vector<std::vector<cv::Point> >& contour, s
 	case _VERTICAL_ALIGN:
 		xth = 1.2f;
 		yth = 10.0f;
-		languageType = _NONALPHABETIC;
+	//	languageType = _NONALPHABETIC;
 	default:
 		break;
 	}
 	//RcvMeargingtBoundaryBox(vecBox, depth, xth, yth, xMargin, yMargin, languageType);		// Test for horizontal case
 }
 
-bool CExtractor::RcvMeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth, float xTh, float yTh, int xMargin, int yMargin, _LANGUAGE_TYPE languageType)
-{
-	int minArea = m_fontSize.width*m_fontSize.width;
-	if (m_fontSize.height < m_fontSize.width)
-		minArea = m_fontSize.height*m_fontSize.height;
-
-	std::vector<_extractBox> tmp = vecBox;
-	vecBox = std::vector<_extractBox>();
-
-	int nWidth = 0, nHeight = 0;
-	bool IsMerged = false;
-	_extractBox resBox;
-	for (int i = 0; i < tmp.size(); i++) {
-		//	for (int i = tmp.size()-1; i >=0; i--){
-		if (tmp[i].IsMerged) continue;
-
-		resBox.init();
-		int sid = FindOptimalBox(tmp, i, xTh, yTh, resBox);
-		if (sid >= 0) {
-			tmp[i].textbox.x = resBox.textbox.x;
-			tmp[i].textbox.y = resBox.textbox.y;
-			tmp[i].textbox.width = resBox.textbox.width;
-			tmp[i].textbox.height = resBox.textbox.height;
-
-			tmp[sid].IsMerged = true;
-			IsMerged = true;
-		}
-	}
-
-
-
-	for (int i = 0; i < tmp.size(); i++) {
-		if (tmp[i].IsMerged == false) {
-			_extractBox tbox;
-			tbox.init();
-			tbox.textbox = tmp[i].textbox;
-			tbox.setExtendBox(xMargin, yMargin);
-			//			tbox.textSphere.setbyRect(tbox.textbox);
-
-			// Filtering line//
-			float arw = (float)tbox.textbox.width / (float)tbox.textbox.height;
-			float arh = (float)tbox.textbox.height / (float)tbox.textbox.width;
-			//if ((tbox.textbox.height > maxheight*2.0f) || (tbox.textbox.width > maxwidth*2.0f))
-			//{
-
-				if ((arw<0.1f) || (arh<0.1f)) {
-					continue;
-				}
-			//}
-
-			// Adjust Size=====================================//  In case of Chinese, Korean
-			if ((languageType == _NONALPHABETIC)) {		// character detection
-				if (arw > 3) {  // " --- "
-					if (yMargin< 4) {
-						int delta = 2;
-						tbox.textboxForCheck.y -= delta;
-						tbox.textboxForCheck.height += delta * 2;
-					}
-				}
-				if (arh > 3) { // " | " 
-					if (xMargin < 4) {
-						int delta = 2;
-						tbox.textboxForCheck.x -= delta;
-						tbox.textboxForCheck.width += delta * 2;
-					}
-				}
-
-				if (tbox.textbox.area() < minArea*0.5f) {
-					if (yMargin < 4) {
-						int delta = 1;
-						tbox.textboxForCheck.y -= delta;
-						tbox.textboxForCheck.height += delta * 2;
-					}
-					if (xMargin < 4) {
-						int delta = 1;
-						tbox.textboxForCheck.x -= delta;
-						tbox.textboxForCheck.width += delta * 2;
-					}
-				}
-			}
-			//=====================================================================//
-			vecBox.push_back(tbox);
-		}
-	}
-	tmp.clear();
-
-	//if (addcnt > 0) {
-	//	float aWidth = (float)m_averTextSize.width / (float)addcnt;
-	//	float aHeight = (float)m_averTextSize.height / (float)addcnt;
-	//	m_averTextSize.set(0, aWidth, 0, aHeight);
-	//}
-
-	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
-		depth++;
-
-		RcvMeargingtBoundaryBox(vecBox, depth, xTh, yTh, xMargin, yMargin,languageType);
-		TRACE("Recursive: %d\n", depth);
-	}
-
-	return true;
-}
+//bool CExtractor::RcvMeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth, float xTh, float yTh, int xMargin, int yMargin, _LANGUAGE_TYPE languageType)
+//{
+//	int minArea = m_fontSize.width*m_fontSize.width;
+//	if (m_fontSize.height < m_fontSize.width)
+//		minArea = m_fontSize.height*m_fontSize.height;
+//
+//	std::vector<_extractBox> tmp = vecBox;
+//	vecBox = std::vector<_extractBox>();
+//
+//	int nWidth = 0, nHeight = 0;
+//	bool IsMerged = false;
+//	_extractBox resBox;
+//	for (int i = 0; i < tmp.size(); i++) {
+//		//	for (int i = tmp.size()-1; i >=0; i--){
+//		if (tmp[i].IsMerged) continue;
+//
+//		resBox.init();
+//		int sid = FindOptimalBox(tmp, i, xTh, yTh, resBox);
+//		if (sid >= 0) {
+//			tmp[i].textbox.x = resBox.textbox.x;
+//			tmp[i].textbox.y = resBox.textbox.y;
+//			tmp[i].textbox.width = resBox.textbox.width;
+//			tmp[i].textbox.height = resBox.textbox.height;
+//
+//			tmp[sid].IsMerged = true;
+//			IsMerged = true;
+//		}
+//	}
+//
+//
+//
+//	for (int i = 0; i < tmp.size(); i++) {
+//		if (tmp[i].IsMerged == false) {
+//			_extractBox tbox;
+//			tbox.init();
+//			tbox.textbox = tmp[i].textbox;
+//			tbox.setExtendBox(xMargin, yMargin);
+//			//			tbox.textSphere.setbyRect(tbox.textbox);
+//
+//			// Filtering line//
+//			float arw = (float)tbox.textbox.width / (float)tbox.textbox.height;
+//			float arh = (float)tbox.textbox.height / (float)tbox.textbox.width;
+//			//if ((tbox.textbox.height > maxheight*2.0f) || (tbox.textbox.width > maxwidth*2.0f))
+//			//{
+//
+//				if ((arw<0.1f) || (arh<0.1f)) {
+//					continue;
+//				}
+//			//}
+//
+//			// Adjust Size=====================================//  In case of Chinese, Korean
+//			if ((languageType == _NONALPHABETIC)) {		// character detection
+//				if (arw > 3) {  // " --- "
+//					if (yMargin< 4) {
+//						int delta = 2;
+//						tbox.textboxForCheck.y -= delta;
+//						tbox.textboxForCheck.height += delta * 2;
+//					}
+//				}
+//				if (arh > 3) { // " | " 
+//					if (xMargin < 4) {
+//						int delta = 2;
+//						tbox.textboxForCheck.x -= delta;
+//						tbox.textboxForCheck.width += delta * 2;
+//					}
+//				}
+//
+//				if (tbox.textbox.area() < minArea*0.5f) {
+//					if (yMargin < 4) {
+//						int delta = 1;
+//						tbox.textboxForCheck.y -= delta;
+//						tbox.textboxForCheck.height += delta * 2;
+//					}
+//					if (xMargin < 4) {
+//						int delta = 1;
+//						tbox.textboxForCheck.x -= delta;
+//						tbox.textboxForCheck.width += delta * 2;
+//					}
+//				}
+//			}
+//			//=====================================================================//
+//			vecBox.push_back(tbox);
+//		}
+//	}
+//	tmp.clear();
+//
+//	//if (addcnt > 0) {
+//	//	float aWidth = (float)m_averTextSize.width / (float)addcnt;
+//	//	float aHeight = (float)m_averTextSize.height / (float)addcnt;
+//	//	m_averTextSize.set(0, aWidth, 0, aHeight);
+//	//}
+//
+//	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
+//		depth++;
+//
+//		RcvMeargingtBoundaryBox(vecBox, depth, xTh, yTh, xMargin, yMargin,languageType);
+//		TRACE("Recursive: %d\n", depth);
+//	}
+//
+//	return true;
+//}
 
 
 int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, float xTh, float yTh, _extractBox& resBox)

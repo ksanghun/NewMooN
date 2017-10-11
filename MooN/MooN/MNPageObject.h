@@ -28,8 +28,10 @@ struct stParapgraphInfo
 	cv::Rect rect;
 	float deSkewAngle;
 	bool IsDeskewed;
-	_ALIGHN_TYPE alignType;
-	POINT3D color;
+	bool IsHori;
+//	unsigned short alignType;
+//	_ALIGHN_TYPE alignType;
+//	POINT3D color;
 };
 
 //struct stParapgraphInfo
@@ -95,7 +97,7 @@ public:
 	void DrawForPicking();
 	void DrawMatchItemForPick();
 	void DrawParagraph();
-	void DrawOCRRes();
+	void DrawOCRResForPick();
 	void DrawParagraphForPick();
 	void DrawSelectedParagraph(int selid);
 	//====================================//
@@ -104,14 +106,19 @@ public:
 	float SetSelectionPosition(int nSlot, float xOffset, float yOffset, bool IsAni);
 	void SetSelection(bool _isSel);
 	bool AddMatchedPoint(stMatchInfo info, int search_size);
-	void AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew);
+	void AddParagraph(cv::Rect rect, bool IsHori, float deskew);
 	bool IsDuplicate(stMatchInfo& info, int search_size);
 
 	float GetDeskewParam(int pid);
+	_stOCRResult GetOCRResult(int _id);
+	void CMNPageObject::SetOCRResult(int _id, _stOCRResult _res);
 
 	// Edit Paragraph box //
 	void DeleteSelPara(int selid);
 	cv::Rect GetSelParaRect(int selid);
+	void DeleteSelOCRRes(int selid);
+	void ConfirmOCRRes(int selid);
+	void UpdateOCRCode(CString _strCode, int selid);
 
 	// OCR //
 	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }
@@ -119,7 +126,7 @@ public:
 	void AddOCRResult(_stOCRResult res);
 
 
-	CString GetPInfoPath();
+	CString GetPInfoPath(CString strExtension);
 	void WritePageInfo();
 	void LoadPageInfo();
 

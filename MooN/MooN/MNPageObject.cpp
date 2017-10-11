@@ -4,7 +4,7 @@
 #include "MNDataManager.h"
 
 
-#define _MAX_WORD_SIZE 64
+
 
 
 CMNPageObject::CMNPageObject()
@@ -182,8 +182,19 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 		return false;
 	}
 
-//	cv::Mat src;
-	if (SINGLETON_DataMng::GetInstance()->LoadImageData(m_strPath, m_thumbImg, false))
+	//==============================================
+	CString strPath = m_strPath;
+	CString str = PathFindExtension(m_strPath);
+	if ((str == L".pdf") || (str == L".PDF")) {
+
+		CString tmpStr = GetPInfoPath(L".jp2");
+		if (PathFileExists(tmpStr)) {
+			strPath = tmpStr;
+		}
+	}
+	// If .jp2 exist, load .jp2 file instead of .pdf file //
+
+	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
 		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
@@ -435,7 +446,7 @@ void CMNPageObject::SetSelMatchItem(int _selid)
 	m_selMatchItemId = _selid; 
 }
 
-void CMNPageObject::DrawOCRRes()
+void CMNPageObject::DrawOCRResForPick()
 {
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
@@ -452,16 +463,15 @@ void CMNPageObject::DrawOCRRes()
 		glLineWidth(1);
 
 		for (int i = 0; i < m_ocrResult.size(); i++) {
-
-			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			glBegin(GL_LINE_STRIP);
-			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+			glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
+			glPushName(i + _PICK_WORD);
+			glBegin(GL_QUADS);
 			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
 			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
 			glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
 			glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
-			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
 			glEnd();
+			glPopName();
 		}
 		glPopMatrix();
 	}
@@ -493,7 +503,7 @@ void CMNPageObject::DrawParagraph()
 		
 		for (int i = 0; i < m_paragraph.size(); i++) {			
 
-			glColor4f(m_paragraph[i].color.x, m_paragraph[i].color.y, m_paragraph[i].color.z, 0.5f);
+			glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
 			glBegin(GL_LINE_STRIP);
 			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
 			glVertex3f(m_paragraph[i].rect.x,						          m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
@@ -544,6 +554,10 @@ void CMNPageObject::DrawSelectedParagraph(int selid)
 
 void CMNPageObject::DrawParagraphForPick()
 {
+	if (m_ocrResult.size() > 0) {
+		return;
+	}
+
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
@@ -795,20 +809,20 @@ bool CMNPageObject::IsNeedToExtract()
 	}
 	return false;
 }
-void CMNPageObject::AddParagraph(cv::Rect rect, _ALIGHN_TYPE type, float deskew)
+void CMNPageObject::AddParagraph(cv::Rect rect, bool IsHori, float deskew)
 {
 	m_IsNeedToSave = true;
 	stParapgraphInfo para;
 	para.deSkewAngle = deskew;
 	para.rect = rect;
-	para.alignType = type;
+	para.IsHori = IsHori;
 	para.IsDeskewed = false;
 
 	//if (type == _UNKNOWN_ALIGN) {
 	//	mtSetPoint3D(&para.color, 0.5f, 0.5f, 0.5f);
 	//}
 	//else if (type == _HORIZON_ALIGN) {
-		mtSetPoint3D(&para.color, 1.0f, 0.0f, 0.0f);
+	//	mtSetPoint3D(&para.color, 1.0f, 0.0f, 0.0f);
 	//}
 	//else {
 	//	mtSetPoint3D(&para.color, 0.0f, 0.0f, 1.0f);
@@ -835,11 +849,9 @@ void CMNPageObject::DeSkewImg(int pid, float fAngle)
 			cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
 
 			m_paragraph[pid].IsDeskewed = true;
-			rotatedFrame.release();
-			UpdateTexture();
+			rotatedFrame.release();		
 		}
-	}
-	
+	}	
 }
 
 void CMNPageObject::UnDoDeSkewImg(int pid)
@@ -856,6 +868,8 @@ void CMNPageObject::UnDoDeSkewImg(int pid)
 			rotatedFrame.release();
 		}		
 	}
+
+
 	UpdateTexture();
 }
 
@@ -867,6 +881,10 @@ void CMNPageObject::UpdateTexture()
 	}
 
 	if (m_thumbImg.ptr()) {
+
+		//m_srcGrayImg.release();
+		//cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+
 		// Save original size //
 		cv::Mat timg = m_thumbImg.clone();
 		m_nImgHeight = m_thumbImg.rows;
@@ -899,11 +917,53 @@ float CMNPageObject::GetDeskewParam(int pid)
 	return 0;
 }
 
+void CMNPageObject::SetOCRResult(int _id, _stOCRResult _res)
+{
+	if ((_id >= 0) && (_id < m_ocrResult.size())) {
+		m_ocrResult[_id] = _res;
+	}
+}
+
+_stOCRResult CMNPageObject::GetOCRResult(int _id)
+{
+	if ((_id>=0) && (_id < m_ocrResult.size())) {
+		return m_ocrResult[_id];
+	}
+	return _stOCRResult();
+}
+
 void CMNPageObject::DeleteSelPara(int selid)
 {	
 	m_IsNeedToSave = true;
 	if ((selid < m_paragraph.size())&&(selid >=0)) {
 		m_paragraph.erase(m_paragraph.begin() + selid);
+	}
+}
+
+void CMNPageObject::DeleteSelOCRRes(int selid)
+{
+	m_IsNeedToSave = true;
+	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+		m_ocrResult.erase(m_ocrResult.begin() + selid);
+	}
+}
+
+void CMNPageObject::ConfirmOCRRes(int selid)
+{
+	m_IsNeedToSave = true;
+	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+		m_ocrResult[selid].fConfidence = 0.9f;
+	}
+}
+
+void CMNPageObject::UpdateOCRCode(CString _strCode, int selid)
+{
+	m_IsNeedToSave = true;
+	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+		m_ocrResult[selid].fConfidence = 0.9f;
+		wsprintf(m_ocrResult[selid].strCode, _strCode);
+
+	//	m_ocrResult[selid].strCode = _strCode;
 	}
 }
 
@@ -921,21 +981,21 @@ void CMNPageObject::AddOCRResult(_stOCRResult res)
 	m_ocrResult.push_back(res);
 }
 
-CString CMNPageObject::GetPInfoPath()
+CString CMNPageObject::GetPInfoPath(CString strExtension)
 {
 	CString path;
 	int nIndex = m_strPath.ReverseFind(_T('.'));
 	if (nIndex > 0) {
 		path = m_strPath.Left(nIndex);
 	}
-	path += ".pinfo";
+	path += strExtension;
 	return path;
 }
 
 
 void CMNPageObject::LoadPageInfo()
 {
-	CString path = GetPInfoPath();
+	CString path = GetPInfoPath(L".pinfo");
 	USES_CONVERSION;
 	char* sz = T2A(path);
 
@@ -943,8 +1003,23 @@ void CMNPageObject::LoadPageInfo()
 	fopen_s(&fp, sz, "rb");
 	if (fp) {
 
-		_stParaInfoFormat data;
-		fread(&data, sizeof(_stParaInfoFormat), 1, fp);
+		int pnum=0, wnum=0;
+		fread(&wnum, sizeof(int), 1, fp);
+		fread(&pnum, sizeof(int), 1, fp);
+		
+
+
+		for (int i = 0; i < wnum; i++) {
+			_stOCRResult res;
+			fread(&res, sizeof(_stOCRResult), 1, fp);
+			m_ocrResult.push_back(res);
+		}
+
+		for (int i = 0; i < pnum; i++) {
+			stParapgraphInfo data;
+			fread(&data, sizeof(stParapgraphInfo), 1, fp);	
+			m_paragraph.push_back(data);			
+		}
 
 
 
@@ -962,33 +1037,33 @@ void CMNPageObject::LoadPageInfo()
 		fclose(fp);
 	}
 
+	m_IsNeedToSave = false;
 }
 
 
 void CMNPageObject::WritePageInfo()
 {
-
-	//if (m_IsNeedToSave) {
-		CString path = GetPInfoPath();
+	if (m_IsNeedToSave) {
+		CString path = GetPInfoPath(L".pinfo");
 		USES_CONVERSION;
 		char* sz =  T2A(path);
 
 		FILE* fp = 0;
 		fopen_s(&fp, sz, "wb");
 		if (fp) {
-			//for (int i = 0; i < strFileName->size(); i++){
+			// Write header 8 byte: paragraph number, word number//
+			int pnum = m_paragraph.size();
+			int wnum = m_ocrResult.size();
 
-			for (int i = 0; i < m_paragraph.size(); i++) {
-				_stParaInfoFormat data;
-				data.x = m_paragraph[i].rect.x;
-				data.y = m_paragraph[i].rect.y;
-				data.width = m_paragraph[i].rect.width;
-				data.height = m_paragraph[i].rect.height;
-				data.desKew = m_paragraph[i].deSkewAngle;
-				data.isDeskew = m_paragraph[i].IsDeskewed;
-				data.nAlign = m_paragraph[i].alignType;
+			fwrite(&wnum, sizeof(int), 1, fp);
+			fwrite(&pnum, sizeof(int), 1, fp);
+			
+			for (int i = 0; i < wnum; i++) {
+				fwrite(&m_ocrResult[i], sizeof(_stOCRResult), 1, fp);
+			}
 
-				fwrite(&data, sizeof(_stParaInfoFormat), 1, fp);
+			for (int i = 0; i < pnum; i++) {
+				fwrite(&m_paragraph[i], sizeof(stParapgraphInfo), 1, fp);
 			}
 
 		//		wchar_t* wchar_str;
@@ -1006,9 +1081,12 @@ void CMNPageObject::WritePageInfo()
 		//		// 2. wchar_t* to char* conversion
 		//		WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, char_str, char_str_len, 0, 0);
 		//		fwrite(char_str, _MAX_WORD_SIZE, 1, fp);
+			fclose(fp);
+		}	
 
-				fclose(fp);
-		}
-		
-	//}
+
+		CString imgpath = GetPInfoPath(L".jp2");
+		char* szimg = T2A(imgpath);
+		cv::imwrite(szimg, m_thumbImg);
+	}
 }
