@@ -24,6 +24,7 @@ public:
 	void EnableCutSearchMode();
 	void DoCurNSearch();
 	void DoExtractBoundary(_stExtractionSetting _info);
+	void DoExtractBoundaryPage(_stExtractionSetting _info);
 	void DoOCR();
 
 	void AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt);

@@ -480,13 +480,8 @@ void CMNPageObject::DrawOCRResForPick()
 	glPopMatrix();
 	glLineWidth(1);
 }
-void CMNPageObject::DrawParagraph()
+void CMNPageObject::DrawParagraph(int selid)
 {
-	if (m_ocrResult.size() > 0) {
-		return;
-	}
-
-
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
@@ -499,11 +494,14 @@ void CMNPageObject::DrawParagraph()
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
 		//if (m_bIsNear){		
-		glLineWidth(1);
+		glLineWidth(3);
 		
 		for (int i = 0; i < m_paragraph.size(); i++) {			
 
-			glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+			glColor4f(0.5f, 0.5f, 1.0f, 0.5f);
+			if(i==selid)
+				glColor4f(0.1f, 0.2f, 1.0f, 0.99f);
+
 			glBegin(GL_LINE_STRIP);
 			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
 			glVertex3f(m_paragraph[i].rect.x,						          m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
@@ -554,10 +552,6 @@ void CMNPageObject::DrawSelectedParagraph(int selid)
 
 void CMNPageObject::DrawParagraphForPick()
 {
-	if (m_ocrResult.size() > 0) {
-		return;
-	}
-
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
@@ -936,16 +930,35 @@ void CMNPageObject::DeleteSelPara(int selid)
 {	
 	m_IsNeedToSave = true;
 	if ((selid < m_paragraph.size())&&(selid >=0)) {
+		DeleteOCRResByRect(m_paragraph[selid].rect);
 		m_paragraph.erase(m_paragraph.begin() + selid);
 	}
 }
 
-void CMNPageObject::DeleteSelOCRRes(int selid)
+void CMNPageObject::DeleteOCRResByRect(cv::Rect rect)
+{
+	std::vector<_stOCRResult>::iterator iter = m_ocrResult.begin();
+	for (; iter != m_ocrResult.end();) {
+
+		cv::Rect andRect_overlap = ((*iter).rect & rect);
+		if (andRect_overlap.area() > 1) {
+			iter = m_ocrResult.erase(iter);
+		}
+		else {
+			++iter;
+		}
+	}
+}
+
+
+bool CMNPageObject::DeleteSelOCRRes(int selid)
 {
 	m_IsNeedToSave = true;
 	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
 		m_ocrResult.erase(m_ocrResult.begin() + selid);
+		return true;
 	}
+	return false;
 }
 
 void CMNPageObject::ConfirmOCRRes(int selid)

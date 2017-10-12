@@ -57,6 +57,7 @@ CMNView::CMNView()
 	m_selOCRId = -1;
 
 	m_bIsAllOCR = false;
+	m_bIsShowParagraph = true;
 }
 
 
@@ -187,7 +188,9 @@ void CMNView::DrawBGPageAni()
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->RotatePos(1.0f);
 		vecImg[i]->DrawMatchItem();
-		vecImg[i]->DrawParagraph();
+
+		if(m_bIsShowParagraph)
+			vecImg[i]->DrawParagraph(m_selParaId);
 	//	vecImg[i]->DrawOCRRes();
 	}
 	glPointSize(1);
@@ -199,7 +202,8 @@ void CMNView::DrawBGPage()
 	for (size_t i = 0; i < vecImg.size(); i++) {
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->DrawMatchItem();
-		vecImg[i]->DrawParagraph();
+		if (m_bIsShowParagraph)
+			vecImg[i]->DrawParagraph(m_selParaId);
 	//	vecImg[i]->DrawOCRRes();
 	}
 	glPointSize(1);
@@ -355,6 +359,8 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			m_addImgCnt = 0;
 			KillTimer(_DO_EXTRACTION);
 
+			str.Format(_T("Extraction.....done"));
+			pM->AddOutputString(str, true);
 			// Rotate Page //
 			//wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 			//SINGLETON_DataMng::GetInstance()->ApplyDeskewPage();
@@ -375,6 +381,9 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 		if (m_addImgCnt == m_loadedImgCnt) {
 			m_addImgCnt = 0;
 			KillTimer(_DO_OCR);
+
+			str.Format(_T("Text Recognition.....done"));
+			pM->AddOutputString(str, true);
 		}
 	}
 
@@ -518,7 +527,8 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	//}
 	//else {
 	DrawImageByOrderForPicking();
-	DrawParagrphForPicking();
+	if (m_bIsShowParagraph)
+		DrawParagrphForPicking();
 	DrawMatchItemForPicking();
 	DrawOCRForPicking();
 	
@@ -702,9 +712,10 @@ void CMNView::DoOCR()
 
 	else {
 		if (m_pSelectPageForCNS) {
-			m_addImgCnt = 1;
+			m_addImgCnt = 0;
 			m_loadedImgCnt = 1;
 			DoOCRForPage(m_pSelectPageForCNS);
+			m_addImgCnt = 1;
 		}
 	}
 }
@@ -797,11 +808,9 @@ void CMNView::DoExtractBoundary()
 	m_loadedImgCnt = vecImg.size();
 	int i;
 	for (i = 0; i < (int)vecImg.size(); i++) {
-
 		if (vecImg[i]->GetVecParagraph().size()>0){
 			continue;
 		}
-
 
 		CString strpath = vecImg[i]->GetPath();
 		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg().clone();
@@ -933,7 +942,7 @@ void CMNView::ProcOCR(bool IsAll)
 	//	imgVec[i]->SetIsSearched(false);
 	//}
 
-	//SetTimer(_DO_OCR, 100, NULL);
+	SetTimer(_DO_OCR, 100, NULL);
 }
 
 void CMNView::ProcExtractBoundary(_stExtractionSetting _info)
@@ -956,7 +965,7 @@ void CMNView::ProcExtractBoundary(_stExtractionSetting _info)
 	//	imgVec[i]->SetIsSearched(false);
 	//}
 
-	//SetTimer(_DO_EXTRACTION, 100, NULL);
+	SetTimer(_DO_EXTRACTION, 100, NULL);
 }
 
 void CMNView::ProcDoSearch()
@@ -1099,12 +1108,14 @@ void CMNView::DeleteSelParagraph()
 	}
 }
 
-void CMNView::DeleteSelOCRRes()
+bool CMNView::DeleteSelOCRRes()
 {
+	bool res = false;
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
+		res = m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
 		m_selOCRId = -1;
 	}
+	return res;
 }
 
 void CMNView::ConfirmOCRRes()
@@ -1331,25 +1342,24 @@ void CMNView::DrawOCRRes()
 					if (ocrRes[j].fConfidence < 0.80f)
 						mtSetPoint3D(&tColor, 1.0f, 0.0f, 0.0f);
 
-
+					glColor4f(tColor.x, tColor.y, tColor.z, 0.2f);
 					if (j == m_selOCRId) {
-						glColor4f(tColor.x, tColor.y, tColor.z, 0.2f);
-						glBegin(GL_QUADS);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						glColor4f(tColor.x, tColor.y, tColor.z, 0.5f);
+						//glBegin(GL_QUADS);
+						//glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						//glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
+						//glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
+						//glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glEnd();
+						//glEnd();
 					}
-
-					glColor4f(tColor.x, tColor.y, tColor.z, 0.9f);
-					glBegin(GL_LINE_STRIP);
+					
+					glBegin(GL_QUADS);
 					glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 					glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
 					glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
 					glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-					glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+					//glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 					glEnd();
 				}
 
@@ -1442,6 +1452,37 @@ void CMNView::OcrEnglishword()
 		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
 		std::vector<_stOCRResult> ocrTmp;
 		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD);
+
+		// Update OCR Res //
+		if (ocrTmp.size() >= 0) {
+			m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
+			for (int i = 0; i < ocrTmp.size(); i++) {
+				ocrTmp[i].rect.x += r.x;
+				ocrTmp[i].rect.y += r.y;
+				ocrTmp[i].type = 0;
+				m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
+			}
+			m_selOCRId = -1;
+		}
+	}
+}
+
+void CMNView::OcrEnglishChar()
+{
+	if (m_pSelectPageForCNS) {
+		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
+
+		cv::Rect r = ocrres.rect;
+		r.x -= 1;
+		r.y -= 1;
+		r.width += 2;
+		r.height += 2;
+
+		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r);
+
+		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+		std::vector<_stOCRResult> ocrTmp;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_SYMBOL);
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
@@ -1601,8 +1642,11 @@ void CMNView::DoOCRForPage(CMNPageObject* pPage)
 	}
 }
 
-void CMNView::DoExtractBoundaryForSelected()
+void CMNView::DoExtractBoundaryForSelected(_stExtractionSetting _info)
 {
+	m_addImgCnt = 0;
+	m_loadedImgCnt = 1;
+	m_extractionSetting = _info;
 	if (m_pSelectPageForCNS) {
 		if (m_pSelectPageForCNS->GetVecParagraph().size() == 0) {
 
@@ -1652,6 +1696,8 @@ void CMNView::DoExtractBoundaryForSelected()
 			}
 		}
 	}
+
+	m_addImgCnt = 1;
 }
 
 // Thread============//
@@ -1672,7 +1718,8 @@ static UINT ThreadDoSearch(LPVOID lpParam)
 static UINT ThreadDoExtraction(LPVOID lpParam)
 {
 	CMNView* pClass = (CMNView*)lpParam;
-	pClass->DoExtractBoundaryForSelected();
+//	pClass->DoExtractBoundaryForSelected();
+	pClass->DoExtractBoundary();
 	return 0L;
 }
 

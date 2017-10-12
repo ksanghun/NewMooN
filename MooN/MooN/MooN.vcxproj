@@ -200,6 +200,7 @@
     <ClInclude Include="FormProperties.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="math_tool.h" />
+    <ClInclude Include="MNButton.h" />
     <ClInclude Include="MNCVMng.h" />
     <ClInclude Include="MNDataManager.h" />
     <ClInclude Include="MNPageObject.h" />
@@ -230,6 +231,7 @@
     <ClCompile Include="FormProperties.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="math_tool.cpp" />
+    <ClCompile Include="MNButton.cpp" />
     <ClCompile Include="MNCVMng.cpp" />
     <ClCompile Include="MNDataManager.cpp" />
     <ClCompile Include="MNPageObject.cpp" />

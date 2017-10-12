@@ -96,7 +96,7 @@ public:
 	void DrawMatchItem();
 	void DrawForPicking();
 	void DrawMatchItemForPick();
-	void DrawParagraph();
+	void DrawParagraph(int selid);
 	void DrawOCRResForPick();
 	void DrawParagraphForPick();
 	void DrawSelectedParagraph(int selid);
@@ -115,8 +115,9 @@ public:
 
 	// Edit Paragraph box //
 	void DeleteSelPara(int selid);
+	void DeleteOCRResByRect(cv::Rect rect);
 	cv::Rect GetSelParaRect(int selid);
-	void DeleteSelOCRRes(int selid);
+	bool DeleteSelOCRRes(int selid);
 	void ConfirmOCRRes(int selid);
 	void UpdateOCRCode(CString _strCode, int selid);
 

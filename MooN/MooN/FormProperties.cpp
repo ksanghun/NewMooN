@@ -26,6 +26,7 @@ CFormProperties::CFormProperties()
 	, m_fDeskew(0)
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
+	, m_bLineBox(TRUE)
 {
 }
 
@@ -57,6 +58,11 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_ENCODE, m_strCode);
 	DDX_Text(pDX, IDC_EDIT_CONFIDENCE, m_fConfidence);
 	DDX_Control(pDX, IDC_COMBO_LANG, m_comboLanguage);
+	DDX_Control(pDX, IDC_BN_RUNOCR, m_btnOCR);
+	DDX_Check(pDX, IDC_CHECK_LINEBIOX, m_bLineBox);
+	DDX_Control(pDX, IDC_BN_ADD_PARA, m_btnLineAdd);
+	DDX_Control(pDX, IDC_BN_DEL_PARA, m_btnLineDel);
+	DDX_Control(pDX, IDC_BN_RE_EXTRACT, m_btnLineReExt);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -74,12 +80,15 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_BN_CLICKED(IDC_BN_ADD_PARA, &CFormProperties::OnBnClickedBnAddPara)
 	ON_BN_CLICKED(IDC_BN_RE_EXTRACT, &CFormProperties::OnBnClickedBnReExtract)
 	ON_BN_CLICKED(IDC_BN_DEL_ALLLINBES, &CFormProperties::OnBnClickedBnDelAlllinbes)
-	ON_BN_CLICKED(IDC_BN_DEL_ALLOCR, &CFormProperties::OnBnClickedBnDelAllocr)
+//	ON_BN_CLICKED(IDC_BN_DEL_ALLOCR, &CFormProperties::OnBnClickedBnDelAllocr)
 	ON_BN_CLICKED(IDC_BN_RUNOCR, &CFormProperties::OnBnClickedBnRunocr)
 	ON_BN_CLICKED(IDC_BN_DEL_OCRRES, &CFormProperties::OnBnClickedBnDelOcrres)
 	ON_BN_CLICKED(IDC_BN_ADD_MODIFYOCRRES, &CFormProperties::OnBnClickedBnAddModifyocrres)
 	ON_BN_CLICKED(IDC_BN_WORD_CONFIRM, &CFormProperties::OnBnClickedBnWordConfirm)
 	ON_BN_CLICKED(IDC_BN_ADD_OCRRES, &CFormProperties::OnBnClickedBnAddOcrres)
+	ON_EN_CHANGE(IDC_EDIT_FILENAME, &CFormProperties::OnEnChangeEditFilename)
+	ON_WM_DRAWITEM()
+	ON_BN_CLICKED(IDC_CHECK_LINEBIOX, &CFormProperties::OnBnClickedCheckLinebiox)
 END_MESSAGE_MAP()
 
 
@@ -126,6 +135,9 @@ void CFormProperties::OnInitialUpdate()
 	m_comboLanguage.AddString(L"Chinese");
 	m_comboLanguage.AddString(L"Korean");
 	m_comboLanguage.SetCurSel(0);
+
+
+
 
 	UpdateData(FALSE);
 
@@ -300,6 +312,7 @@ void CFormProperties::OnBnClickedBnDelAlllinbes()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DeleteAllLines();
+	pImgView->DeleteAllOCRRes();
 }
 
 
@@ -350,4 +363,90 @@ void CFormProperties::OnBnClickedBnAddOcrres()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->AddOCRRes();
+}
+
+
+void CFormProperties::OnEnChangeEditFilename()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CFormView::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+}
+
+
+void CFormProperties::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	// TODO: Add your message handler code here and/or call default
+	if ((nIDCtl == IDC_BN_RUNOCR) || (nIDCtl == IDC_BN_EXTRACTLINE))         //checking for the button 
+	{
+		CDC dc;
+		RECT rect;
+		dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
+		rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
+		dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
+		dc.FillSolidRect(&rect, RGB(100, 250, 150));//Here you can define the required color to appear on the Button.
+		UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
+		if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
+		else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
+		dc.SetBkColor(RGB(100, 250, 150));   //Setting the Text Background color
+		dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
+		TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
+		ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
+		::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH); //Get the Caption of Button Window 
+		dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
+		dc.Detach();  // Detach the Button DC
+	}
+
+	if (nIDCtl == IDC_BN_DEL_ALLLINBES)         //checking for the button 
+	{
+		CDC dc;
+		RECT rect;
+		dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
+		rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
+		dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
+		dc.FillSolidRect(&rect, RGB(250, 250, 150));//Here you can define the required color to appear on the Button.
+		UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
+		if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
+		else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
+		dc.SetBkColor(RGB(250, 250, 150));   //Setting the Text Background color
+		dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
+		TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
+		ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
+		::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH); //Get the Caption of Button Window 
+		dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
+		dc.Detach();  // Detach the Button DC
+	}
+
+
+
+
+
+
+	CFormView::OnDrawItem(nIDCtl, lpDrawItemStruct);
+}
+
+
+void CFormProperties::OnBnClickedCheckLinebiox()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CMNView* pImgView = pView->GetImageView();
+	if (m_bLineBox == FALSE) {
+		m_btnLineAdd.EnableWindow(FALSE);
+		m_btnLineDel.EnableWindow(FALSE);
+		m_btnLineReExt.EnableWindow(FALSE);
+
+		pImgView->EnableShowLine(false);
+	}
+	else {
+		m_btnOCR.EnableWindow(TRUE);
+		m_btnLineAdd.EnableWindow(TRUE);
+		m_btnLineDel.EnableWindow(TRUE);
+
+		pImgView->EnableShowLine(true);
+	}
+
 }

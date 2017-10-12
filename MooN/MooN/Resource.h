@@ -133,7 +133,7 @@
 #define IDC_EDIT3                       1029
 #define IDC_BN_KEYWORD_SEARCH           1030
 #define IDC_BN_RUNOCR                   1031
-#define IDC_BN_DEL_ALLOCR               1032
+#define IDC_CHECK_LINEBIOX              1032
 #define IDC_BN_WORD_CONFIRM             1033
 #define IDC_BN_ADD_OCRRES               1034
 #define ID_FILE_EXIT                    32771
@@ -160,14 +160,15 @@
 #define ID_OCR_KOREANWORD               32791
 #define ID_OCR_KOREANCHARACTER          32792
 #define ID_OCR_CHINESEWORD              32793
+#define ID_OCR_ENGLISHCHARACTER32794    32794
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

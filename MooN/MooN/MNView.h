@@ -34,11 +34,12 @@ public:
 	void DoOCRForPage(CMNPageObject* pPage);
 
 	void OcrEnglishword();
+	void OcrEnglishChar();
 	void OcrChiChar();
 	void OcrChiWord();
 
 	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
-	void DoExtractBoundaryForSelected();
+	void DoExtractBoundaryForSelected(_stExtractionSetting _info);
 	//============================//
 
 	void InitGLview(int _nWidth, int _nHeight);
@@ -77,7 +78,7 @@ public:
 
 	// Extraction Editing //
 	void DeleteSelParagraph();
-	void DeleteSelOCRRes();
+	bool DeleteSelOCRRes();
 	void DeleteAllLines();
 	void DeleteAllOCRRes();
 	void AddOCRRes();
@@ -91,6 +92,7 @@ public:
 	void UpdateOCRCode(CString _strCode);
 
 	RECT2D GetSelectedAreaForCNS();
+	void EnableShowLine(bool Isshow) {		m_bIsShowParagraph = Isshow;	}
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -121,6 +123,7 @@ private:
 
 	bool m_IsSearchMatchItems;
 	int m_selMatchItemId;
+	bool m_bIsShowParagraph;
 
 
 	//For Template Matching=====//

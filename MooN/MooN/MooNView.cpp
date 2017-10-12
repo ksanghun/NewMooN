@@ -323,6 +323,20 @@ void CMooNView::DoExtractBoundary(_stExtractionSetting _info)
 	}
 }
 
+void CMooNView::DoExtractBoundaryPage(_stExtractionSetting _info)
+{
+	if ((m_pViewImage)) {
+		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+		CString str;
+		str.Format(_T("Extraction.....start"));
+		pM->AddOutputString(str, false);
+		m_pViewImage->DoExtractBoundaryForSelected(_info);
+		str.Format(_T("Extraction.....done"));
+		pM->AddOutputString(str, true);
+
+	}
+}
+
 void CMooNView::DoOCR()
 {
 	if ((m_pViewImage)) {

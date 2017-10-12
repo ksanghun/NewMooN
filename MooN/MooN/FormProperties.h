@@ -2,6 +2,7 @@
 #include "afxcmn.h"
 #include "afxcolorbutton.h"
 #include "afxwin.h"
+#include "MNButton.h"
 
 
 // CFromProperties form view
@@ -78,6 +79,14 @@ public:
 	afx_msg void OnBnClickedBnAddModifyocrres();
 	afx_msg void OnBnClickedBnWordConfirm();
 	afx_msg void OnBnClickedBnAddOcrres();
+	afx_msg void OnEnChangeEditFilename();
+	CMNButton m_btnOCR;
+	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+	BOOL m_bLineBox;
+	afx_msg void OnBnClickedCheckLinebiox();
+	CButton m_btnLineAdd;
+	CButton m_btnLineDel;
+	CButton m_btnLineReExt;
 };
 
 

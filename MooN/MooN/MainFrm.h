@@ -95,6 +95,7 @@ public:
 	afx_msg void OnOcrEnglishword();
 	afx_msg void OnOcrChinesecharacter();
 	afx_msg void OnOcrChineseword();
+	afx_msg void OnOcrEnglishcharacter();
 };
 
 
