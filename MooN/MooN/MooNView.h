@@ -23,8 +23,8 @@ public:
 	short SetSelectedItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl, float& offset);
 	void EnableCutSearchMode();
 	void DoCurNSearch();
-	void DoExtractBoundary(_stExtractionSetting _info);
-	void DoExtractBoundaryPage(_stExtractionSetting _info);
+	void DoExtractBoundary();
+	void DoExtractBoundaryPage();
 	void DoOCR();
 
 	void AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt);

@@ -18,15 +18,16 @@ CFormProperties::CFormProperties()
 	, m_bEnglish(TRUE)
 	, m_bChinese(TRUE)
 	, m_bKorean(FALSE)
-	, m_nEngFontSize(1)
-	, m_nChiFontSize(1)
-	, m_nKorFontSize(1)
+	, m_nEngFontSize(32)
+	, m_nChiFontSize(32)
+	, m_nKorFontSize(32)
 	, m_nAlign(0)
 	, m_strPageName(_T(""))
 	, m_fDeskew(0)
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
 	, m_bLineBox(TRUE)
+	, m_editConfi(80)
 {
 }
 
@@ -63,6 +64,9 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BN_ADD_PARA, m_btnLineAdd);
 	DDX_Control(pDX, IDC_BN_DEL_PARA, m_btnLineDel);
 	DDX_Control(pDX, IDC_BN_RE_EXTRACT, m_btnLineReExt);
+	DDX_Control(pDX, IDC_SLIDER_CONFI, m_sliderConfi);
+	DDX_Text(pDX, IDC_EDIT_CONFI, m_editConfi);
+	DDV_MinMaxLong(pDX, m_editConfi, 0, 100);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -89,6 +93,8 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_EN_CHANGE(IDC_EDIT_FILENAME, &CFormProperties::OnEnChangeEditFilename)
 	ON_WM_DRAWITEM()
 	ON_BN_CLICKED(IDC_CHECK_LINEBIOX, &CFormProperties::OnBnClickedCheckLinebiox)
+	ON_EN_CHANGE(IDC_EDIT_CONFI, &CFormProperties::OnEnChangeEditConfi)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_CONFI, &CFormProperties::OnNMCustomdrawSliderConfi)
 END_MESSAGE_MAP()
 
 
@@ -137,7 +143,13 @@ void CFormProperties::OnInitialUpdate()
 	m_comboLanguage.SetCurSel(0);
 
 
+	m_sliderConfi.SetRange(0, 100, TRUE);
+	m_sliderConfi.SetTicFreq(100);
+	m_sliderConfi.SetPos(m_editConfi);
 
+
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->SetDispConfidence(m_editConfi);
 
 	UpdateData(FALSE);
 
@@ -188,6 +200,7 @@ void CFormProperties::OnNMGetCustomSplitRectMfccolorbutton1(NMHDR *pNMHDR, LRESU
 //
 void CFormProperties::GetCurrSetting()
 {
+	UpdateData(TRUE);
 	_stExtractionSetting extractonInfo;
 	extractonInfo.init();
 
@@ -207,19 +220,21 @@ void CFormProperties::OnBnClickedBnExtractline()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 
-	_stExtractionSetting extractonInfo;
-	extractonInfo.init();
+	//_stExtractionSetting extractonInfo;
+	//extractonInfo.init();
 
-	extractonInfo.IsVerti = (bool)m_nAlign;
-	extractonInfo.chiSize = m_nChiFontSize;
-	extractonInfo.engSize = m_nEngFontSize;
-	extractonInfo.korSize = m_nEngFontSize;
-	extractonInfo.isChi = m_bChinese;
-	extractonInfo.isEng = m_bEnglish;
-	extractonInfo.isKor = m_bKorean;
+	//extractonInfo.IsVerti = (bool)m_nAlign;
+	//extractonInfo.chiSize = m_nChiFontSize;
+	//extractonInfo.engSize = m_nEngFontSize;
+	//extractonInfo.korSize = m_nEngFontSize;
+	//extractonInfo.isChi = m_bChinese;
+	//extractonInfo.isEng = m_bEnglish;
+	//extractonInfo.isKor = m_bKorean;
 
-
-	pView->DoExtractBoundary(extractonInfo);
+	GetCurrSetting();
+//	pView->DoExtractBoundary();
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DoExtractBoundaryForSelected();
 
 }
 
@@ -252,6 +267,7 @@ void CFormProperties::OnBnClickedBnKorFont()
 
 void CFormProperties::SetParagraphInfo(float fskew, CString strName)
 {
+	UpdateData(TRUE);
 	m_strPageName = strName;
 	m_fDeskew = fskew;
 	UpdateData(FALSE);
@@ -259,6 +275,7 @@ void CFormProperties::SetParagraphInfo(float fskew, CString strName)
 
 void CFormProperties::SetOCRInfo(wchar_t* strCode, float fConfi, int lang)
 {
+	UpdateData(TRUE);
 	m_strCode = CString(strCode);
 	m_fConfidence = fConfi;
 	m_comboLanguage.SetCurSel(lang);
@@ -303,7 +320,8 @@ void CFormProperties::OnBnClickedBnReExtract()
 {
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
-	pImgView->ReExtractParagraph(__ENG, _HORIZON_ALIGN);
+	GetCurrSetting();
+	pImgView->ReExtractParagraph();
 }
 
 
@@ -380,45 +398,45 @@ void CFormProperties::OnEnChangeEditFilename()
 void CFormProperties::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
 	// TODO: Add your message handler code here and/or call default
-	if ((nIDCtl == IDC_BN_RUNOCR) || (nIDCtl == IDC_BN_EXTRACTLINE))         //checking for the button 
-	{
-		CDC dc;
-		RECT rect;
-		dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
-		rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
-		dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
-		dc.FillSolidRect(&rect, RGB(100, 250, 150));//Here you can define the required color to appear on the Button.
-		UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
-		if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
-		else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
-		dc.SetBkColor(RGB(100, 250, 150));   //Setting the Text Background color
-		dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
-		TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
-		ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
-		::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH); //Get the Caption of Button Window 
-		dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
-		dc.Detach();  // Detach the Button DC
-	}
+	//if ((nIDCtl == IDC_BN_RUNOCR) || (nIDCtl == IDC_BN_EXTRACTLINE))         //checking for the button 
+	//{
+	//	CDC dc;
+	//	RECT rect;
+	//	dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
+	//	rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
+	//	dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
+	//	dc.FillSolidRect(&rect, RGB(100, 250, 150));//Here you can define the required color to appear on the Button.
+	//	UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
+	//	if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
+	//	else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
+	//	dc.SetBkColor(RGB(100, 250, 150));   //Setting the Text Background color
+	//	dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
+	//	TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
+	//	ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
+	//	::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH); //Get the Caption of Button Window 
+	//	dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
+	//	dc.Detach();  // Detach the Button DC
+	//}
 
-	if (nIDCtl == IDC_BN_DEL_ALLLINBES)         //checking for the button 
-	{
-		CDC dc;
-		RECT rect;
-		dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
-		rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
-		dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
-		dc.FillSolidRect(&rect, RGB(250, 250, 150));//Here you can define the required color to appear on the Button.
-		UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
-		if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
-		else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
-		dc.SetBkColor(RGB(250, 250, 150));   //Setting the Text Background color
-		dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
-		TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
-		ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
-		::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH); //Get the Caption of Button Window 
-		dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
-		dc.Detach();  // Detach the Button DC
-	}
+	//if (nIDCtl == IDC_BN_DEL_ALLLINBES)         //checking for the button 
+	//{
+	//	CDC dc;
+	//	RECT rect;
+	//	dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
+	//	rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
+	//	dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
+	//	dc.FillSolidRect(&rect, RGB(250, 250, 150));//Here you can define the required color to appear on the Button.
+	//	UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
+	//	if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
+	//	else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
+	//	dc.SetBkColor(RGB(250, 250, 150));   //Setting the Text Background color
+	//	dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
+	//	TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
+	//	ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
+	//	::GetWindowText(lpDrawItemStruct->hwndItem, buffer, MAX_PATH); //Get the Caption of Button Window 
+	//	dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
+	//	dc.Detach();  // Detach the Button DC
+	//}
 
 
 
@@ -442,11 +460,44 @@ void CFormProperties::OnBnClickedCheckLinebiox()
 		pImgView->EnableShowLine(false);
 	}
 	else {
-		m_btnOCR.EnableWindow(TRUE);
+		m_btnLineReExt.EnableWindow(TRUE);
 		m_btnLineAdd.EnableWindow(TRUE);
 		m_btnLineDel.EnableWindow(TRUE);
 
 		pImgView->EnableShowLine(true);
 	}
 
+}
+
+
+void CFormProperties::OnEnChangeEditConfi()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CFormView::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+	UpdateData(TRUE);
+	m_sliderConfi.SetPos(m_editConfi);
+	UpdateData(FALSE);
+}
+
+
+void CFormProperties::OnNMCustomdrawSliderConfi(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	UpdateData(TRUE);
+	int pos = m_sliderConfi.GetPos();
+
+	if (pos != (int)m_fEditTh) {
+		m_editConfi = pos;
+		UpdateData(FALSE);
+
+		CMNView* pImgView = pView->GetImageView();
+		pImgView->SetDispConfidence(m_editConfi);
+	}
 }

@@ -316,24 +316,23 @@ void CMooNView::DoCurNSearch()
 	}
 }
 
-void CMooNView::DoExtractBoundary(_stExtractionSetting _info)
+void CMooNView::DoExtractBoundary()
 {
 	if ((m_pViewImage)) {
-		m_pViewImage->ProcExtractBoundary(_info);
+		m_pViewImage->ProcExtractBoundary();
 	}
 }
 
-void CMooNView::DoExtractBoundaryPage(_stExtractionSetting _info)
+void CMooNView::DoExtractBoundaryPage()
 {
 	if ((m_pViewImage)) {
 		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 		CString str;
 		str.Format(_T("Extraction.....start"));
 		pM->AddOutputString(str, false);
-		m_pViewImage->DoExtractBoundaryForSelected(_info);
+		m_pViewImage->DoExtractBoundaryForSelected();
 		str.Format(_T("Extraction.....done"));
 		pM->AddOutputString(str, true);
-
 	}
 }
 

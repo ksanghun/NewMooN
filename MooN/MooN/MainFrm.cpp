@@ -588,7 +588,7 @@ void CMainFrame::OnAnalyzeExtracttextboundary()
 {
 	// TODO: Add your command handler code here
 	m_wndProperties.GetCurrSetting();
-	pView->DoExtractBoundary(SINGLETON_DataMng::GetInstance()->GetExtractionSetting());
+	pView->DoExtractBoundary();
 	//pView->DoOCR();
 }
 

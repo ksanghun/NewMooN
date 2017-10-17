@@ -131,7 +131,13 @@ void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::v
 		textBox.textbox = cv::boundingRect(cv::Mat(contours_poly[i]));
 		textBox.setExtendBox(xMargin, yMargin);
 			
-
+		//// check aspect ratio //
+		//float arw = (float)textBox.textbox.width / (float)textBox.textbox.height;
+		//float arh = (float)textBox.textbox.height / (float)textBox.textbox.width;
+		//if ((arw < 0.2f) || (arh < 0.2f)) {
+		//	continue;
+		//}
+		
 		vecBox.push_back(textBox);
 	}
 

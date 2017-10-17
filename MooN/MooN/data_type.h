@@ -481,6 +481,13 @@ struct _stOCRResult {
 	float fConfidence;
 	wchar_t strCode[_MAX_WORD_SIZE];
 	int type;  // 0 Eng, 1: chi
+
+	void init() {
+		fConfidence = 0.0f;
+		rect = cv::Rect(0, 0, 0, 0);
+		type = 0;
+		memset(strCode, 0x00, sizeof(strCode));
+	};
 };
 
 

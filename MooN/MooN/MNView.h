@@ -25,7 +25,7 @@ public:
 	// Thread Functions===========//
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
-	void ProcExtractBoundary(_stExtractionSetting _info);
+	void ProcExtractBoundary();
 	void ProcOCR(bool IsAll);
 	void GenerateThumbnail();
 	bool DoSearch();
@@ -39,7 +39,7 @@ public:
 	void OcrChiWord();
 
 	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
-	void DoExtractBoundaryForSelected(_stExtractionSetting _info);
+	void DoExtractBoundaryForSelected();
 	//============================//
 
 	void InitGLview(int _nWidth, int _nHeight);
@@ -85,7 +85,7 @@ public:
 	void AddParagraph();
 	void DeskewParagraph(float fAngle);
 	void UndoDeskewParagraph();
-	void ReExtractParagraph(_LANGUAGE_TYPE lang, _ALIGHN_TYPE align);
+	void ReExtractParagraph();
 	void ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang);
 
 	void ConfirmOCRRes();
@@ -93,6 +93,7 @@ public:
 
 	RECT2D GetSelectedAreaForCNS();
 	void EnableShowLine(bool Isshow) {		m_bIsShowParagraph = Isshow;	}
+	void SetDispConfidence(long nConfi) { m_dispConfi = (float)nConfi*0.01f; }
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -143,6 +144,9 @@ private:
 	bool m_bIsAllOCR;
 	CExtractor m_Extractor;
 	_stExtractionSetting m_extractionSetting;
+
+	float m_dispConfi;
+
 public:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);

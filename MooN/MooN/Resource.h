@@ -136,6 +136,8 @@
 #define IDC_CHECK_LINEBIOX              1032
 #define IDC_BN_WORD_CONFIRM             1033
 #define IDC_BN_ADD_OCRRES               1034
+#define IDC_SLIDER_CONFI                1035
+#define IDC_EDIT_CONFI                  1037
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -168,7 +170,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        317
 #define _APS_NEXT_COMMAND_VALUE         32795
-#define _APS_NEXT_CONTROL_VALUE         1033
+#define _APS_NEXT_CONTROL_VALUE         1038
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

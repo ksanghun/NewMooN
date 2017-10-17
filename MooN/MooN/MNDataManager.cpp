@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "MNDataManager.h"
+#include "MainFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -595,4 +596,11 @@ void CMNDataManager::MultiToUniCode(char* char_str, wchar_t* str_unicode)
 	// Multi to Unicode //
 	int nLen = MultiByteToWideChar(CP_ACP, 0, &char_str[0], strlen(char_str), NULL, NULL);		
 	MultiByteToWideChar(CP_ACP, 0, char_str, strlen(char_str), str_unicode, nLen);
+}
+
+_stExtractionSetting CMNDataManager::GetExtractionSetting() 
+{ 
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	pM->GetCurrSetting();
+	return m_extractonInfo; 
 }

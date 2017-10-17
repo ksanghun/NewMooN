@@ -58,6 +58,7 @@ CMNView::CMNView()
 
 	m_bIsAllOCR = false;
 	m_bIsShowParagraph = true;
+
 }
 
 
@@ -108,7 +109,6 @@ void CMNView::InitCamera(bool movexy)
 		m_AniMoveVec = m_PO;
 	}
 	m_fAniMoveSca = m_cameraPri.GetLevelHeight() - MAX_CAM_HIGHTLEVEL * 2;
-
 	SetTimer(_MOVECAMANI, 20, NULL);
 }
 void CMNView::MouseWheel(short zDelta)
@@ -355,7 +355,8 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 		pM->AddOutputString(str, true);
 
 		// End of thread //
-		if (m_addImgCnt == m_loadedImgCnt) {
+	//	if (m_addImgCnt == m_loadedImgCnt) {
+		if(m_bIsThreadEnd){
 			m_addImgCnt = 0;
 			KillTimer(_DO_EXTRACTION);
 
@@ -378,7 +379,8 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 		pM->AddOutputString(str, true);
 
 		// End of thread //
-		if (m_addImgCnt == m_loadedImgCnt) {
+		//if (m_addImgCnt == m_loadedImgCnt) {
+		if (m_bIsThreadEnd) {
 			m_addImgCnt = 0;
 			KillTimer(_DO_OCR);
 
@@ -454,7 +456,10 @@ void CMNView::OnLButtonDblClk(UINT nFlags, CPoint point)
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 	if (m_pSelectPageForCNS) {
 		m_pSelectPageForCNS->SetCandidate(true);
-		MoveCameraPos(m_pSelectPageForCNS->GetPos(), (DEFAULT_PAGE_SIZE + 200));
+
+		if (m_cameraPri.GetLevelHeight() > DEFAULT_PAGE_SIZE + 200) {
+			MoveCameraPos(m_pSelectPageForCNS->GetPos(), (DEFAULT_PAGE_SIZE + 200));
+		}
 		//KillTimer(_MOVECAMANI);
 		//m_nAniCnt = 0;
 		//m_AniMoveVec = m_pSelectPageForCNS->GetPos() - m_lookAt;
@@ -534,7 +539,6 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	
 	//}
 	//=============================================//
-
 	hits = glRenderMode(GL_RENDER);
 	if (hits > 0)
 	{
@@ -561,7 +565,6 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 			}
 		}
 	}
-
 	//	if (m_IsSearchMatchItems) {
 	//		m_selMatchItemId = selectBuff[3];
 	//		m_pSelectPageForCNS->SetSelMatchItem(m_selMatchItemId);
@@ -718,6 +721,8 @@ void CMNView::DoOCR()
 			m_addImgCnt = 1;
 		}
 	}
+
+	m_bIsThreadEnd = true;
 }
 
 bool CMNView::DoSearch()
@@ -817,10 +822,9 @@ void CMNView::DoExtractBoundary()
 		if (srcImg.ptr()) {
 
 		//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
-			cv::threshold(srcImg, srcImg, 200, 255, cv::THRESH_OTSU);
-		//	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
+		//	cv::threshold(srcImg, srcImg, 200, 255, cv::THRESH_OTSU);
+		////	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
 			cv::bitwise_not(srcImg, srcImg);
-
 			int fsize = (int)m_extractionSetting.engSize;
 
 			// Detect text block //
@@ -914,6 +918,8 @@ void CMNView::DoExtractBoundary()
 	}
 	
 	vecImg[i - 1]->SetIsSearched(false);
+
+	m_bIsThreadEnd = true;
 }
 
 void CMNView::ProcOCR(bool IsAll)
@@ -925,7 +931,6 @@ void CMNView::ProcOCR(bool IsAll)
 
 	m_bIsAllOCR = IsAll;
 
-	pM->GetCurrSetting();
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 
 
@@ -945,7 +950,7 @@ void CMNView::ProcOCR(bool IsAll)
 	SetTimer(_DO_OCR, 100, NULL);
 }
 
-void CMNView::ProcExtractBoundary(_stExtractionSetting _info)
+void CMNView::ProcExtractBoundary()
 {
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	CString str;
@@ -953,7 +958,7 @@ void CMNView::ProcExtractBoundary(_stExtractionSetting _info)
 	pM->AddOutputString(str, false);
 
 
-	m_extractionSetting = _info;
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 //	InitCamera(false);
 	CWinThread* pl;
 	m_bIsThreadEnd = false;
@@ -1238,47 +1243,53 @@ void CMNView::ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool Is
 	//	cv::bitwise_not(para, para);
 		int x_ext = 0, y_ext = 0;
 		int fsize = 0;
-		if (lang == __ENG) {
+		switch (lang) {
+		case __ENG:
 			fsize = (int)m_extractionSetting.engSize;
+			break;
+		case __CHI:
+			fsize = (int)m_extractionSetting.chiSize;
+			break;
+		case __KOR:
+			fsize = (int)m_extractionSetting.korSize;
+			break;
+		}
+
+		if (IsVerti) {
+			x_ext = -1;
+			y_ext = fsize*2;
+		}
+		else {
 			x_ext = fsize * 2;
 			y_ext = -1;
 		}
-		else if (lang == __CHI) {
-			fsize = (int)m_extractionSetting.chiSize;
-			x_ext = 0;
-			y_ext = 1;
-		}
-		else if (lang == __KOR) {
-			fsize = (int)m_extractionSetting.korSize;
-			x_ext = 1;
-			y_ext = 1;
-		}
-
 		m_Extractor.Extraction(img, x_ext, y_ext, vecBox);
 	}
 }
 
 
 
-void CMNView::ReExtractParagraph(_LANGUAGE_TYPE lang, _ALIGHN_TYPE align)
+void CMNView::ReExtractParagraph()
 {
+
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 	if ((m_pSelectPageForCNS)) {
 		cv::Rect r = m_pSelectPageForCNS->GetSelParaRect(m_selParaId);
 		if ((r.width > 0) && (r.height > 0)) {
 
 			// Delete Previous Para rect //
 			m_pSelectPageForCNS->DeleteSelPara(m_selParaId);
+			m_selParaId = -1;
 
 			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();
 			if (srcImg.ptr()) {
-				cv::Mat para = srcImg(r);
-				cv::threshold(para, para, 125, 255, cv::THRESH_OTSU);
+				cv::Mat para = srcImg(r).clone();
 				cv::bitwise_not(para, para);
-
+				cv::imshow("Re-ext", para);
 				//int fsize = (int)m_extractionSetting.engSize;
 				//// Detect text block //
 				std::vector<_extractBox> vecLines;
-				ExtractBox(para, vecLines, m_extractionSetting.IsVerti, lang);
+				ExtractBox(para, vecLines, m_extractionSetting.IsVerti, __ENG);
 				//_ALIGHN_TYPE align;
 				//if (m_extractionSetting.nAlign == 0) {
 				//	m_Extractor.Extraction(para, fsize * 2, -1, vecLines, _ALPHABETIC, _UNKNOWN_ALIGN);
@@ -1339,7 +1350,7 @@ void CMNView::DrawOCRRes()
 
 					
 					mtSetPoint3D(&tColor, 0.0f, 1.0f, 0.0f);
-					if (ocrRes[j].fConfidence < 0.80f)
+					if (ocrRes[j].fConfidence < m_dispConfi)
 						mtSetPoint3D(&tColor, 1.0f, 0.0f, 0.0f);
 
 					glColor4f(tColor.x, tColor.y, tColor.z, 0.2f);
@@ -1373,29 +1384,36 @@ void CMNView::DrawOCRRes()
 
 void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 {
+//	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 	std::vector<_stOCRResult> ocrRes;
+	ocrRes.clear();
+
+	float fScale = 1.0f;
 	if (m_extractionSetting.isEng) {
-		m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetEngTess(), tesseract::RIL_WORD);
+		fScale = 32.0f / (float)m_extractionSetting.engSize;
+		m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale);
 	}
+	int resNum = ocrRes.size();
 
 	std::vector<_stOCRResult> ocrResChi;
 	if (m_extractionSetting.isChi) {
-		if (ocrRes.size() > 0) {
-			for (int k = 0; k < ocrRes.size(); k++) {
-
+		fScale = 32.0f / (float)m_extractionSetting.chiSize;
+		
+		if (resNum > 0) {
+			for (int k = 0; k < resNum; k++) {
+				ocrRes[k].type = __ENG;
 				if (ocrRes[k].fConfidence < 0.70f) {
-					cv::Mat imgword = img(ocrRes[k].rect);
+					cv::Mat imgword = img(ocrRes[k].rect).clone();
 
 					std::vector<_stOCRResult> ocrTmp;
-					m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL);
-
+					float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale);
 
 					// Select Result between chi and eng //
-					float averConf = 0;
-					for (int m = 0; m < ocrTmp.size(); m++) {
-						averConf += ocrTmp[m].fConfidence;
-					}
-					averConf /= (float)ocrTmp.size();
+					//float averConf = 0;
+					//for (int m = 0; m < ocrTmp.size(); m++) {
+					//	averConf += ocrTmp[m].fConfidence;
+					//}
+					//averConf /= (float)ocrTmp.size();
 
 					if (ocrRes[k].fConfidence < averConf*0.9f) {
 						ocrRes[k].type = 100;
@@ -1414,7 +1432,11 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 			}
 		}
 		else {
-			m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL);
+			float fScale = 32.0f / (float)m_extractionSetting.chiSize;
+			m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale);
+			for (int k = 0; k < ocrRes.size(); k++) {
+				ocrRes[k].type = __CHI;
+			}
 		}
 	}
 
@@ -1434,11 +1456,15 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		ocrResChi[k].type = 1;
 		pPage->AddOCRResult(ocrResChi[k]);
 	}
+
+	ocrRes.clear();
+	ocrResChi.clear();
 }
 
 void CMNView::OcrEnglishword()
 {
 	if (m_pSelectPageForCNS) {
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
 		cv::Rect r = ocrres.rect;
@@ -1451,7 +1477,8 @@ void CMNView::OcrEnglishword()
 
 		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
 		std::vector<_stOCRResult> ocrTmp;
-		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD);
+		float fScale = (float)m_extractionSetting.engSize / 32.0f;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale);
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
@@ -1470,6 +1497,7 @@ void CMNView::OcrEnglishword()
 void CMNView::OcrEnglishChar()
 {
 	if (m_pSelectPageForCNS) {
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
 		cv::Rect r = ocrres.rect;
@@ -1482,7 +1510,9 @@ void CMNView::OcrEnglishChar()
 
 		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
 		std::vector<_stOCRResult> ocrTmp;
-		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_SYMBOL);
+
+		float fScale = (float)m_extractionSetting.engSize / 32.0f;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_SYMBOL, fScale);
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
@@ -1501,19 +1531,34 @@ void CMNView::OcrEnglishChar()
 void CMNView::OcrChiChar()
 {
 	if (m_pSelectPageForCNS) {
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
 		cv::Rect r = ocrres.rect;
-		r.x -= 1;
-		r.y -= 1;
-		r.width += 2;
-		r.height += 2;
+		//r.x -= 1;
+		//r.y -= 1;
+		//r.width += 2;
+		//r.height += 2;
 
-		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r);
+		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
+
+		//cv::threshold(imgword, imgword, 125, 255, cv::THRESH_OTSU);
+		//cv::bitwise_not(imgword, imgword);
+
+		//cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+		//	cv::Size(3, 3),
+		//	cv::Point(-1, -1));
+		//cv::erode(imgword, imgword, element);
+
+		//cv::threshold(imgword, imgword, 100, 255, cv::THRESH_OTSU);
+	//	cv::bitwise_not(imgword, imgword);
+
+		cv::imshow("cword", imgword);
 
 		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
 		std::vector<_stOCRResult> ocrTmp;
-		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL);
+		float fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale);
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
@@ -1532,19 +1577,29 @@ void CMNView::OcrChiChar()
 void CMNView::OcrChiWord()
 {
 	if (m_pSelectPageForCNS) {
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
 		cv::Rect r = ocrres.rect;
-		r.x -= 1;
-		r.y -= 1;
-		r.width += 2;
-		r.height += 2;
+		//r.x -= 1;
+		//r.y -= 1;
+		//r.width += 2;
+		//r.height += 2;
 
-		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r);
+		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
+		//cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+		//	cv::Size(3, 3),
+		//	cv::Point(-1, -1));
+		//cv::erode(imgword, imgword, element);
+
+		//cv::threshold(imgword, imgword, 100, 255, cv::THRESH_OTSU);
+	//	cv::bitwise_not(imgword, imgword);
+	//	cv::imshow("cword", imgword);
 
 		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_WORD);
 		std::vector<_stOCRResult> ocrTmp;
-		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL);
+		float fScale = 32.0f / (float)m_extractionSetting.chiSize;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale);
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
@@ -1562,91 +1617,35 @@ void CMNView::OcrChiWord()
 
 void CMNView::DoOCRForPage(CMNPageObject* pPage)
 {
+
+	//m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_AUTO_OSD);
+	//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_AUTO_OSD);
+	//m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_AUTO_OSD);
+
 	m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_LINE);
+	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+	m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
+
 
 	if (pPage) {
-		if (pPage->GetVecOCRResult().size() == 0) {
+	//	if (pPage->GetVecOCRResult().size() == 0) {
 			cv::Mat gray = pPage->GetSrcPageGrayImg();
 			std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
-
-
-			for (int j = 0; j < para.size(); j++) {
-				cv::Mat imgLine = gray(para[j].rect);
-
-				DoOCRForCutImg(imgLine, para[j].rect, pPage);
-				//	cv::threshold(imgLine, imgLine, 150, 255, cv::THRESH_BINARY);
-				//std::vector<_stOCRResult> ocrRes;
-				//if (m_extractionSetting.isEng) {
-				//	m_OCRMng.extractWithOCR(imgLine, ocrRes, m_OCRMng.GetEngTess(), tesseract::RIL_WORD);
-				//}
-
-				//std::vector<_stOCRResult> ocrResChi;
-				//if (m_extractionSetting.isChi) {
-				//	if (ocrRes.size() > 0) {
-				//		for (int k = 0; k < ocrRes.size(); k++) {
-
-				//			if (ocrRes[k].fConfidence < 0.70f) {
-				//				cv::Mat imgword = imgLine(ocrRes[k].rect);
-
-				//				std::vector<_stOCRResult> ocrTmp;
-				//				m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL);
-
-
-				//				// Select Result between chi and eng //
-				//				float averConf = 0;
-				//				for (int m = 0; m < ocrTmp.size(); m++) {
-				//					averConf += ocrTmp[m].fConfidence;
-				//				}
-				//				averConf /= (float)ocrTmp.size();
-
-				//				if (ocrRes[k].fConfidence < averConf*0.9f) {
-				//					ocrRes[k].type = 100;
-				//				}
-
-				//				//===========================//
-				//				if (ocrRes[k].type == 100) {		// Substitute chi result to eng result //
-				//					for (int m = 0; m < ocrTmp.size(); m++) {
-				//						ocrTmp[m].rect.x += ocrRes[k].rect.x;
-				//						ocrTmp[m].rect.y += ocrRes[k].rect.y;
-				//						ocrResChi.push_back(ocrTmp[m]);
-				//					}
-				//				}
-				//				//================//
-				//			}
-				//		}
-				//	}
-				//	else {
-				//		m_OCRMng.extractWithOCR(imgLine, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL);
-				//	}
-				//}
-
-
-				//for (int k = 0; k < ocrRes.size(); k++) {
-				//	if (ocrRes[k].type < 100) {
-				//		ocrRes[k].rect.x += para[j].rect.x;
-				//		ocrRes[k].rect.y += para[j].rect.y;
-				//		ocrRes[k].type = 0;
-				//		pPage->AddOCRResult(ocrRes[k]);
-				//	}
-				//}
-
-				//for (int k = 0; k < ocrResChi.size(); k++) {
-				//	ocrResChi[k].rect.x += para[j].rect.x;
-				//	ocrResChi[k].rect.y += para[j].rect.y;
-				//	ocrResChi[k].type = 1;
-				//	pPage->AddOCRResult(ocrResChi[k]);
-				//}
+			for (int i = 0; i < para.size(); i++) {
+				cv::Mat pimg = gray(para[i].rect).clone();
+				DoOCRForCutImg(pimg, para[i].rect, pPage);
+				pimg.release();
 			}
-		}
+	//		DoOCRForCutImg(gray, cv::Rect(0,0,100,100), pPage);
+	//	}
 	}
 }
 
-void CMNView::DoExtractBoundaryForSelected(_stExtractionSetting _info)
+void CMNView::DoExtractBoundaryForSelected()
 {
 	m_addImgCnt = 0;
 	m_loadedImgCnt = 1;
-	m_extractionSetting = _info;
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 	if (m_pSelectPageForCNS) {
 		if (m_pSelectPageForCNS->GetVecParagraph().size() == 0) {
 
@@ -1654,8 +1653,8 @@ void CMNView::DoExtractBoundaryForSelected(_stExtractionSetting _info)
 			if (srcImg.ptr()) {
 
 				//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
-				cv::threshold(srcImg, srcImg, 200, 255, cv::THRESH_OTSU);
-				//	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
+				//cv::threshold(srcImg, srcImg, 200, 255, cv::THRESH_OTSU);
+				////	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
 				cv::bitwise_not(srcImg, srcImg);
 				int fsize = (int)m_extractionSetting.engSize;
 

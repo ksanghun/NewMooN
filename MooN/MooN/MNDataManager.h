@@ -91,7 +91,7 @@ public:
 	CMNPageObject* GetPageByID(int pid);
 
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
-	_stExtractionSetting GetExtractionSetting() { return m_extractonInfo; }
+	_stExtractionSetting GetExtractionSetting();// { return m_extractonInfo; }
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;

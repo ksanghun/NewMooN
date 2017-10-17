@@ -185,21 +185,23 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	//==============================================
 	CString strPath = m_strPath;
 	CString str = PathFindExtension(m_strPath);
-	if ((str == L".pdf") || (str == L".PDF")) {
+//	if ((str == L".pdf") || (str == L".PDF")) {
 
-		CString tmpStr = GetPInfoPath(L".jp2");
-		if (PathFileExists(tmpStr)) {
-			strPath = tmpStr;
-		}
+	CString tmpStr = GetPInfoPath(L".jp2");
+	if (PathFileExists(tmpStr)) {
+		strPath = tmpStr;
 	}
+//	}
 	// If .jp2 exist, load .jp2 file instead of .pdf file //
 
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
 		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
-
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 150, 255, cv::THRESH_OTSU);
 		LoadPageInfo();
+
+		
 
 
 		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
@@ -241,6 +243,8 @@ void CMNPageObject::UploadThumbImage()
 	//gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
 //	m_thumbImg.release();
 
+
+	cv::imshow("binary", m_srcGrayImg);
 
 	if (m_texId != 0) {
 		return;
@@ -838,9 +842,7 @@ void CMNPageObject::DeSkewImg(int pid, float fAngle)
 			cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 			rotatedFrame.copyTo(m_thumbImg(m_paragraph[pid].rect));
 
-			// Update Gray Scale Image//
-			m_srcGrayImg.release();
-			cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+			
 
 			m_paragraph[pid].IsDeskewed = true;
 			rotatedFrame.release();		
@@ -876,8 +878,8 @@ void CMNPageObject::UpdateTexture()
 
 	if (m_thumbImg.ptr()) {
 
-		//m_srcGrayImg.release();
-		//cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+		m_srcGrayImg.release();
+		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
 
 		// Save original size //
 		cv::Mat timg = m_thumbImg.clone();
@@ -1024,6 +1026,7 @@ void CMNPageObject::LoadPageInfo()
 
 		for (int i = 0; i < wnum; i++) {
 			_stOCRResult res;
+			res.init();
 			fread(&res, sizeof(_stOCRResult), 1, fp);
 			m_ocrResult.push_back(res);
 		}
@@ -1100,6 +1103,6 @@ void CMNPageObject::WritePageInfo()
 
 		CString imgpath = GetPInfoPath(L".jp2");
 		char* szimg = T2A(imgpath);
-		cv::imwrite(szimg, m_thumbImg);
+		cv::imwrite(szimg, m_srcGrayImg);
 	}
 }
