@@ -27,7 +27,7 @@ CFormProperties::CFormProperties()
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
 	, m_bLineBox(TRUE)
-	, m_editConfi(80)
+	, m_editConfi(70)
 {
 }
 

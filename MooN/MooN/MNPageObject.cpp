@@ -198,7 +198,7 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
 		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 150, 255, cv::THRESH_OTSU);
+	//	cv::threshold(m_srcGrayImg, m_srcGrayImg, 128, 255, cv::THRESH_OTSU);
 		LoadPageInfo();
 
 		
@@ -244,7 +244,7 @@ void CMNPageObject::UploadThumbImage()
 //	m_thumbImg.release();
 
 
-	cv::imshow("binary", m_srcGrayImg);
+//	cv::imshow("binary", m_srcGrayImg);
 
 	if (m_texId != 0) {
 		return;
@@ -840,7 +840,13 @@ void CMNPageObject::DeSkewImg(int pid, float fAngle)
 			cv::Mat rotMat, rotatedFrame, invRot;
 			rotMat = getRotationMatrix2D(cv::Point2f(para.cols*0.5f, para.rows*0.5f), m_paragraph[pid].deSkewAngle, 1);
 			cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+
+//			cv::addWeighted(rotatedFrame, 1.5, rotatedFrame, -0.5, 0, rotatedFrame);
 			rotatedFrame.copyTo(m_thumbImg(m_paragraph[pid].rect));
+		
+//			cv::filter2D()
+
+			
 
 			
 
