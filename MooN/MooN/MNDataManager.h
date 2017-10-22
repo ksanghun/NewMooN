@@ -13,7 +13,12 @@
 #define _NORMALIZE_SIZE_W 32*5
 #define ANI_FRAME_CNT 10
 
+#define DB_CLASS_NUM 8
+#define DB_IMGCHAR_SIZE 32
+#define DB_MAXNUM_IMGDB 10
+
 typedef std::vector<CMNPageObject*> stVecPageObj;
+
 struct stPageGroup {
 	int nSlot;
 	stVecPageObj imgVec;
@@ -48,6 +53,24 @@ struct stMatchResult
 
 typedef std::vector<stMatchResult> stVecMatchResult;
 
+
+struct stDBRefImage {
+	cv::Mat img[DB_MAXNUM_IMGDB];
+	int nCurrImgId;
+	bool needToUpdate;
+
+	unsigned short wNum, hNum, maxCharLen;
+	std::vector<wchar_t*> vecStr;
+
+	void init(unsigned short _w, unsigned short _h, unsigned short _len) {
+		nCurrImgId = 0;
+		wNum = _w;
+		hNum = _h;
+		maxCharLen = _len;
+		vecStr = std::vector<wchar_t*>();
+		needToUpdate = false;
+	};
+};
 
 
 class CMNDataManager
@@ -86,15 +109,22 @@ public:
 	void ResetMatchingResult();
 	void ApplyDeskewPage();
 	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
-
+	void DBTraining();
+	bool IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
+	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
+	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);
 
 	CMNPageObject* GetPageByID(int pid);
 
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
 	_stExtractionSetting GetExtractionSetting();// { return m_extractonInfo; }
+
+	void SetUserDataFolder(CString str) { m_strUserDataFolder = str; }
+	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
+	CString m_strUserDataFolder;
 	
 
 //	vecPageObj m_vecImageData;
@@ -109,8 +139,16 @@ private:
 
 	// matching results //
 	std::map<unsigned long, stVecMatchResult> m_mapMatchResults;
-
 	_stExtractionSetting m_extractonInfo;
+
+	//=====For DataBase==============================//
+	stDBRefImage m_refImgClass[DB_CLASS_NUM];
+	void InitDataBaseFiles();
+	void UpdateImgClassDB();
+	void UpdateImgClassImgCodes();
+	//=====================//
+
+
 };
 
 typedef CMNSingleton<CMNDataManager> SINGLETON_DataMng;

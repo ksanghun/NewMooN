@@ -59,6 +59,13 @@ CMNDataManager::~CMNDataManager()
 	m_mapImageData.clear();
 	m_mapGrupImg.clear();
 
+	for (int i = 0; i < DB_CLASS_NUM; i++) {
+		for (int j = 0; j < m_refImgClass[i].vecStr.size(); j++) {
+			m_refImgClass[i].img[0].release();
+			delete m_refImgClass[i].vecStr[j];
+		}
+	}
+
 }
 
 CMNPageObject* CMNDataManager::GetPageByOrderID(int idx)
@@ -112,7 +119,17 @@ bool CMNDataManager::LoadImageData(CString strPath, cv::Mat& pimg, bool IsGray)
 
 void CMNDataManager::InitData()
 {
+	m_refImgClass[0].init(60, 60, 4);
+	m_refImgClass[1].init(30, 60, 8);
+	m_refImgClass[2].init(20, 60, 12);
+	m_refImgClass[3].init(15, 60, 16);
+	m_refImgClass[4].init(12, 60, 20);
+	m_refImgClass[5].init(10, 60, 24);
+	m_refImgClass[6].init(8, 56, 28);
+	m_refImgClass[7].init(7, 56, 32);
 
+
+	InitDataBaseFiles();
 }
 
 void CMNDataManager::PopImageDataSet(unsigned long _pcode)
@@ -603,4 +620,227 @@ _stExtractionSetting CMNDataManager::GetExtractionSetting()
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	pM->GetCurrSetting();
 	return m_extractonInfo; 
+}
+
+int CMNDataManager::GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect)
+{
+	outRect.x = 0;
+	outRect.y = 0;
+
+	float fScale = (float)_NORMALIZE_SIZE_H / (float)inrect.height;
+	outRect.width = inrect.width*fScale;
+	outRect.height = inrect.height*fScale;
+
+	int wcnt = outRect.width / _NORMALIZE_SIZE_H;
+	if (wcnt < 1) {		wcnt = 1;	}
+	if (wcnt > 8) {		wcnt = 8;	}
+
+	outRect.width = _NORMALIZE_SIZE_H*wcnt;
+
+	if (inrect.height > _NORMALIZE_SIZE_H) {
+		outRect.height = _NORMALIZE_SIZE_H;
+	}
+	return wcnt;
+}
+
+void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
+{
+	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
+	int classid = GetNomalizedWordSize(ocrres.rect, norRect) - 1;
+	int imgid = m_refImgClass[classid].nCurrImgId;
+	cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+
+	for (int pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
+		int w = (classid + 1) * DB_IMGCHAR_SIZE;
+		int h = DB_IMGCHAR_SIZE;
+		cv::Rect rect;
+		rect.x = (pos % m_refImgClass[classid].wNum)*w;
+		rect.y = (pos / m_refImgClass[classid].wNum)*h;
+		rect.width = w;
+		rect.height = h;
+
+
+		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
+
+		float confi = TemplateMatching(cutimg, imgword)+0.1f;
+		if (( confi > 0.80f)){ // && (ocrres.fConfidence < confi )){
+			memset(ocrres.strCode, 0x00, sizeof(ocrres.strCode));
+			memcpy(ocrres.strCode, m_refImgClass[classid].vecStr[pos], sizeof(m_refImgClass[classid].vecStr[pos]));
+			ocrres.fConfidence = confi;
+			if (ocrres.fConfidence > 1.0f)
+				ocrres.fConfidence = 1.0f;
+		}
+
+		imgword.release();
+	}
+}
+float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
+{
+	cv::imshow("src", src);
+	cv::imshow("dst", dst);
+
+	int result_cols = dst.cols - src.cols + 1;
+	int result_rows = dst.rows - src.rows + 1;
+	cv::Mat result(result_rows, result_cols, CV_32FC1);
+	cv::matchTemplate(dst, src, result, CV_TM_CCOEFF_NORMED);
+
+	float th = 0.0f;
+	float fD = 0.0f;
+	for (int y = 0; y < result.rows; y++) {
+		for (int x = 0; x < result.cols; x++) {
+			fD = result.at<float>(y, x);
+			if (fD > th) {
+				TRACE("%3.2f\n", fD);
+				th = fD;
+			}
+		}
+	}
+	return th;
+}
+
+bool CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
+{
+	for (auto pos=0; pos<m_refImgClass[classid].vecStr.size(); pos++){
+		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {	
+			int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
+			// Template Matching //
+			int w = (classid + 1) * DB_IMGCHAR_SIZE;
+			int h = DB_IMGCHAR_SIZE;
+			cv::Rect rect;
+			rect.x = (pos % m_refImgClass[classid].wNum)*w;
+			rect.y = (pos / m_refImgClass[classid].wNum)*h;
+			rect.width = w;
+			rect.height = h;
+
+			cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
+			m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
+
+			if (TemplateMatching(cutimg, imgword) > 0.85f) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
+}
+
+void CMNDataManager::DBTraining()
+{
+	for (int i = 0; i < m_vecImgData.size(); i++) {
+		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+
+		for (int j = 0; j < ocrRes.size(); j++) {
+			if (ocrRes[j].bNeedToDB) {
+				cv::Mat cutimg = m_vecImgData[i]->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
+				cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
+				int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect)-1;
+				int imgid = m_refImgClass[classid].nCurrImgId;
+
+				cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+				// Verify to add into DB =====================================//
+				bool IsAdd = IsNeedToAddDB(cutimg, ocrRes[j].strCode, classid);
+				//===========================================================//
+
+				if ((classid < 8) && (classid >= 0) && (IsAdd)) {
+					int wordPosId = m_refImgClass[classid].vecStr.size();					
+					
+					int w = (classid+1) * DB_IMGCHAR_SIZE;
+					int h = DB_IMGCHAR_SIZE;
+
+					norRect.x = (wordPosId % m_refImgClass[i].wNum)*w;
+					norRect.y = (wordPosId / m_refImgClass[i].wNum)*h;
+
+					cutimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+					
+					wchar_t* strcode = new wchar_t[m_refImgClass[classid].maxCharLen];
+					memset(strcode, 0x00, sizeof(strcode));
+					memcpy(strcode, ocrRes[j].strCode, sizeof(strcode));
+					m_refImgClass[classid].vecStr.push_back(strcode);
+
+					m_refImgClass[classid].needToUpdate = true;
+					m_vecImgData[i]->UpdateOCRResStatus(j, false);
+				}
+			}
+		}
+	}
+	UpdateImgClassDB();
+}
+
+void CMNDataManager::UpdateImgClassDB()
+{
+	USES_CONVERSION;
+	for (int i = 0; i < DB_CLASS_NUM; i++) {
+		if (m_refImgClass[i].needToUpdate) {
+			int imgid = m_refImgClass[i].nCurrImgId;
+			CString strFile;
+			strFile.Format(L"%s//class%02d_%02d.jp2", m_strUserDataFolder, i, imgid);
+			char* sz = T2A(strFile);
+			cv::imwrite(sz, m_refImgClass[i].img[imgid]);
+
+			strFile.Format(L"%s//class%02d_%02d.jpg", m_strUserDataFolder, i, imgid);
+			sz = T2A(strFile);
+			cv::imwrite(sz, m_refImgClass[i].img[imgid]);
+
+			// Write image encode //
+			strFile.Format(L"%s//class%02d.jp3", m_strUserDataFolder, i);
+			sz = T2A(strFile);
+			FILE* fp = 0;
+			fopen_s(&fp, sz, "wb");
+
+			int num = m_refImgClass[i].vecStr.size();
+			int clen = m_refImgClass[i].maxCharLen;
+			fwrite(&num, sizeof(int), 1, fp);
+			fwrite(&clen, sizeof(int), 1, fp);
+			for (int j = 0; j < num; j++) {
+				fwrite(m_refImgClass[i].vecStr[j], sizeof(wchar_t)*clen, 1, fp);
+			}
+			fclose(fp);
+		}
+	}
+}
+
+
+void CMNDataManager::InitDataBaseFiles()
+{
+	USES_CONVERSION;	
+	CString strFile;
+	char* sz = 0;
+	for (int i = 0; i < DB_CLASS_NUM; i++) {		
+
+		// Read InfoFile First //
+		strFile.Format(L"%s//class%02d.jp3", m_strUserDataFolder, i);
+		sz = T2A(strFile);
+		FILE* fp = 0;
+		fopen_s(&fp, sz, "rb");
+		if (fp) {			
+			int num = 0, cLen = 0;
+			fread(&num, sizeof(int), 1, fp);
+			fread(&cLen, sizeof(int), 1, fp);
+			for (int j = 0; j < num; j++) {
+				wchar_t* code = new wchar_t[cLen];
+				memset(code, 0x00, sizeof(wchar_t)*cLen);
+				fread(code, sizeof(wchar_t)*cLen, 1, fp);
+				m_refImgClass[i].vecStr.push_back(code);
+			}
+			fclose(fp);
+		}
+		//=====================================//
+
+
+		int imgid = m_refImgClass[i].nCurrImgId;
+		for (int j = 0; j < (imgid + 1); j++) {
+			
+			strFile.Format(L"%s//class%02d_%02d.jp2", m_strUserDataFolder, i, j);
+			sz = T2A(strFile);
+
+			m_refImgClass[i].img[j] = cv::imread(sz, CV_LOAD_IMAGE_GRAYSCALE);
+			if (m_refImgClass[i].img[0].ptr() == NULL) {		// Create New DB Class image File //
+				int w = m_refImgClass[i].wNum * DB_IMGCHAR_SIZE*(i + 1);
+				int h = m_refImgClass[i].hNum * DB_IMGCHAR_SIZE;
+				m_refImgClass[i].img[j] = cv::Mat(w, h, CV_8UC1, cv::Scalar(255));
+				m_refImgClass[i].needToUpdate = true;
+			}
+		}
+	}
 }

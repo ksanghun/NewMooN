@@ -27,7 +27,7 @@ CFormProperties::CFormProperties()
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
 	, m_bLineBox(TRUE)
-	, m_editConfi(70)
+	, m_editConfi(80)
 {
 }
 
@@ -95,6 +95,9 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_BN_CLICKED(IDC_CHECK_LINEBIOX, &CFormProperties::OnBnClickedCheckLinebiox)
 	ON_EN_CHANGE(IDC_EDIT_CONFI, &CFormProperties::OnEnChangeEditConfi)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_CONFI, &CFormProperties::OnNMCustomdrawSliderConfi)
+	ON_EN_CHANGE(IDC_EDIT_KOR_SIZE, &CFormProperties::OnEnChangeEditKorSize)
+	ON_EN_CHANGE(IDC_EDIT_CHI_SIZE, &CFormProperties::OnEnChangeEditChiSize)
+	ON_BN_CLICKED(IDC_BN_ALL_DEL_OCRRES, &CFormProperties::OnBnClickedBnAllDelOcrres)
 END_MESSAGE_MAP()
 
 
@@ -140,6 +143,7 @@ void CFormProperties::OnInitialUpdate()
 	m_comboLanguage.AddString(L"English");
 	m_comboLanguage.AddString(L"Chinese");
 	m_comboLanguage.AddString(L"Korean");
+	m_comboLanguage.AddString(L"DB");
 	m_comboLanguage.SetCurSel(0);
 
 
@@ -330,7 +334,7 @@ void CFormProperties::OnBnClickedBnDelAlllinbes()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DeleteAllLines();
-	pImgView->DeleteAllOCRRes();
+//	pImgView->DeleteAllOCRRes();
 }
 
 
@@ -500,4 +504,34 @@ void CFormProperties::OnNMCustomdrawSliderConfi(NMHDR *pNMHDR, LRESULT *pResult)
 		CMNView* pImgView = pView->GetImageView();
 		pImgView->SetDispConfidence(m_editConfi);
 	}
+}
+
+
+void CFormProperties::OnEnChangeEditKorSize()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CFormView::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+}
+
+
+void CFormProperties::OnEnChangeEditChiSize()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CFormView::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+}
+
+
+void CFormProperties::OnBnClickedBnAllDelOcrres()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteAllOCRRes();
 }

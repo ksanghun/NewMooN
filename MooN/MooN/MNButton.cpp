@@ -5,9 +5,7 @@
 #include "MooN.h"
 #include "MNButton.h"
 
-
 // CMNButton
-
 IMPLEMENT_DYNAMIC(CMNButton, CButton)
 
 CMNButton::CMNButton()

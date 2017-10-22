@@ -46,6 +46,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_OCR_CHINESECHARACTER, &CMainFrame::OnOcrChinesecharacter)
 	ON_COMMAND(ID_OCR_CHINESEWORD, &CMainFrame::OnOcrChineseword)
 	ON_COMMAND(ID_OCR_ENGLISHCHARACTER, &CMainFrame::OnOcrEnglishcharacter)
+	ON_COMMAND(ID_OCR_KOREANWO, &CMainFrame::OnOcrKoreanwo)
+	ON_COMMAND(ID_OCR_KOREANCHARACTER, &CMainFrame::OnOcrKoreancharacter)
+	ON_COMMAND(ID_ANALYSIS_DATATRAINING, &CMainFrame::OnAnalysisDatatraining)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -427,6 +430,9 @@ void CMainFrame::InitConfituration()
 	if (PathFileExists(strfolder) == 0) {
 		CreateDirectory(strfolder, NULL);
 	}
+	
+	SINGLETON_DataMng::GetInstance()->SetUserDataFolder(strfolder);
+
 
 	// Load Config
 	FILE* fp = 0;
@@ -442,7 +448,6 @@ void CMainFrame::InitConfituration()
 		m_strSrcPath = (CStringA)srcPath;
 		m_strLogPath = (CStringA)srcPath;
 		fclose(fp);
-
 	}
 	else {
 		CDlgConfig dlg;
@@ -468,11 +473,12 @@ void CMainFrame::InitConfituration()
 		CreateDirectory(strLog, NULL);
 	}
 
-	SINGLETON_DataMng::GetInstance()->Test();
+//	SINGLETON_DataMng::GetInstance()->Test();
 
 	m_wndFileView.FillFileView(m_strSrcPath);
 	GetImgFilePath(m_strSrcPath);
 
+	SINGLETON_DataMng::GetInstance()->InitData();
 }
 
 void CMainFrame::GetImgFilePath(CString strPath)
@@ -751,4 +757,29 @@ void CMainFrame::OnOcrEnglishcharacter()
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->OcrEnglishChar();
+}
+
+
+void CMainFrame::OnOcrKoreanwo()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->OcrKorWord();
+}
+
+
+void CMainFrame::OnOcrKoreancharacter()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->OcrKorChar();
+}
+
+
+void CMainFrame::OnAnalysisDatatraining()
+{
+	// TODO: Add your command handler code here
+	BeginWaitCursor();
+	SINGLETON_DataMng::GetInstance()->DBTraining();
+	EndWaitCursor();
 }

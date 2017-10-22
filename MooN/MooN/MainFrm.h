@@ -32,7 +32,7 @@ public:
 	void GetCurrSetting() { return m_wndProperties.GetCurrSetting(); }
 
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
-
+	
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);
@@ -62,7 +62,6 @@ protected:  // control bar embedded members
 
 	CString			m_strSrcPath;
 	CString			m_strLogPath;
-
 
 // Generated message map functions
 protected:
@@ -96,6 +95,9 @@ public:
 	afx_msg void OnOcrChinesecharacter();
 	afx_msg void OnOcrChineseword();
 	afx_msg void OnOcrEnglishcharacter();
+	afx_msg void OnOcrKoreanwo();
+	afx_msg void OnOcrKoreancharacter();
+	afx_msg void OnAnalysisDatatraining();
 };
 
 

@@ -68,8 +68,8 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 //	fScale = 1.0f;
 
 	//cv::threshold(image, image, 200, 255, cv::THRESH_OTSU);
-	//cv::Mat resizeImg;
-	//cv::resize(image, resizeImg, cv::Size(image.cols * fScale, image.rows * fScale));
+	cv::Mat resizeImg;
+	cv::resize(image, resizeImg, cv::Size(image.cols * fScale, image.rows * fScale));
 	//cv::imshow("resize1", resizeImg);
 	//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
 	//	cv::Size(3, 3),
@@ -79,8 +79,8 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 
 	//======================//
 
-//	tess.SetImage((uchar*)resizeImg.data, resizeImg.size().width, resizeImg.size().height, resizeImg.channels(), resizeImg.step1());
-	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
+	tess.SetImage((uchar*)resizeImg.data, resizeImg.size().width, resizeImg.size().height, resizeImg.channels(), resizeImg.step1());
+//	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
 	tess.Recognize(0);
 
 	//	const char* out = tess.GetUTF8Text();
@@ -146,7 +146,7 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 
 
 	tess.Clear();
-//	resizeImg.release();
+	resizeImg.release();
 
 	if (cnt > 0)
 		averConf /= cnt;

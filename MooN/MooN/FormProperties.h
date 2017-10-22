@@ -91,6 +91,9 @@ public:
 	long m_editConfi;
 	afx_msg void OnEnChangeEditConfi();
 	afx_msg void OnNMCustomdrawSliderConfi(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeEditKorSize();
+	afx_msg void OnEnChangeEditChiSize();
+	afx_msg void OnBnClickedBnAllDelOcrres();
 };
 
 

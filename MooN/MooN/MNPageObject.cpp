@@ -198,10 +198,15 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	{
 		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
 		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
-	//	cv::threshold(m_srcGrayImg, m_srcGrayImg, 128, 255, cv::THRESH_OTSU);
-		LoadPageInfo();
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
 
-		
+
+		//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
+		//	cv::Size(3, 3),
+		//	cv::Point(-1, -1));
+		//cv::dilate(m_srcGrayImg, m_srcGrayImg, element);
+
+		LoadPageInfo();
 
 
 		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
@@ -244,7 +249,7 @@ void CMNPageObject::UploadThumbImage()
 //	m_thumbImg.release();
 
 
-//	cv::imshow("binary", m_srcGrayImg);
+	cv::imshow("binary", m_srcGrayImg);
 
 	if (m_texId != 0) {
 		return;
@@ -974,6 +979,15 @@ void CMNPageObject::ConfirmOCRRes(int selid)
 	m_IsNeedToSave = true;
 	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
 		m_ocrResult[selid].fConfidence = 0.9f;
+		m_ocrResult[selid].bNeedToDB = true;
+	}
+}
+
+void CMNPageObject::UpdateOCRResStatus(int selid, bool IsUpdate)
+{
+	m_IsNeedToSave = true;
+	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+		m_ocrResult[selid].bNeedToDB = IsUpdate;
 	}
 }
 
@@ -982,6 +996,7 @@ void CMNPageObject::UpdateOCRCode(CString _strCode, int selid)
 	m_IsNeedToSave = true;
 	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
 		m_ocrResult[selid].fConfidence = 0.9f;
+		m_ocrResult[selid].bNeedToDB = true;
 		wsprintf(m_ocrResult[selid].strCode, _strCode);
 
 	//	m_ocrResult[selid].strCode = _strCode;
@@ -1081,6 +1096,7 @@ void CMNPageObject::WritePageInfo()
 			fwrite(&pnum, sizeof(int), 1, fp);
 			
 			for (int i = 0; i < wnum; i++) {
+				m_ocrResult[i].bNeedToDB = false;  // should be mandatory //
 				fwrite(&m_ocrResult[i], sizeof(_stOCRResult), 1, fp);
 			}
 

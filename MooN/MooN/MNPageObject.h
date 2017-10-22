@@ -120,6 +120,7 @@ public:
 	bool DeleteSelOCRRes(int selid);
 	void ConfirmOCRRes(int selid);
 	void UpdateOCRCode(CString _strCode, int selid);
+	void UpdateOCRResStatus(int selid, bool IsUpdate);
 
 	// OCR //
 	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }

@@ -37,10 +37,13 @@ public:
 	void OcrEnglishChar();
 	void OcrChiChar();
 	void OcrChiWord();
+	void OcrKorWord();
+	void OcrKorChar();
 
 	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
 	
 	void DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType);
+	void DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes);
 	void DoExtractBoundaryForSelected();
 	//============================//
 

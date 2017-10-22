@@ -956,12 +956,12 @@ void CMNView::ProcOCR(bool IsAll)
 
 
 //	InitCamera(false);
-	CWinThread* pl;
-	m_bIsThreadEnd = false;
-	pl = AfxBeginThread(ThreadDoOCR, this);
+	//CWinThread* pl;
+	//m_bIsThreadEnd = false;
+	//pl = AfxBeginThread(ThreadDoOCR, this);
 
 	//DoExtractBoundary();
-	//DoOCR();
+	DoOCR();
 
 	//std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	//for (size_t i = 0; i < imgVec.size(); i++) {
@@ -1434,6 +1434,31 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 	ocrAdd.clear();
 }
 
+
+void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes)
+{
+	std::vector<_stOCRResult> ocrAdd;
+	for (int k = 0; k < ocrRes.size(); k++) {
+		if (ocrRes[k].fConfidence < 0.80f) {
+			cv::Mat imgword = img(ocrRes[k].rect).clone();	
+			_stOCRResult dbRes = ocrRes[k];
+			SINGLETON_DataMng::GetInstance()->MatchingFromDB(imgword, dbRes);
+
+			if (dbRes.fConfidence > 0.8f) {
+				ocrRes[k].type = 100;
+				dbRes.type = 3;
+				ocrAdd.push_back(dbRes);
+			}
+			imgword.release();
+		}
+	}
+
+	for (int i = 0; i < ocrAdd.size(); i++) {
+		ocrRes.push_back(ocrAdd[i]);
+	}
+	ocrAdd.clear();
+}
+
 void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 {
 	std::vector<_stOCRResult> ocrRes;// = pPage->GetVecOCRResult();
@@ -1472,6 +1497,9 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		}
 	}
 
+
+	// COR Correctness //
+	DoOCCorrection(img, rect, pPage, ocrRes);
 	
 
 
@@ -1480,6 +1508,12 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		if (ocrRes[k].type < 100) {
 			ocrRes[k].rect.x += rect.x;
 			ocrRes[k].rect.y += rect.y;
+
+			//if (ocrRes[k].type == 0) {
+			//	// check ",.;:'"(){}[]?! in prefix and surpix, then trim them //
+			//}
+
+
 			pPage->AddOCRResult(ocrRes[k]);
 		}
 	}
@@ -1634,25 +1668,13 @@ void CMNView::OcrChiChar()
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
 		cv::Rect r = ocrres.rect;
-		//r.x -= 1;
-		//r.y -= 1;
-		//r.width += 2;
-		//r.height += 2;
+		r.x -= 1;
+		r.y -= 1;
+		r.width += 2;
+		r.height += 2;
 
 		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
-
-		//cv::threshold(imgword, imgword, 125, 255, cv::THRESH_OTSU);
-		//cv::bitwise_not(imgword, imgword);
-
-		//cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-		//	cv::Size(3, 3),
-		//	cv::Point(-1, -1));
-		//cv::erode(imgword, imgword, element);
-
-		//cv::threshold(imgword, imgword, 100, 255, cv::THRESH_OTSU);
-	//	cv::bitwise_not(imgword, imgword);
-
-		cv::imshow("cword", imgword);
+//		cv::imshow("cword", imgword);
 
 		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
 		std::vector<_stOCRResult> ocrTmp;
@@ -1680,25 +1702,86 @@ void CMNView::OcrChiWord()
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
 		cv::Rect r = ocrres.rect;
-		//r.x -= 1;
-		//r.y -= 1;
-		//r.width += 2;
-		//r.height += 2;
+		r.x -= 1;
+		r.y -= 1;
+		r.width += 2;
+		r.height += 2;
 
 		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
-		//cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-		//	cv::Size(3, 3),
-		//	cv::Point(-1, -1));
-		//cv::erode(imgword, imgword, element);
-
-		//cv::threshold(imgword, imgword, 100, 255, cv::THRESH_OTSU);
-	//	cv::bitwise_not(imgword, imgword);
-	//	cv::imshow("cword", imgword);
 
 		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_WORD);
 		std::vector<_stOCRResult> ocrTmp;
 		float fScale = 32.0f / (float)m_extractionSetting.chiSize;
 		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+
+		// Update OCR Res //
+		if (ocrTmp.size() >= 0) {
+			m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
+			for (int i = 0; i < ocrTmp.size(); i++) {
+				ocrTmp[i].rect.x += r.x;
+				ocrTmp[i].rect.y += r.y;
+				ocrTmp[i].type = 1;
+				m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
+			}
+			m_selOCRId = -1;
+		}
+	}
+}
+
+
+void CMNView::OcrKorChar()
+{
+	if (m_pSelectPageForCNS) {
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
+		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
+
+		cv::Rect r = ocrres.rect;
+		r.x -= 1;
+		r.y -= 1;
+		r.width += 2;
+		r.height += 2;
+
+		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
+		//		cv::imshow("cword", imgword);
+
+		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
+		std::vector<_stOCRResult> ocrTmp;
+		float fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+
+		// Update OCR Res //
+		if (ocrTmp.size() >= 0) {
+			m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
+			for (int i = 0; i < ocrTmp.size(); i++) {
+				ocrTmp[i].rect.x += r.x;
+				ocrTmp[i].rect.y += r.y;
+				ocrTmp[i].type = 1;
+				m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
+			}
+			m_selOCRId = -1;
+		}
+	}
+}
+
+
+void CMNView::OcrKorWord()
+{
+	if (m_pSelectPageForCNS) {
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
+		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
+
+		cv::Rect r = ocrres.rect;
+		r.x -= 1;
+		r.y -= 1;
+		r.width += 2;
+		r.height += 2;
+
+		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
+
+		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_WORD);
+		std::vector<_stOCRResult> ocrTmp;
+		float fScale = 32.0f / (float)m_extractionSetting.chiSize;
+		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
@@ -1722,6 +1805,8 @@ void CMNView::DoOCRForPage(CMNPageObject* pPage)
 
 		cv::Mat gray = pPage->GetSrcPageGrayImg();
 		std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
+		if (para.size() == 0)
+			return;
 
 		int x1 = 9999, y1=9999, x2=0, y2=0;
 		for (int i = 0; i < para.size(); i++) {
