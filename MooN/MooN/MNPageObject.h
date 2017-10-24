@@ -60,7 +60,7 @@ public:
 	void SetSelMatchItem(int _selid);// { m_selMatchItemId = _selid; }
 	void DeSkewImg(int pid, float fAngle);
 	void UnDoDeSkewImg(int pid);
-	void UpdateTexture();
+	void UpdateTexture(cv::Mat& texImg);
 
 	bool IsNear() { return m_bIsNear; }
 
@@ -130,7 +130,8 @@ public:
 
 	CString GetPInfoPath(CString strExtension);
 	void WritePageInfo();
-	void LoadPageInfo();
+	bool LoadPageInfo(unsigned short& width, unsigned short& height);
+	void EncodeTexBox();
 
 	void ClearParagraph();
 	void ClearOCRResult();
@@ -177,14 +178,16 @@ private:
 	bool m_bCandidate;
 	bool m_bIsNear;
 	bool m_IsNeedToSave;
+	bool m_bImageChanged;
 
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;
 	std::vector<_stOCRResult> m_ocrResult;
 
-
+	cv::Mat m_fullImg;
 	cv::Mat m_thumbImg;
 	cv::Mat m_srcGrayImg;
 	int m_selMatchItemId;
+	bool m_IsTbimg;
 };
 

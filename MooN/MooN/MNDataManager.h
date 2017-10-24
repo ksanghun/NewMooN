@@ -146,8 +146,11 @@ private:
 	void InitDataBaseFiles();
 	void UpdateImgClassDB();
 	void UpdateImgClassImgCodes();
+	void DeSkew(cv::Mat& img);
 	//=====================//
 
+
+	std::vector<cv::Point> points;
 
 };
 

@@ -33,6 +33,8 @@ CMNPageObject::CMNPageObject()
 
 	m_selMatchItemId = -1;
 	m_IsNeedToSave = false;
+	m_bImageChanged = false;
+	m_IsTbimg = false;
 }
 
 
@@ -48,6 +50,7 @@ CMNPageObject::~CMNPageObject()
 
 	ClearMatchResult();
 
+	m_fullImg.release();
 	m_thumbImg.release();
 	m_srcGrayImg.release();
 }
@@ -71,7 +74,18 @@ void CMNPageObject::SetName(CString _strpath, CString _strpname, CString _strnam
 	m_strName = _strname;
 	parentCode = _pcode;
 	nCode = _code;
+
+
 	//	mtSetPoint3D(&m_pos, 0.0f, 0.0f, 0.0f);
+	// Check data filder //
+	CString path;
+	path = m_strPName + L"\\moon_db";
+	if (PathFileExists(path) == 0) {
+		CreateDirectory(path, NULL);
+	}
+
+
+
 }
 
 void CMNPageObject::SetSize(unsigned short _w, unsigned short _h, float _size)
@@ -147,15 +161,28 @@ GLuint CMNPageObject::LoadFullImage()
 	if (m_texId != 0) {
 		return 0;
 	}
+
+	CString strPath = m_strPath;
+	CString str = PathFindExtension(m_strPath);
+	CString tmpStr = GetPInfoPath(L".jp2");
+	if (PathFileExists(tmpStr)) {
+		strPath = tmpStr;
+	}
+
+
 	cv::Mat pimg;
-	if (SINGLETON_DataMng::GetInstance()->LoadImageData(m_strPath, pimg, false)) {
+	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false)) {
+
+		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
+
 		// Save original size //
-		m_nImgHeight = pimg.rows;
-		m_nImgWidth = pimg.cols;
+		m_nImgHeight = m_fullImg.rows;
+		m_nImgWidth = m_fullImg.cols;
 		// resize for texture //
-		int w = ConvertGLTexSize(pimg.cols);
-		int h = ConvertGLTexSize(pimg.rows);
-		cv::resize(pimg, pimg, cvSize(w, h));
+		int w = ConvertGLTexSize(m_fullImg.cols);
+		int h = ConvertGLTexSize(m_fullImg.rows);
+		cv::resize(m_fullImg, pimg, cvSize(w, h));
 
 		glGenTextures(1, &m_texId);
 		glBindTexture(GL_TEXTURE_2D, m_texId);
@@ -187,26 +214,32 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	CString str = PathFindExtension(m_strPath);
 //	if ((str == L".pdf") || (str == L".PDF")) {
 
-	CString tmpStr = GetPInfoPath(L".jp2");
+	CString tmpStr = GetPInfoPath(L"_tb.jp2");
 	if (PathFileExists(tmpStr)) {
 		strPath = tmpStr;
+		m_IsTbimg = true;
 	}
 //	}
 	// If .jp2 exist, load .jp2 file instead of .pdf file //
-
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
 	{
-		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
-		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
-
-
+		unsigned short width = 0, height = 0;
+		if (LoadPageInfo(width, height)) {
+			SetSize(width, height, DEFAULT_PAGE_SIZE);
+		}
+		else {
+			SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
+			cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
+		}
+		
+		//cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+		//cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
 		//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
 		//	cv::Size(3, 3),
 		//	cv::Point(-1, -1));
 		//cv::dilate(m_srcGrayImg, m_srcGrayImg, element);
 
-		LoadPageInfo();
+		
 
 
 		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
@@ -233,48 +266,49 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 
 void CMNPageObject::UploadThumbImage()
 {
-	//if (m_thumbnailTexId != 0) {
-	//	return;
-	//}
-
-	//glGenTextures(1, &m_thumbnailTexId);
-	//glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
-
-	//gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
-//	m_thumbImg.release();
-
-
-	cv::imshow("binary", m_srcGrayImg);
-
-	if (m_texId != 0) {
-		return;
-	}
 	if (m_thumbImg.ptr()) {
-		// Save original size //
-		m_nImgHeight = m_thumbImg.rows;
-		m_nImgWidth = m_thumbImg.cols;
-		// resize for texture //
-		int w = ConvertGLTexSize(m_thumbImg.cols);
-		int h = ConvertGLTexSize(m_thumbImg.rows);
-		cv::resize(m_thumbImg, m_thumbImg, cvSize(w, h));
-
-		glGenTextures(1, &m_texId);
-		glBindTexture(GL_TEXTURE_2D, m_texId);
+		glGenTextures(1, &m_thumbnailTexId);
+		glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
 
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.ptr());
-
-		cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
 	}
+//	m_thumbImg.release();
+
+
+
+
+
+//	cv::imshow("binary", m_srcGrayImg);
+
+	//if (m_texId != 0) {
+	//	return;
+	//}
+	//if (m_thumbImg.ptr()) {
+	//	// Save original size //
+	//	m_nImgHeight = m_thumbImg.rows;
+	//	m_nImgWidth = m_thumbImg.cols;
+	//	// resize for texture //
+	//	int w = ConvertGLTexSize(m_thumbImg.cols);
+	//	int h = ConvertGLTexSize(m_thumbImg.rows);
+	//	cv::resize(m_thumbImg, m_thumbImg, cvSize(w, h));
+
+	//	glGenTextures(1, &m_texId);
+	//	glBindTexture(GL_TEXTURE_2D, m_texId);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
+
+	//	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.ptr());
+
+	//	cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
+	//}
 
 }
 
@@ -306,7 +340,7 @@ void CMNPageObject::AnimatePos(bool IsZvalue)
 
 void CMNPageObject::DrawThumbNail(float fAlpha)
 {
-	if (m_texId == 0) {
+	if (m_thumbnailTexId == 0) {
 		return;
 	}
 	if (m_bCandidate) {
@@ -335,12 +369,12 @@ void CMNPageObject::DrawThumbNail(float fAlpha)
 
 
 	glEnable(GL_TEXTURE_2D);
-	//if (m_texId == 0) {		
-	//	glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-	//}
-	//else {
+	if (m_texId == 0) {		
+		glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
+	}
+	else {
 		glBindTexture(GL_TEXTURE_2D, m_texId);
-	//}
+	}
 
 
 	glColor4f(1.0f, 1.0f, 1.0f, fAlpha);
@@ -797,11 +831,13 @@ void CMNPageObject::ClearMatchResult()
 
 void CMNPageObject::ClearParagraph()
 {
+	m_IsNeedToSave = true;
 	m_paragraph.clear();
 }
 
 void CMNPageObject::ClearOCRResult()
 {
+	m_IsNeedToSave = true;
 	m_ocrResult.clear();
 }
 
@@ -836,66 +872,64 @@ void CMNPageObject::AddParagraph(cv::Rect rect, bool IsHori, float deskew)
 
 void CMNPageObject::DeSkewImg(int pid, float fAngle)
 {
-	m_IsNeedToSave = true;
-	if ((pid < m_paragraph.size()) && (pid >= 0)) {
+	if (m_fullImg.ptr()) {
+		m_bImageChanged = true;
+		if ((pid < m_paragraph.size()) && (pid >= 0)) {
 
-		if (m_paragraph[pid].IsDeskewed == false) {
-			m_paragraph[pid].deSkewAngle = fAngle;
-			cv::Mat para = m_thumbImg(m_paragraph[pid].rect);
-			cv::Mat rotMat, rotatedFrame, invRot;
-			rotMat = getRotationMatrix2D(cv::Point2f(para.cols*0.5f, para.rows*0.5f), m_paragraph[pid].deSkewAngle, 1);
-			cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+			if (m_paragraph[pid].IsDeskewed == false) {
+				m_paragraph[pid].deSkewAngle = fAngle;
+				cv::Mat para = m_fullImg(m_paragraph[pid].rect);
+				cv::Mat rotMat, rotatedFrame, invRot;
+				rotMat = getRotationMatrix2D(cv::Point2f(para.cols*0.5f, para.rows*0.5f), m_paragraph[pid].deSkewAngle, 1);
+				cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 
-//			cv::addWeighted(rotatedFrame, 1.5, rotatedFrame, -0.5, 0, rotatedFrame);
-			rotatedFrame.copyTo(m_thumbImg(m_paragraph[pid].rect));
-		
-//			cv::filter2D()
+				//			cv::addWeighted(rotatedFrame, 1.5, rotatedFrame, -0.5, 0, rotatedFrame);
+				rotatedFrame.copyTo(m_fullImg(m_paragraph[pid].rect));
 
-			
-
-			
-
-			m_paragraph[pid].IsDeskewed = true;
-			rotatedFrame.release();		
+				//			cv::filter2D()
+				m_paragraph[pid].IsDeskewed = true;
+				rotatedFrame.release();
+			}
 		}
-	}	
+	}
+
+	UpdateTexture(m_fullImg);
 }
 
 void CMNPageObject::UnDoDeSkewImg(int pid)
 {
 	if ((pid < m_paragraph.size()) && (pid >= 0)) {
 		if (m_paragraph[pid].IsDeskewed) {
-			cv::Mat para = m_thumbImg(m_paragraph[pid].rect);
+			cv::Mat para = m_fullImg(m_paragraph[pid].rect);
 			cv::Mat rotMat, rotatedFrame, invRot;
 			rotMat = getRotationMatrix2D(cv::Point2f(para.cols*0.5f, para.rows*0.5f), -m_paragraph[pid].deSkewAngle, 1);
 			cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
-			rotatedFrame.copyTo(m_thumbImg(m_paragraph[pid].rect));
+			rotatedFrame.copyTo(m_fullImg(m_paragraph[pid].rect));
 
 			m_paragraph[pid].IsDeskewed = false;
 			rotatedFrame.release();
 		}		
 	}
 
-
-	UpdateTexture();
+	UpdateTexture(m_fullImg);
 }
 
-void CMNPageObject::UpdateTexture()
+void CMNPageObject::UpdateTexture(cv::Mat& texImg)
 {
 	if (m_texId > 0) {
 		glDeleteTextures(1, &m_texId);
 		m_texId = 0;
 	}
 
-	if (m_thumbImg.ptr()) {
-
+	if (texImg.ptr()) {
 		m_srcGrayImg.release();
-		cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
+		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
 
 		// Save original size //
-		cv::Mat timg = m_thumbImg.clone();
-		m_nImgHeight = m_thumbImg.rows;
-		m_nImgWidth = m_thumbImg.cols;
+		cv::Mat timg = texImg.clone();
+		m_nImgHeight = texImg.rows;
+		m_nImgWidth = texImg.cols;
 		// resize for texture //
 		int w = ConvertGLTexSize(timg.cols);
 		int h = ConvertGLTexSize(timg.rows);
@@ -1019,18 +1053,21 @@ void CMNPageObject::AddOCRResult(_stOCRResult res)
 
 CString CMNPageObject::GetPInfoPath(CString strExtension)
 {
-	CString path;
-	int nIndex = m_strPath.ReverseFind(_T('.'));
+	CString path, filename;
+	int nIndex = m_strName.ReverseFind(_T('.'));
 	if (nIndex > 0) {
-		path = m_strPath.Left(nIndex);
+		filename = m_strName.Left(nIndex);
 	}
-	path += strExtension;
+//	filename += strExtension;	
+	path = m_strPName + L"\\moon_db\\" + filename + strExtension;
 	return path;
 }
 
 
-void CMNPageObject::LoadPageInfo()
+bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 {
+	m_IsNeedToSave = true;
+	bool IsLoad = false;
 	CString path = GetPInfoPath(L".pinfo");
 	USES_CONVERSION;
 	char* sz = T2A(path);
@@ -1040,6 +1077,9 @@ void CMNPageObject::LoadPageInfo()
 	if (fp) {
 
 		int pnum=0, wnum=0;
+
+		fread(&width, sizeof(unsigned short), 1, fp);
+		fread(&height, sizeof(unsigned short), 1, fp);
 		fread(&wnum, sizeof(int), 1, fp);
 		fread(&pnum, sizeof(int), 1, fp);
 		
@@ -1070,19 +1110,20 @@ void CMNPageObject::LoadPageInfo()
 		//MultiByteToWideChar(CP_ACP, 0, char_str, strlen(char_str), strUnicode, nLen);
 
 		//CString strRead = CString(strUnicode);
-
+		m_IsNeedToSave = false;
+		IsLoad = true;
 		fclose(fp);
 	}
-
-	m_IsNeedToSave = false;
+	
+	return IsLoad;
 }
 
 
 void CMNPageObject::WritePageInfo()
 {
+	USES_CONVERSION;
 	if (m_IsNeedToSave) {
-		CString path = GetPInfoPath(L".pinfo");
-		USES_CONVERSION;
+		CString path = GetPInfoPath(L".pinfo");		
 		char* sz =  T2A(path);
 
 		FILE* fp = 0;
@@ -1092,6 +1133,8 @@ void CMNPageObject::WritePageInfo()
 			int pnum = m_paragraph.size();
 			int wnum = m_ocrResult.size();
 
+			fwrite(&m_nImgWidth, sizeof(unsigned short), 1, fp);
+			fwrite(&m_nImgHeight, sizeof(unsigned short), 1, fp);
 			fwrite(&wnum, sizeof(int), 1, fp);
 			fwrite(&pnum, sizeof(int), 1, fp);
 			
@@ -1103,28 +1146,199 @@ void CMNPageObject::WritePageInfo()
 			for (int i = 0; i < pnum; i++) {
 				fwrite(&m_paragraph[i], sizeof(stParapgraphInfo), 1, fp);
 			}
-
-		//		wchar_t* wchar_str;
-		//		char char_str[_MAX_WORD_SIZE];
-		//		memset(char_str, 0x00, sizeof(char_str));
-		//		int char_str_len;
-
-		//		// 1. CString to wchar * conversion
-		//		CString strTmp = L"TESTFILESAVEFUNCTIONîÜÔðÓðîÜ±è»óÈÆ";
-		//		wchar_str = strTmp.GetBuffer(strTmp.GetLength());
-
-
-		//		char_str_len = WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, NULL, 0, NULL, NULL);
-		////		char_str = new char[char_str_len];
-		//		// 2. wchar_t* to char* conversion
-		//		WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, char_str, char_str_len, 0, 0);
-		//		fwrite(char_str, _MAX_WORD_SIZE, 1, fp);
 			fclose(fp);
 		}	
 
+		if (m_IsTbimg == false) {
+			CString imgpath = GetPInfoPath(L"_tb.jp2");
+			char* szimg = T2A(imgpath);
+			cv::imwrite(szimg, m_thumbImg);
+		}		
+	}
 
+	if (m_bImageChanged) {
 		CString imgpath = GetPInfoPath(L".jp2");
 		char* szimg = T2A(imgpath);
 		cv::imwrite(szimg, m_srcGrayImg);
 	}
+	
+}
+
+
+
+
+void CMNPageObject::EncodeTexBox()
+{
+	int wordheight = 32;
+	// Sorting by x, y pos //
+	//=For Encoding======================//
+	typedef struct _EWORDINFO {
+		wchar_t* str;
+		cv::Rect rect;
+	}_EWORDINFO;
+
+	std::vector<_EWORDINFO> vecEncode;
+	for (int i = 0; i < m_ocrResult.size(); i++) {
+		_EWORDINFO tmp;
+		tmp.rect = m_ocrResult[i].rect;
+		tmp.str = m_ocrResult[i].strCode;
+		vecEncode.push_back(tmp);
+	}
+
+	//std::vector<_ENCODETEXT> encodeWord;
+	////==================================//
+	int minY = 10000, minX = 0;
+	RECT2D r1, r2;
+	int y1, y2, x1, x2;
+
+	int numItem = vecEncode.size();
+	if (numItem > 1) {
+
+		for (int i = 0; i < numItem - 1; i++)
+		{
+			for (int j = 0; j < numItem - i - 1; j++)
+			{
+				int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
+				int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
+				if (yj > yj1) /* For decreasing order use < */
+				{
+					_EWORDINFO swap = vecEncode[j];
+					vecEncode[j] = vecEncode[j + 1];
+					vecEncode[j + 1] = swap;
+				}
+			}
+		}
+
+
+		for (int i = 0; i < numItem - 1; i++)
+		{
+			for (int j = 0; j < numItem - i - 1; j++)
+			{
+				if (vecEncode[j].rect.x > vecEncode[j + 1].rect.x) /* For decreasing order use < */
+				{
+					int my1 = vecEncode[j].rect.y + vecEncode[j].rect.height*0.5f;
+					int my2 = vecEncode[j + 1].rect.y + vecEncode[j + 1].rect.height*0.5f;
+
+					//int my1 = vecEncode[j].rect.y2;
+					//int my2 = vecEncode[j + 1].rect.y2;
+
+					if (abs(my1 - my2) < (vecEncode[j].rect.height*0.5)) {
+						_EWORDINFO swap = vecEncode[j];
+						vecEncode[j] = vecEncode[j + 1];
+						vecEncode[j + 1] = swap;
+					}
+				}
+			}
+		}
+	}
+
+	CString strPath = GetPInfoPath(L".txt");
+
+	//	fopen_s(&fp, (CStringA)strPath, "w");
+	//	fp = _wfopen(strPath, L"w");
+	CFile cfile;
+	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeNoTruncate | CFile::modeCreate))
+	{
+		return;
+	}
+
+	USHORT nShort = 0xfeff;  // À¯´ÏÄÚµå ¹ÙÀÌÆ® ¿À´õ¸¶Å©.
+	cfile.Write(&nShort, 2);
+
+	//	file.Write(pStrWideChar, nSize * 2);
+	if (vecEncode.size() > 0) {
+	//	wchar_t *wchar_str;
+	//	char *char_str;
+	//	int char_str_len;
+
+		int preYPos = 0, yPos = 0;
+		bool Isfirst = true;
+		int wNum = vecEncode.size();
+		int averHeight = vecEncode[0].rect.height;
+		for (int i = 0; i < wNum; i++) {
+
+		//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
+			yPos = vecEncode[i].rect.y + vecEncode[i].rect.height*0.5f;
+
+			int diff = abs(preYPos - yPos);
+			if (diff > averHeight*0.75) {		
+
+				cfile.Write(L"\r\n", 4);
+
+				preYPos = yPos;
+				averHeight += vecEncode[i].rect.height;
+				averHeight /= 2;
+			}
+			int len = wcslen(vecEncode[i].str) *2;
+			cfile.Write(vecEncode[i].str, len);
+
+			//if (i < wNum - 1) {
+			//	int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
+			//	if (diff > averHeight / 4) {
+					cfile.Write(L" ", 2);		// Space
+/*				}
+			}*/			
+		}
+	}
+	cfile.Close();
+	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+
+
+
+
+	/*
+	if (fp){
+	wchar_t *wchar_str;
+	char *char_str;
+	int char_str_len;
+
+	int preYPos = 0, yPos = 0;
+	bool Isfirst = true;
+
+	if (vecEncode.size() > 0){
+	int averHeight = vecEncode[0].rect.height;
+	for (int i = 0; i < vecEncode.size(); i++){
+
+	yPos = vecEncode[i].rect.y1 + vecEncode[i].rect.height*0.5f;
+	//	yPos = vecEncode[i].rect.y2;
+
+	// 1. CString to wchar * conversion
+	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
+	char_str_len = WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, NULL, 0, NULL, NULL);
+	char_str = new char[char_str_len];
+
+	//// 2. wchar_t* to char* conversion
+	WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, char_str, char_str_len, 0, 0);
+
+	int diff = abs(preYPos - yPos);
+	if (diff > averHeight){
+	fwprintf(fp, L"%ls", "\n");
+	//	fwrite("\n", 1, 1, fp);
+
+	//if ((diff > (iter_gr->second.matche[i].rect.height * 2)) &&  (Isfirst==false)){
+	//	int space = diff / (iter_gr->second.matche[i].rect.height*2.0f);
+	//	for (int k = 0; k < space; k++){
+	//		fwrite("\n", 1, 1, fp);
+	//	}
+	//}
+	preYPos = yPos;
+	//Isfirst = false;
+
+	averHeight += vecEncode[i].rect.height;
+	averHeight /= 2;
+
+	}
+
+	//int len = strlen(char_str) + 1;
+	//int len = wcslen(wchar_str) + 1;
+	//fwrite(char_str, len, 1, fp);
+
+	fwprintf(fp, L"%ls", wchar_str);
+	delete[] char_str;
+	}
+	}
+	fclose(fp);
+	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+	}
+	*/
 }

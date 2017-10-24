@@ -227,6 +227,7 @@ HTREEITEM CFileView::ExtractFolder(CString strFolder, CString strName, _strlist&
 	//int nCount = 0;
 	CString strSubPath;
 	CString strFileName;
+	CString folderName;
 	CFileFind file_find;
 	BOOL bWorking;
 	bWorking = file_find.FindFile(strFolder + ("\\*"));
@@ -240,9 +241,11 @@ HTREEITEM CFileView::ExtractFolder(CString strFolder, CString strName, _strlist&
 			//directory 
 			if (file_find.IsDirectory())
 			{
-				strSubPath = strFolder + ("\\") + file_find.GetFileName();
-				ExtractFolder(strSubPath, file_find.GetFileName(), filelist, hRes);
-
+				folderName = file_find.GetFileName();
+				if (folderName != "moon_db") {
+					strSubPath = strFolder + ("\\") + folderName;
+					ExtractFolder(strSubPath, file_find.GetFileName(), filelist, hRes);
+				}
 				//nCount++;
 			}
 			//file 

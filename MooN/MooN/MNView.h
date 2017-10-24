@@ -44,6 +44,9 @@ public:
 	
 	void DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType);
 	void DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes);
+	bool MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth);
+	void TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect);
+	bool IsSymbol(wchar_t ch);
 	void DoExtractBoundaryForSelected();
 	//============================//
 
@@ -92,6 +95,7 @@ public:
 	void UndoDeskewParagraph();
 	void ReExtractParagraph();
 	void ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang);
+	void EncodePage();
 
 	void ConfirmOCRRes();
 	void UpdateOCRCode(CString _strCode);

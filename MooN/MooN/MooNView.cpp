@@ -111,6 +111,15 @@ void CMooNView::SetTreeDragItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl)
 	if (m_pViewImage) {
 		m_pViewImage->ProcGenerateThumbnail();
 	}
+
+	HTREEITEM hChildItem = pCtrl->GetChildItem(hItem);
+	if (hChildItem == NULL) {  // No Child!! File
+		HTREEITEM hPItem = pCtrl->GetParentItem(hItem);
+		ProcSetSelectedItem(hPItem, pCtrl);
+	}
+	else {
+		ProcSetSelectedItem(hItem, pCtrl);
+	}
 }
 
 
@@ -138,7 +147,8 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 
 		// Add Image Data //
 		
-		SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);		
+		SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);	
+		
 		cnt++;
 
 	}
@@ -163,6 +173,7 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 				cCode = getHashCode(sz);
 				// Add Image Data //
 				SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);
+				
 				cnt++;
 			}
 

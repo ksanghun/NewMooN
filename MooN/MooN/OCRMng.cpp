@@ -41,8 +41,10 @@ bool COCRMng::InitOCRMng()
 	SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
 	SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
 
-	m_tessChi.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
-	m_tessKor.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
+	m_tessChi.SetVariable("tessedit_char_blacklist", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+//	m_tessChi.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
+//	m_tessKor.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
 
 	return true;
 }
@@ -94,7 +96,6 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 	if (ri != 0) {
 		do {
 			char* word = ri->GetUTF8Text(level);
-
 			float conf = ri->Confidence(level);
 			//	if (conf > 94.99f) continue;
 

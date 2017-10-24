@@ -94,6 +94,7 @@ public:
 	afx_msg void OnEnChangeEditKorSize();
 	afx_msg void OnEnChangeEditChiSize();
 	afx_msg void OnBnClickedBnAllDelOcrres();
+	afx_msg void OnBnClickedBnEncode();
 };
 
 

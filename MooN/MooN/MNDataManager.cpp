@@ -255,6 +255,8 @@ short CMNDataManager::SelectPages(unsigned long cCode)
 
 		if (iter_gr->second.nSlot == -1) {		// Selection
 			iter_gr->second.nSlot = GetEmptySlot();
+			m_yOffset -= DEFAULT_PAGE_SIZE;  // added
+		}
 			float xoffset = DEFAULT_X_OFFSET;
 			int i = 0;
 			for (i = 0; i < iter_gr->second.imgVec.size(); i++) {
@@ -269,25 +271,26 @@ short CMNDataManager::SelectPages(unsigned long cCode)
 				m_yOffset -= DEFAULT_PAGE_SIZE;
 			}
 			res = 1;
-		}
-		else {		// Deselection //
-			ReturnSlot(iter_gr->second.nSlot);
-			iter_gr->second.nSlot = -1;
-			float xoffset = DEFAULT_X_OFFSET;
-			int i = 0;
-			for (i = 0; i < iter_gr->second.imgVec.size(); i++) {
-				if (i % MAX_DESP_COLS == 0) {
-					xoffset = DEFAULT_X_OFFSET;
-					m_yOffset += DEFAULT_PAGE_SIZE;
-				}
-				xoffset += iter_gr->second.imgVec[i]->SetSelectionPosition(-1, xoffset, m_yOffset, true);
-			}
-			if (i % MAX_DESP_COLS == 0) {
-				xoffset = DEFAULT_X_OFFSET;
-				m_yOffset += DEFAULT_PAGE_SIZE;
-			}
-			res = 2;
-		}
+			m_yOffset += DEFAULT_PAGE_SIZE;  // added
+	//	}
+		//else {		// Deselection //
+		//	ReturnSlot(iter_gr->second.nSlot);
+		//	iter_gr->second.nSlot = -1;
+		//	float xoffset = DEFAULT_X_OFFSET;
+		//	int i = 0;
+		//	for (i = 0; i < iter_gr->second.imgVec.size(); i++) {
+		//		if (i % MAX_DESP_COLS == 0) {
+		//			xoffset = DEFAULT_X_OFFSET;
+		//			m_yOffset += DEFAULT_PAGE_SIZE;
+		//		}
+		//		xoffset += iter_gr->second.imgVec[i]->SetSelectionPosition(-1, xoffset, m_yOffset, true);
+		//	}
+		//	if (i % MAX_DESP_COLS == 0) {
+		//		xoffset = DEFAULT_X_OFFSET;
+		//		m_yOffset += DEFAULT_PAGE_SIZE;
+		//	}
+		//	res = 2;
+		//}
 	}
 	return res;
 }
@@ -631,7 +634,7 @@ int CMNDataManager::GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect)
 	outRect.width = inrect.width*fScale;
 	outRect.height = inrect.height*fScale;
 
-	int wcnt = outRect.width / _NORMALIZE_SIZE_H;
+	int wcnt = ((float)outRect.width / (float)_NORMALIZE_SIZE_H)+0.5f;
 	if (wcnt < 1) {		wcnt = 1;	}
 	if (wcnt > 8) {		wcnt = 8;	}
 
@@ -645,6 +648,10 @@ int CMNDataManager::GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect)
 
 void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 {
+	//cv::imshow("before", cutimg);
+	//DeSkew(cutimg);
+	//cv::imshow("after", cutimg);
+
 	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 	int classid = GetNomalizedWordSize(ocrres.rect, norRect) - 1;
 	int imgid = m_refImgClass[classid].nCurrImgId;
@@ -662,11 +669,11 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 
 		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
-
-		float confi = TemplateMatching(cutimg, imgword)+0.1f;
-		if (( confi > 0.80f)){ // && (ocrres.fConfidence < confi )){
-			memset(ocrres.strCode, 0x00, sizeof(ocrres.strCode));
-			memcpy(ocrres.strCode, m_refImgClass[classid].vecStr[pos], sizeof(m_refImgClass[classid].vecStr[pos]));
+		int clen = m_refImgClass[classid].maxCharLen;
+		float confi = TemplateMatching(cutimg, imgword)+0.12f;
+		if ((ocrres.fConfidence < confi )){  //( confi > 0.80f) && 
+			memset(ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+			memcpy(ocrres.strCode, m_refImgClass[classid].vecStr[pos], sizeof(wchar_t)*clen);
 			ocrres.fConfidence = confi;
 			if (ocrres.fConfidence > 1.0f)
 				ocrres.fConfidence = 1.0f;
@@ -677,8 +684,8 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 }
 float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 {
-	cv::imshow("src", src);
-	cv::imshow("dst", dst);
+	//cv::imshow("src", src);
+	//cv::imshow("dst", dst);
 
 	int result_cols = dst.cols - src.cols + 1;
 	int result_rows = dst.rows - src.rows + 1;
@@ -720,8 +727,7 @@ bool CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classi
 				return false;
 			}
 		}
-	}
-	
+	}	
 	return true;
 }
 
@@ -748,14 +754,15 @@ void CMNDataManager::DBTraining()
 					int w = (classid+1) * DB_IMGCHAR_SIZE;
 					int h = DB_IMGCHAR_SIZE;
 
-					norRect.x = (wordPosId % m_refImgClass[i].wNum)*w;
-					norRect.y = (wordPosId / m_refImgClass[i].wNum)*h;
+					norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
+					norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
 
 					cutimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
 					
-					wchar_t* strcode = new wchar_t[m_refImgClass[classid].maxCharLen];
-					memset(strcode, 0x00, sizeof(strcode));
-					memcpy(strcode, ocrRes[j].strCode, sizeof(strcode));
+					int clen = m_refImgClass[classid].maxCharLen;
+					wchar_t* strcode = new wchar_t[clen];
+					memset(strcode, 0x00, sizeof(wchar_t)*clen);
+					memcpy(strcode, ocrRes[j].strCode, sizeof(wchar_t)*clen);
 					m_refImgClass[classid].vecStr.push_back(strcode);
 
 					m_refImgClass[classid].needToUpdate = true;
@@ -843,4 +850,25 @@ void CMNDataManager::InitDataBaseFiles()
 			}
 		}
 	}
+}
+
+
+void CMNDataManager::DeSkew(cv::Mat& img)
+{
+	cv::Mat tmpimg = img.clone();
+	cv::bitwise_not(tmpimg, tmpimg);
+	
+	points.clear();
+	findNonZero(tmpimg, points);
+	cv::RotatedRect box = cv::minAreaRect(points);
+
+	double angle = box.angle;
+	if (angle < -45.)
+		angle += 90.;
+
+	cv::Mat rotMat, rotatedFrame, invRot;
+	rotMat = getRotationMatrix2D(cv::Point2f(tmpimg.cols*0.5f, tmpimg.rows*0.5f), angle, 1);
+	cv::warpAffine(img, img, rotMat, img.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+//	rotatedFrame.copyTo(img);
+
 }

@@ -98,6 +98,7 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_EN_CHANGE(IDC_EDIT_KOR_SIZE, &CFormProperties::OnEnChangeEditKorSize)
 	ON_EN_CHANGE(IDC_EDIT_CHI_SIZE, &CFormProperties::OnEnChangeEditChiSize)
 	ON_BN_CLICKED(IDC_BN_ALL_DEL_OCRRES, &CFormProperties::OnBnClickedBnAllDelOcrres)
+	ON_BN_CLICKED(IDC_BN_ENCODE, &CFormProperties::OnBnClickedBnEncode)
 END_MESSAGE_MAP()
 
 
@@ -534,4 +535,12 @@ void CFormProperties::OnBnClickedBnAllDelOcrres()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DeleteAllOCRRes();
+}
+
+
+void CFormProperties::OnBnClickedBnEncode()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->EncodePage();
 }
