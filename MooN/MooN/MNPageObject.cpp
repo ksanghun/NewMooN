@@ -35,12 +35,14 @@ CMNPageObject::CMNPageObject()
 	m_IsNeedToSave = false;
 	m_bImageChanged = false;
 	m_IsTbimg = false;
+	
 }
 
 
 CMNPageObject::~CMNPageObject()
 {
-	WritePageInfo();
+//	WritePageInfo();
+	UpdateDataBaseFiles();
 
 
 	if (m_texId > 0) {
@@ -174,7 +176,7 @@ GLuint CMNPageObject::LoadFullImage()
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false)) {
 
 		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 128, 255, cv::THRESH_OTSU);
 
 		// Save original size //
 		m_nImgHeight = m_fullImg.rows;
@@ -870,6 +872,15 @@ void CMNPageObject::AddParagraph(cv::Rect rect, bool IsHori, float deskew)
 	m_paragraph.push_back(para);
 }
 
+void CMNPageObject::RemoveNoise(cv::Rect rect)
+{
+	if (m_fullImg.ptr()) {
+		m_bImageChanged = true;
+		m_fullImg(rect).setTo(cv::Scalar(255, 255, 255));
+	}
+
+	UpdateTexture(m_fullImg);
+}
 void CMNPageObject::DeSkewImg(int pid, float fAngle)
 {
 	if (m_fullImg.ptr()) {
@@ -924,7 +935,7 @@ void CMNPageObject::UpdateTexture(cv::Mat& texImg)
 	if (texImg.ptr()) {
 		m_srcGrayImg.release();
 		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 128, 255, cv::THRESH_OTSU);
 
 		// Save original size //
 		cv::Mat timg = texImg.clone();
@@ -1097,14 +1108,11 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 			fread(&data, sizeof(stParapgraphInfo), 1, fp);	
 			m_paragraph.push_back(data);			
 		}
-
-
-
+		
 		//char char_str[_MAX_WORD_SIZE] = { 0, };
 		//wchar_t strUnicode[_MAX_WORD_SIZE] = { 0, };
 
 		//fread(char_str, _MAX_WORD_SIZE, 1, fp);
-
 		//// Multi to Unicode //
 		//int nLen = MultiByteToWideChar(CP_ACP, 0, &char_str[0], strlen(char_str), NULL, NULL);		
 		//MultiByteToWideChar(CP_ACP, 0, char_str, strlen(char_str), strUnicode, nLen);
@@ -1118,50 +1126,127 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 	return IsLoad;
 }
 
-
-void CMNPageObject::WritePageInfo()
+void CMNPageObject::UpdateSearchDBFile()
 {
-	USES_CONVERSION;
+	int wnum = m_ocrResult.size();
+	char char_str[_MAX_WORD_SIZE * 2];
+	for (int i = 0; i < wnum; i++) {
+		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
+
+		_stSDBWord sdword;
+		sdword.strcode = getHashCode(char_str);
+		sdword.rect = m_ocrResult[i].rect;
+		sdword.fConfi = m_ocrResult[i].fConfidence;
+		sdword.fDiff = 0.0f;
+
+		SINGLETON_DataMng::GetInstance()->AddSDBItem(sdword, m_ocrResult[i].strCode);
+	}
+
+	//bool bNeedToUpdateTable = false;
+
+	//USES_CONVERSION;
+	//CString path = GetPInfoPath(L".sdb");
+	//char* sz = T2A(path);
+
+	//FILE* fp = 0;
+	//fopen_s(&fp, sz, "wb");
+	//if (fp) {
+	//	// Write header 8 byte: paragraph number, word number//
+	//	int wnum = m_ocrResult.size();
+	//	char char_str[_MAX_WORD_SIZE * 2];
+	//	for (int i = 0; i < wnum; i++) {
+	//		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+	//		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
+	//		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
+	//		
+	//		_stSDBFormat sdword;
+	//		sdword.strcode = getHashCode(char_str);
+	//		sdword.rect = m_ocrResult[i].rect;
+	//		sdword.fConfi = m_ocrResult[i].fConfidence;
+	//		sdword.fDiff = 0.0f;		
+
+	//		fwrite(&sdword, sizeof(_stSDBFormat), 1, fp);
+
+	//		if (m_mapWordTable.find(sdword.strcode) == m_mapWordTable.end()) {
+	//			_stSDBWord tableWord;
+	//			memcpy(tableWord.str, m_ocrResult[i].strCode, sizeof(wchar_t)*(_MAX_WORD_SIZE));
+	//			tableWord.hcode = sdword.strcode;
+	//			m_mapWordTable[sdword.strcode] = tableWord;
+	//			bNeedToUpdateTable = true;
+	//		}
+
+	//	}
+	//	fclose(fp);
+	//}
+
+	//// Update Word Table //
+	//if (bNeedToUpdateTable) {
+	//	path = GetPInfoPath(L".htbl");
+	//	sz = T2A(path);
+	//	fopen_s(&fp, sz, "wb");
+	//	if (fp) {
+	//		int wnum = m_mapWordTable.size();
+	//		for (int i = 0; i < wnum; i++) {
+	//			fwrite(&m_mapWordTable[i].hcode, sizeof(unsigned int), 1, fp);
+	//			fwrite(&m_mapWordTable[i].str, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
+	//		}
+	//		fclose(fp);
+	//	}
+	//}
+}
+
+
+void CMNPageObject::UpdateDataBaseFiles()
+{
 	if (m_IsNeedToSave) {
-		CString path = GetPInfoPath(L".pinfo");		
-		char* sz =  T2A(path);
-
-		FILE* fp = 0;
-		fopen_s(&fp, sz, "wb");
-		if (fp) {
-			// Write header 8 byte: paragraph number, word number//
-			int pnum = m_paragraph.size();
-			int wnum = m_ocrResult.size();
-
-			fwrite(&m_nImgWidth, sizeof(unsigned short), 1, fp);
-			fwrite(&m_nImgHeight, sizeof(unsigned short), 1, fp);
-			fwrite(&wnum, sizeof(int), 1, fp);
-			fwrite(&pnum, sizeof(int), 1, fp);
-			
-			for (int i = 0; i < wnum; i++) {
-				m_ocrResult[i].bNeedToDB = false;  // should be mandatory //
-				fwrite(&m_ocrResult[i], sizeof(_stOCRResult), 1, fp);
-			}
-
-			for (int i = 0; i < pnum; i++) {
-				fwrite(&m_paragraph[i], sizeof(stParapgraphInfo), 1, fp);
-			}
-			fclose(fp);
-		}	
-
-		if (m_IsTbimg == false) {
-			CString imgpath = GetPInfoPath(L"_tb.jp2");
-			char* szimg = T2A(imgpath);
-			cv::imwrite(szimg, m_thumbImg);
-		}		
+		UpdateSearchDBFile();
+		WritePageInfo();		
 	}
 
 	if (m_bImageChanged) {
+		USES_CONVERSION;
 		CString imgpath = GetPInfoPath(L".jp2");
 		char* szimg = T2A(imgpath);
 		cv::imwrite(szimg, m_srcGrayImg);
 	}
-	
+}
+
+void CMNPageObject::WritePageInfo()
+{
+	USES_CONVERSION;
+	CString path = GetPInfoPath(L".pinfo");
+	char* sz = T2A(path);
+
+	FILE* fp = 0;
+	fopen_s(&fp, sz, "wb");
+	if (fp) {
+		// Write header 8 byte: paragraph number, word number//
+		int pnum = m_paragraph.size();
+		int wnum = m_ocrResult.size();
+
+		fwrite(&m_nImgWidth, sizeof(unsigned short), 1, fp);
+		fwrite(&m_nImgHeight, sizeof(unsigned short), 1, fp);
+		fwrite(&wnum, sizeof(int), 1, fp);
+		fwrite(&pnum, sizeof(int), 1, fp);
+
+		for (int i = 0; i < wnum; i++) {
+			m_ocrResult[i].bNeedToDB = false;  // should be mandatory //
+			fwrite(&m_ocrResult[i], sizeof(_stOCRResult), 1, fp);
+		}
+
+		for (int i = 0; i < pnum; i++) {
+			fwrite(&m_paragraph[i], sizeof(stParapgraphInfo), 1, fp);
+		}
+		fclose(fp);
+	}
+
+	if (m_IsTbimg == false) {		// thumbnail image shoudl followed to info file //
+		CString imgpath = GetPInfoPath(L"_tb.jp2");
+		char* szimg = T2A(imgpath);
+		cv::imwrite(szimg, m_thumbImg);
+	}
 }
 
 
@@ -1237,7 +1322,8 @@ void CMNPageObject::EncodeTexBox()
 	//	fopen_s(&fp, (CStringA)strPath, "w");
 	//	fp = _wfopen(strPath, L"w");
 	CFile cfile;
-	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeNoTruncate | CFile::modeCreate))
+//	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeNoTruncate | CFile::modeCreate))
+	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
 	{
 		return;
 	}
@@ -1272,12 +1358,12 @@ void CMNPageObject::EncodeTexBox()
 			int len = wcslen(vecEncode[i].str) *2;
 			cfile.Write(vecEncode[i].str, len);
 
-			//if (i < wNum - 1) {
-			//	int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
-			//	if (diff > averHeight / 4) {
+			if (i < wNum - 1) {
+				int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
+				if (diff > averHeight / 4) {
 					cfile.Write(L" ", 2);		// Space
-/*				}
-			}*/			
+				}
+			}		
 		}
 	}
 	cfile.Close();

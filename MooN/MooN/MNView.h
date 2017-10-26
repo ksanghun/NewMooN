@@ -33,12 +33,14 @@ public:
 	void DoOCR();
 	void DoOCRForPage(CMNPageObject* pPage);
 
+	// OCR POP-UP Menu //
 	void OcrEnglishword();
 	void OcrEnglishChar();
 	void OcrChiChar();
 	void OcrChiWord();
 	void OcrKorWord();
 	void OcrKorChar();
+	void RemoveNoise();
 
 	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
 	

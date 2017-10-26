@@ -1433,7 +1433,7 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 			std::vector<_stOCRResult> ocrTmp;
 			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
 		
-			if ((averConf > ocrRes[k].fConfidence*1.1f) && (averConf > 0.65f)) {
+			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.65f)) {
 				ocrRes[k].type = 100; 
 				for (int m = 0; m < ocrTmp.size(); m++) {
 					ocrTmp[m].rect.x += ocrRes[k].rect.x;
@@ -1555,8 +1555,9 @@ void CMNView::TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect)
 							}
 						}
 						// Update texbox rect size;
-						ocrRes[k].rect = cv::Rect(minx, miny, (maxx - minx), (maxy - miny));
-
+						if (minx < 9999) {
+							ocrRes[k].rect = cv::Rect(minx, miny, (maxx - minx), (maxy - miny));
+						}
 					}
 				}
 			}
@@ -1587,7 +1588,7 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 	// Flush OCR Results // !!!!
 	// 1. Merge text box if they are duplicated //
 	int depth = 0;
-	MeargingtTextBox(ocrRes, depth);
+//	MeargingtTextBox(ocrRes, depth);
 	TrimTextBox(ocrRes, rect);
 
 	std::vector<_stOCRResult> ocrAdd;
@@ -1668,6 +1669,7 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 			m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
 		}
 	}
+
 	// COR Correctness //
 	DoOCCorrection(img, rect, pPage, ocrRes);
 	
@@ -1895,7 +1897,14 @@ void CMNView::OcrChiWord()
 	}
 }
 
-
+void CMNView::RemoveNoise()
+{
+	if (m_pSelectPageForCNS) {
+		RECT2D rect = GetSelectedAreaForCNS();
+		cv::Rect r(rect.x1, rect.y1, rect.width, rect.height);
+		m_pSelectPageForCNS->RemoveNoise(r);
+	}
+}
 void CMNView::OcrKorChar()
 {
 	if (m_pSelectPageForCNS) {
@@ -2097,12 +2106,12 @@ static UINT ThreadDoOCR(LPVOID lpParam)
 void CMNView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	// TODO: Add your message handler code here
-	if (m_selOCRId >= 0) {
+//	if (m_selOCRId >= 0) {
 		CMenu menu;
 		menu.LoadMenuW(IDR_MENU_OCR);
 		CMenu* pMenu = menu.GetSubMenu(0);
 		pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, AfxGetMainWnd());
-	}
+//	}
 	
 }
 

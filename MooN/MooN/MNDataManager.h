@@ -121,6 +121,10 @@ public:
 
 	void SetUserDataFolder(CString str) { m_strUserDataFolder = str; }
 	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
+
+	void AddSDBItem(_stSDBWord item, wchar_t* strCode);
+	void UpdateSDBFiles();
+	void LoadSDBFiles();
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -131,6 +135,16 @@ private:
 	std::vector<CMNPageObject*> m_vecImgData;
 	std::map<unsigned long, CMNPageObject*> m_mapImageData;
 	std::map<unsigned long, stPageGroup> m_mapGrupImg;
+
+
+	// For Search DB ======================================//
+	std::map<unsigned int, _stSDBWordTable> m_mapWordTable;
+	std::map<unsigned int, _stSDB> m_mapSDB;
+	//=====================================================//
+
+	bool m_bIsUpdateTable;
+	
+
 	bool m_bSlot[MAX_SLOT_SIZE];
 	float m_xOffset, m_yOffset;
 
@@ -145,7 +159,7 @@ private:
 	stDBRefImage m_refImgClass[DB_CLASS_NUM];
 	void InitDataBaseFiles();
 	void UpdateImgClassDB();
-	void UpdateImgClassImgCodes();
+//	void UpdateImgClassImgCodes();
 	void DeSkew(cv::Mat& img);
 	//=====================//
 

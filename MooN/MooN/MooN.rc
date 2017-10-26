@@ -369,6 +369,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Korean Word",                 ID_OCR_KOREANWO
         MENUITEM "Korean Character",            ID_OCR_KOREANCHARACTER
+        MENUITEM SEPARATOR
+        MENUITEM "Remove Noise",                ID_OCR_REMOVENOISE
     END
 END
 

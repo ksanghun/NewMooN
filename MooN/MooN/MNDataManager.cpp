@@ -38,6 +38,8 @@ CMNDataManager::CMNDataManager()
 	mtSetPoint3D(&m_AccColor[0], 0.2f, 1.0f, 0.0f);
 
 	m_maxCutWidth = _NORMALIZE_SIZE_W + 5;
+
+	m_bIsUpdateTable = false;
 }
 
 
@@ -66,6 +68,8 @@ CMNDataManager::~CMNDataManager()
 		}
 	}
 
+	
+	UpdateSDBFiles();
 }
 
 CMNPageObject* CMNDataManager::GetPageByOrderID(int idx)
@@ -130,6 +134,7 @@ void CMNDataManager::InitData()
 
 
 	InitDataBaseFiles();
+	LoadSDBFiles();
 }
 
 void CMNDataManager::PopImageDataSet(unsigned long _pcode)
@@ -871,4 +876,130 @@ void CMNDataManager::DeSkew(cv::Mat& img)
 	cv::warpAffine(img, img, rotMat, img.size(), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
 //	rotatedFrame.copyTo(img);
 
+}
+
+void CMNDataManager::AddSDBItem(_stSDBWord item, wchar_t* strCode)
+{
+	// Update HashTable //
+	if (m_mapWordTable.find(item.strcode) == m_mapWordTable.end()) {
+		_stSDBWordTable htable;
+		memcpy(htable.str, strCode, sizeof(wchar_t)*(_MAX_WORD_SIZE));
+		m_mapWordTable[item.strcode] = htable;
+		m_bIsUpdateTable = true;
+	}
+
+	// Add SDB item //
+	if (m_mapSDB.find(item.strcode) == m_mapSDB.end()) {
+		_stSDB sdb;
+		sdb.push_back(item);
+		m_mapSDB[item.strcode] = sdb;
+	}
+	else {
+		m_mapSDB[item.strcode].push_back(item);
+	}
+
+
+
+}
+
+void CMNDataManager::LoadSDBFiles()
+{
+	USES_CONVERSION;
+	CString strFile;
+	char* sz = 0;
+
+
+	// Read InfoFile First //
+	strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
+	sz = T2A(strFile);
+	FILE* fp = 0;
+	fopen_s(&fp, sz, "rb");
+	if (fp) {
+		int num = 0, cLen = 0;
+		fread(&num, sizeof(int), 1, fp);
+		unsigned int hcode;
+		_stSDBWordTable strCode;	
+		for (int j = 0; j < num; j++) {
+			fread(&hcode, sizeof(unsigned int), 1, fp);
+			fread(&strCode.str, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
+			m_mapWordTable[hcode] = strCode;
+
+		}
+		fclose(fp);
+	}
+
+	//=====================================//
+	strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
+	sz = T2A(strFile);
+
+	FILE* fpb = 0;
+	fopen_s(&fpb, sz, "rb");
+	if (fpb) {
+		int wnum = 0;
+		fread(&wnum, sizeof(int), 1, fpb);
+
+		for (int i = 0; i < wnum; i++) {
+			int pnum = 0;
+			unsigned int hcode = 0;
+			fread(&pnum, sizeof(int), 1, fpb);
+			fread(&hcode, sizeof(unsigned int), 1, fpb);
+
+			for (int j = 0; j < pnum; j++) {
+				_stSDBWord sword;
+				fread(&sword, sizeof(_stSDBWord), 1, fpb);
+				m_mapSDB[hcode].push_back(sword);
+			}
+		}
+		fclose(fpb);
+	}
+}
+
+void CMNDataManager::UpdateSDBFiles()
+{
+	USES_CONVERSION;
+
+	CString strFile;
+	char* sz = 0;
+	// Write code Table if it is needed //
+	if (m_bIsUpdateTable) {		
+		strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
+		sz = T2A(strFile);
+
+		FILE* fp = 0;
+		fopen_s(&fp, sz, "wb");
+		if (fp) {
+			int wnum = m_mapWordTable.size();
+			std::map<unsigned int, _stSDBWordTable>::iterator iter= m_mapWordTable.begin();
+
+			fwrite(&wnum, sizeof(int), 1, fp);
+			for (; iter != m_mapWordTable.end(); iter++) {
+				fwrite(&iter->first, sizeof(unsigned int), 1, fp);
+				fwrite(&iter->second, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
+			}
+			fclose(fp);
+		}
+	}
+	//=================================================================
+
+	strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
+	sz = T2A(strFile);
+
+	FILE* fp = 0;
+	fopen_s(&fp, sz, "wb");
+	if (fp) {
+		int wnum = m_mapSDB.size();
+		fwrite(&wnum, sizeof(int), 1, fp);
+		std::map<unsigned int, _stSDB>::iterator iter = m_mapSDB.begin();
+		for (; iter != m_mapSDB.end(); iter++) {
+
+			int pnum = iter->second.size();
+			fwrite(&pnum, sizeof(unsigned int), 1, fp);
+			fwrite(&iter->first, sizeof(unsigned int), 1, fp);
+
+			for (int i=0; i<pnum; i++) {
+				fwrite(&iter->second[i], sizeof(_stSDBWord), 1, fp);
+			}
+		}
+		fclose(fp);
+	}
 }

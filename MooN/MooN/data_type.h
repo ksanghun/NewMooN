@@ -492,6 +492,18 @@ struct _stOCRResult {
 	};
 };
 
+struct _stSDBWord {
+	unsigned int strcode;
+	cv::Rect rect;
+	float fConfi;
+	float fDiff;
+};
+
+typedef std::vector<_stSDBWord> _stSDB;
+
+struct _stSDBWordTable {
+	wchar_t str[_MAX_WORD_SIZE];
+};
 
 struct _stParaInfoFormat {
 	unsigned short x, y, width, height;	// position and size
@@ -499,6 +511,7 @@ struct _stParaInfoFormat {
 	unsigned char isDeskew;
 	unsigned short nAlign;
 };
+
 
 
 #pragma pack()

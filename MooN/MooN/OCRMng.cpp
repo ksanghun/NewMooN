@@ -176,7 +176,7 @@ void COCRMng::TestFunc()
 		std::vector<_stOCRResult> boundRect;
 		cv::Mat image = cv::imread(sz);
 		cv::cvtColor(image, image, CV_BGR2GRAY);
-		cv::threshold(image, image, 125, 255, cv::THRESH_BINARY);
+		cv::threshold(image, image, 128, 255, cv::THRESH_BINARY);
 	//	cv::imshow("Binary", image);
 
 		extractWithOCR(image, boundRect, GetEngTess(), tesseract::RIL_WORD, 1.0f, 0);

@@ -139,7 +139,6 @@
 #define IDC_SLIDER_CONFI                1035
 #define IDC_BN_ALL_DEL_OCRRES           1036
 #define IDC_EDIT_CONFI                  1037
-#define IDC_BUTTON2                     1038
 #define IDC_BN_ENCODE                   1038
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
@@ -169,13 +168,14 @@
 #define ID_OCR_KOREANWORD32795          32795
 #define ID_OCR_KOREANWO                 32796
 #define ID_ANALYSIS_DATATRAINING        32797
+#define ID_OCR_REMOVENOISE              32798
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32798
+#define _APS_NEXT_COMMAND_VALUE         32799
 #define _APS_NEXT_CONTROL_VALUE         1039
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

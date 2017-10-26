@@ -98,6 +98,7 @@ public:
 	afx_msg void OnOcrKoreanwo();
 	afx_msg void OnOcrKoreancharacter();
 	afx_msg void OnAnalysisDatatraining();
+	afx_msg void OnOcrRemovenoise();
 };
 
 

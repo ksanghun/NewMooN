@@ -49,6 +49,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_OCR_KOREANWO, &CMainFrame::OnOcrKoreanwo)
 	ON_COMMAND(ID_OCR_KOREANCHARACTER, &CMainFrame::OnOcrKoreancharacter)
 	ON_COMMAND(ID_ANALYSIS_DATATRAINING, &CMainFrame::OnAnalysisDatatraining)
+	ON_COMMAND(ID_OCR_REMOVENOISE, &CMainFrame::OnOcrRemovenoise)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -782,4 +783,12 @@ void CMainFrame::OnAnalysisDatatraining()
 	BeginWaitCursor();
 	SINGLETON_DataMng::GetInstance()->DBTraining();
 	EndWaitCursor();
+}
+
+
+void CMainFrame::OnOcrRemovenoise()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->RemoveNoise();
 }

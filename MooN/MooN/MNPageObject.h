@@ -44,6 +44,8 @@ struct stParapgraphInfo
 //};
 
 
+
+
 class CMNPageObject
 {
 public:
@@ -59,6 +61,7 @@ public:
 	void SetIsSearched(bool _IsSearch) { m_bIsSearching = _IsSearch; }
 	void SetSelMatchItem(int _selid);// { m_selMatchItemId = _selid; }
 	void DeSkewImg(int pid, float fAngle);
+	void RemoveNoise(cv::Rect rect);
 	void UnDoDeSkewImg(int pid);
 	void UpdateTexture(cv::Mat& texImg);
 
@@ -130,6 +133,8 @@ public:
 
 	CString GetPInfoPath(CString strExtension);
 	void WritePageInfo();
+	void UpdateSearchDBFile();
+	void UpdateDataBaseFiles();
 	bool LoadPageInfo(unsigned short& width, unsigned short& height);
 	void EncodeTexBox();
 
@@ -183,6 +188,7 @@ private:
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;
 	std::vector<_stOCRResult> m_ocrResult;
+	
 
 	cv::Mat m_fullImg;
 	cv::Mat m_thumbImg;
