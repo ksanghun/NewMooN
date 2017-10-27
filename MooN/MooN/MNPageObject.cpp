@@ -1056,9 +1056,27 @@ cv::Rect CMNPageObject::GetSelParaRect(int selid)
 	return cv::Rect();
 }
 
+void CMNPageObject::ClearDBSearchResult()
+{
+	m_sdbResult.clear();
+}
+void CMNPageObject::AddDBSearchResult(cv::Rect _rect)
+{
+	stDBSearchRes res;
+	res.rect = _rect;
+	m_sdbResult.push_back(res);
+}
+
 void CMNPageObject::AddOCRResult(_stOCRResult res)
 {
 	m_IsNeedToSave = true;
+
+	char char_str[_MAX_WORD_SIZE * 2];
+	memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+	int char_str_len = WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, NULL, 0, NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, char_str, char_str_len, 0, 0);
+	res.hcode = getHashCode(char_str);
+
 	m_ocrResult.push_back(res);
 }
 
@@ -1101,6 +1119,13 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 			res.init();
 			fread(&res, sizeof(_stOCRResult), 1, fp);
 			m_ocrResult.push_back(res);
+
+			// Generate SDB MAP //
+		//	if()
+
+
+
+
 		}
 
 		for (int i = 0; i < pnum; i++) {
@@ -1126,8 +1151,10 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 	return IsLoad;
 }
 
-void CMNPageObject::UpdateSearchDBFile()
+void CMNPageObject::WriteSearchDBFile()
 {
+	std::map<unsigned int, _stSDB> m_mapSDB;
+
 	int wnum = m_ocrResult.size();
 	char char_str[_MAX_WORD_SIZE * 2];
 	for (int i = 0; i < wnum; i++) {
@@ -1137,12 +1164,37 @@ void CMNPageObject::UpdateSearchDBFile()
 
 		_stSDBWord sdword;
 		sdword.strcode = getHashCode(char_str);
+		sdword.filecode = nCode;
 		sdword.rect = m_ocrResult[i].rect;
 		sdword.fConfi = m_ocrResult[i].fConfidence;
 		sdword.fDiff = 0.0f;
 
-		SINGLETON_DataMng::GetInstance()->AddSDBItem(sdword, m_ocrResult[i].strCode);
+		m_mapSDB[sdword.strcode].push_back(sdword);		
 	}
+
+	USES_CONVERSION;
+	CString path = GetPInfoPath(L".sdb");
+	char* sz = T2A(path);
+
+	FILE* fp = 0;
+	fopen_s(&fp, sz, "wb");
+	if (fp) {
+		int wnum = m_mapSDB.size();
+		fwrite(&wnum, sizeof(int), 1, fp);
+		std::map<unsigned int, _stSDB>::iterator iter = m_mapSDB.begin();
+		for (; iter != m_mapSDB.end(); iter++) {
+
+			int pnum = iter->second.size();
+			fwrite(&pnum, sizeof(unsigned int), 1, fp);
+			fwrite(&iter->first, sizeof(unsigned int), 1, fp);
+
+			for (int i=0; i<pnum; i++) {
+				fwrite(&iter->second[i], sizeof(_stSDBWord), 1, fp);
+			}
+		}
+		fclose(fp);
+	}
+	m_mapSDB.clear();
 
 	//bool bNeedToUpdateTable = false;
 
@@ -1201,7 +1253,7 @@ void CMNPageObject::UpdateSearchDBFile()
 void CMNPageObject::UpdateDataBaseFiles()
 {
 	if (m_IsNeedToSave) {
-		UpdateSearchDBFile();
+		WriteSearchDBFile();
 		WritePageInfo();		
 	}
 
@@ -1427,4 +1479,43 @@ void CMNPageObject::EncodeTexBox()
 	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
 	}
 	*/
+}
+
+
+void CMNPageObject::DrawSDBItem()
+{
+	glPushMatrix();
+	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
+
+	if (m_sdbResult.size() > 0) {
+		// Draw detected position //
+		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+		glPushMatrix();
+		glScalef(m_fXScale, m_fYScale, 1.0f);
+		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
+
+		
+		for (int i = 0; i < m_sdbResult.size(); i++) {
+			glColor4f(1.0f, 1.0f, 0.0f, 0.5f);
+			glBegin(GL_QUADS);
+			glVertex3f(m_sdbResult[i].rect.x, m_nImgHeight - m_sdbResult[i].rect.y, 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x, m_nImgHeight - (m_sdbResult[i].rect.y + m_sdbResult[i].rect.height), 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x + m_sdbResult[i].rect.width, m_nImgHeight - (m_sdbResult[i].rect.y + m_sdbResult[i].rect.height), 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x + m_sdbResult[i].rect.width, m_nImgHeight - m_sdbResult[i].rect.y, 0.0f);
+			glEnd();
+
+
+			glColor4f(1.0f, 1.0f, 0.0f, 0.99f);
+			glBegin(GL_LINE_STRIP);
+			glVertex3f(m_sdbResult[i].rect.x, m_nImgHeight - m_sdbResult[i].rect.y, 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x, m_nImgHeight - (m_sdbResult[i].rect.y + m_sdbResult[i].rect.height), 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x + m_sdbResult[i].rect.width, m_nImgHeight - (m_sdbResult[i].rect.y + m_sdbResult[i].rect.height), 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x + m_sdbResult[i].rect.width, m_nImgHeight - m_sdbResult[i].rect.y, 0.0f);
+			glVertex3f(m_sdbResult[i].rect.x, m_nImgHeight - m_sdbResult[i].rect.y, 0.0f);
+			glEnd();
+		}
+
+		glPopMatrix();
+	}
+	glPopMatrix();
 }

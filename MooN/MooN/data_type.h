@@ -13,7 +13,7 @@
 
 #define _PAGE_RES 512
 #define _MAX_WORD_SIZE 32
-
+#define THUMBNAIL_SIZE 64
 //#define _IMGICON_SIZE 100.0f
 //#define _MAX_TREE_DEPTH 7
 
@@ -480,6 +480,7 @@ struct _stOCRResult {
 	cv::Rect rect;
 	float fConfidence;
 	wchar_t strCode[_MAX_WORD_SIZE];
+	unsigned int hcode;
 	int type;  // 0 Eng, 1: chi, 2: Kor
 	bool bNeedToDB;
 
@@ -489,10 +490,12 @@ struct _stOCRResult {
 		type = 0;
 		memset(strCode, 0x00, sizeof(strCode));
 		bNeedToDB = false;
+		hcode = 0;
 	};
 };
 
 struct _stSDBWord {
+	unsigned int filecode;
 	unsigned int strcode;
 	cv::Rect rect;
 	float fConfi;

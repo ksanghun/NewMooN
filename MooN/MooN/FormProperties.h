@@ -95,6 +95,8 @@ public:
 	afx_msg void OnEnChangeEditChiSize();
 	afx_msg void OnBnClickedBnAllDelOcrres();
 	afx_msg void OnBnClickedBnEncode();
+	afx_msg void OnBnClickedBnKeywordSearch();
+	CString m_editKeyword;
 };
 
 

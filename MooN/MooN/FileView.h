@@ -3,7 +3,16 @@
 
 #include "ViewTree.h"
 #include "DragDropTreeCtrl.h"
-typedef	std::vector<CString> _strlist;
+
+
+struct _stTreeFileInfo {
+	CString strPath;
+	CString strFile;
+};
+
+typedef	std::vector<_stTreeFileInfo> _strlist;
+
+
 
 class CFileViewToolBar : public CMFCToolBar
 {

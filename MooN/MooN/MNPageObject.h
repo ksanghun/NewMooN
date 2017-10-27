@@ -34,6 +34,11 @@ struct stParapgraphInfo
 //	POINT3D color;
 };
 
+struct stDBSearchRes
+{
+	cv::Rect rect;
+};
+
 //struct stParapgraphInfo
 //{
 //	cv::Rect rect;
@@ -75,6 +80,7 @@ public:
 	unsigned short GetImgHeight() { return m_nImgHeight; };
 	unsigned long GetCode() { return nCode; }
 	unsigned long GetPCode() { return parentCode; }
+
 	float GetfXScale() { return m_fXScale; }
 	float GetfYScale() { return m_fYScale; }
 	CString GetPath() { return m_strPath; };
@@ -103,6 +109,7 @@ public:
 	void DrawOCRResForPick();
 	void DrawParagraphForPick();
 	void DrawSelectedParagraph(int selid);
+	void DrawSDBItem();
 	//====================================//
 
 	void RotatePos(float fSpeed);
@@ -129,11 +136,13 @@ public:
 	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }
 	std::vector<_stOCRResult>& GetVecOCRResult() { return m_ocrResult; }
 	void AddOCRResult(_stOCRResult res);
+	void AddDBSearchResult(cv::Rect _rect);
+	void ClearDBSearchResult();
 
 
 	CString GetPInfoPath(CString strExtension);
 	void WritePageInfo();
-	void UpdateSearchDBFile();
+	void WriteSearchDBFile();
 	void UpdateDataBaseFiles();
 	bool LoadPageInfo(unsigned short& width, unsigned short& height);
 	void EncodeTexBox();
@@ -188,6 +197,8 @@ private:
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;
 	std::vector<_stOCRResult> m_ocrResult;
+	std::vector<stDBSearchRes> m_sdbResult;
+	
 	
 
 	cv::Mat m_fullImg;

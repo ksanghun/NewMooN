@@ -28,6 +28,7 @@ CFormProperties::CFormProperties()
 	, m_fConfidence(0)
 	, m_bLineBox(TRUE)
 	, m_editConfi(80)
+	, m_editKeyword(_T(""))
 {
 }
 
@@ -67,6 +68,7 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_CONFI, m_sliderConfi);
 	DDX_Text(pDX, IDC_EDIT_CONFI, m_editConfi);
 	DDV_MinMaxLong(pDX, m_editConfi, 0, 100);
+	DDX_Text(pDX, IDC_EDIT_KEYWORD_SEARCH, m_editKeyword);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -99,6 +101,7 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_EN_CHANGE(IDC_EDIT_CHI_SIZE, &CFormProperties::OnEnChangeEditChiSize)
 	ON_BN_CLICKED(IDC_BN_ALL_DEL_OCRRES, &CFormProperties::OnBnClickedBnAllDelOcrres)
 	ON_BN_CLICKED(IDC_BN_ENCODE, &CFormProperties::OnBnClickedBnEncode)
+	ON_BN_CLICKED(IDC_BN_KEYWORD_SEARCH, &CFormProperties::OnBnClickedBnKeywordSearch)
 END_MESSAGE_MAP()
 
 
@@ -544,3 +547,15 @@ void CFormProperties::OnBnClickedBnEncode()
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->EncodePage();
 }
+
+
+void CFormProperties::OnBnClickedBnKeywordSearch()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	SINGLETON_DataMng::GetInstance()->DoKeywordSearch(m_editKeyword);
+
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->InitCamera();
+}
+

@@ -128,7 +128,7 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 	USES_CONVERSION;	char* sz = 0;
 
 	CString strPath, strPName, strName;
-	unsigned long pCode = 0, cCode = 0;
+	unsigned long pCode = 0, cCode = 0, nameCode = 0;
 	HTREEITEM hChildItem = pCtrl->GetChildItem(_item);
 
 	if (hChildItem == NULL) {  // No Child!! File
@@ -145,10 +145,9 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 		sz = T2A(strPath);
 		cCode = getHashCode(sz);
 
-		// Add Image Data //
-		
-		SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);	
-		
+
+		// Add Image Data //		
+		SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);			
 		cnt++;
 
 	}
@@ -171,6 +170,8 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 				//==================================//
 				char* sz = T2A(strPath);
 				cCode = getHashCode(sz);
+				sz = T2A(strName);
+				nameCode = getHashCode(sz);
 				// Add Image Data //
 				SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);
 				

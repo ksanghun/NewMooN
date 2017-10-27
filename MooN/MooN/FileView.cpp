@@ -4,6 +4,7 @@
 #include "FileView.h"
 #include "Resource.h"
 #include "MooN.h"
+#include "MNDataManager.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -89,6 +90,12 @@ void CFileView::FillFileView(CString strFolder)
 
 	_strlist filelist;
 	ExtractFolder(strFolder, strFolder, filelist, hRoot);
+
+
+	// Update DB Table & Generate SDB Files //
+	for (int i = 0; i < filelist.size(); i++) {
+		SINGLETON_DataMng::GetInstance()->InitSDB(filelist[i].strPath, filelist[i].strFile);
+	}
 }
 
 void CFileView::OnContextMenu(CWnd* pWnd, CPoint point)
@@ -252,9 +259,12 @@ HTREEITEM CFileView::ExtractFolder(CString strFolder, CString strName, _strlist&
 			else
 			{
 				strFileName = strFolder + ("\\") + file_find.GetFileName();
-
 				if (IsSupportFormat(strFileName)) {
-					filelist.push_back(strFileName);
+
+					_stTreeFileInfo fileInfo;
+					fileInfo.strPath = strFileName;
+					fileInfo.strFile = file_find.GetFileName();
+					filelist.push_back(fileInfo);
 					m_wndFileView.InsertItem(file_find.GetFileName(), 3, 3, hRes);
 				}
 

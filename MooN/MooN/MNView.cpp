@@ -15,7 +15,7 @@ enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, 
 #define MAX_CAM_FOV 45.0f
 
 #define ANI_FRAME_CNT 10
-#define THUMBNAIL_SIZE 64
+
 
 CMNView::CMNView()
 {
@@ -188,6 +188,7 @@ void CMNView::DrawBGPageAni()
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->RotatePos(1.0f);
 		vecImg[i]->DrawMatchItem();
+		vecImg[i]->DrawSDBItem();
 
 		if(m_bIsShowParagraph)
 			vecImg[i]->DrawParagraph(m_selParaId);
@@ -205,6 +206,7 @@ void CMNView::DrawBGPage()
 		if (m_bIsShowParagraph)
 			vecImg[i]->DrawParagraph(m_selParaId);
 	//	vecImg[i]->DrawOCRRes();
+		vecImg[i]->DrawSDBItem();
 	}
 	glPointSize(1);
 }

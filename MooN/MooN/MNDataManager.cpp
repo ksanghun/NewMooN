@@ -183,9 +183,7 @@ void CMNDataManager::PopImageDataSet(unsigned long _pcode)
 	}	
 }
 
-
-
-void CMNDataManager::PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode)
+CMNPageObject* CMNDataManager::PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode)
 {
 	//CString str = PathFindExtension(_strName);
 
@@ -197,39 +195,43 @@ void CMNDataManager::PushImageDataSet(CString _strpath, CString _strPName, CStri
 	//	(str == L".tiff") || (str == L".TIFF")) 
 	//{
 
-		std::map<unsigned long, stPageGroup>::iterator iter_gr;
-		std::map<unsigned long, CMNPageObject*>::iterator iter;
+	std::map<unsigned long, stPageGroup>::iterator iter_gr;
+	std::map<unsigned long, CMNPageObject*>::iterator iter;
 
 
-		CMNPageObject* pimg = new CMNPageObject;
-		pimg->SetName(_strpath, _strPName, _strName, _code, _pcode);
+	CMNPageObject* pimg = new CMNPageObject;
+	pimg->SetName(_strpath, _strPName, _strName, _code, _pcode);
 
-		iter = m_mapImageData.find(_code);
-		if (iter == m_mapImageData.end()) {
+	iter = m_mapImageData.find(_code);
+	if (iter == m_mapImageData.end()) {
 
-			// Store Data Information ================================//!!!!
-			m_mapImageData[_code] = pimg;		// for duplication checking
+		// Store Data Information ================================//!!!!
+		m_mapImageData[_code] = pimg;		// for duplication checking
 
-			// push image data sequecily ..
-			m_vecImgData.push_back(pimg);
+		// push image data sequecily ..
+		m_vecImgData.push_back(pimg);
 
-			// Make Group =========================//
-			iter_gr = m_mapGrupImg.find(_pcode);
-			if (iter_gr == m_mapGrupImg.end()) {		// New Group
-				stVecPageObj vecImg;
-				vecImg.push_back(std::move(pimg));
-				m_mapGrupImg[_pcode].imgVec = vecImg;
-				m_mapGrupImg[_pcode].nSlot = -1;
-			}
-			else {
-				m_mapGrupImg[_pcode].imgVec.push_back(std::move(pimg));
-			}
-			//======================================//
+		// Make Group =========================//
+		iter_gr = m_mapGrupImg.find(_pcode);
+		if (iter_gr == m_mapGrupImg.end()) {		// New Group
+			stVecPageObj vecImg;
+			vecImg.push_back(std::move(pimg));
+			m_mapGrupImg[_pcode].imgVec = vecImg;
+			m_mapGrupImg[_pcode].nSlot = -1;
 		}
 		else {
-			delete pimg;
+			m_mapGrupImg[_pcode].imgVec.push_back(std::move(pimg));
 		}
-//	}
+		//======================================//
+
+		return pimg;
+	}
+	else {
+		delete pimg;
+		return iter->second;
+	}
+
+		
 }
 
 int CMNDataManager::GetEmptySlot()
@@ -878,7 +880,7 @@ void CMNDataManager::DeSkew(cv::Mat& img)
 
 }
 
-void CMNDataManager::AddSDBItem(_stSDBWord item, wchar_t* strCode)
+void CMNDataManager::AddSDBItem(_stSDBWord item, wchar_t* strCode, unsigned int _pcode, CString strPName)
 {
 	// Update HashTable //
 	if (m_mapWordTable.find(item.strcode) == m_mapWordTable.end()) {
@@ -888,18 +890,23 @@ void CMNDataManager::AddSDBItem(_stSDBWord item, wchar_t* strCode)
 		m_bIsUpdateTable = true;
 	}
 
-	// Add SDB item //
-	if (m_mapSDB.find(item.strcode) == m_mapSDB.end()) {
-		_stSDB sdb;
-		sdb.push_back(item);
-		m_mapSDB[item.strcode] = sdb;
-	}
-	else {
-		m_mapSDB[item.strcode].push_back(item);
-	}
+	//// Add Filename code //
+	//if (m_mapWordTable.find(_pcode) == m_mapWordTable.end()) {
+	//	_stSDBWordTable htable;
+	//	memcpy(htable.str, strPName.GetBuffer(), sizeof(wchar_t)*(_MAX_WORD_SIZE));
+	//	m_mapWordTable[_pcode] = htable;
+	//	m_bIsUpdateTable = true;
+	//}
 
-
-
+	//// Add SDB item //
+	//if (m_mapSDB.find(item.strcode) == m_mapSDB.end()) {
+	//	_stSDB sdb;
+	//	sdb.push_back(item);
+	//	m_mapSDB[item.strcode] = sdb;
+	//}
+	//else {
+	//	m_mapSDB[item.strcode].push_back(item);
+	//}
 }
 
 void CMNDataManager::LoadSDBFiles()
@@ -929,29 +936,29 @@ void CMNDataManager::LoadSDBFiles()
 	}
 
 	//=====================================//
-	strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
-	sz = T2A(strFile);
+	//strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
+	//sz = T2A(strFile);
 
-	FILE* fpb = 0;
-	fopen_s(&fpb, sz, "rb");
-	if (fpb) {
-		int wnum = 0;
-		fread(&wnum, sizeof(int), 1, fpb);
+	//FILE* fpb = 0;
+	//fopen_s(&fpb, sz, "rb");
+	//if (fpb) {
+	//	int wnum = 0;
+	//	fread(&wnum, sizeof(int), 1, fpb);
 
-		for (int i = 0; i < wnum; i++) {
-			int pnum = 0;
-			unsigned int hcode = 0;
-			fread(&pnum, sizeof(int), 1, fpb);
-			fread(&hcode, sizeof(unsigned int), 1, fpb);
+	//	for (int i = 0; i < wnum; i++) {
+	//		int pnum = 0;
+	//		unsigned int hcode = 0;
+	//		fread(&pnum, sizeof(int), 1, fpb);
+	//		fread(&hcode, sizeof(unsigned int), 1, fpb);
 
-			for (int j = 0; j < pnum; j++) {
-				_stSDBWord sword;
-				fread(&sword, sizeof(_stSDBWord), 1, fpb);
-				m_mapSDB[hcode].push_back(sword);
-			}
-		}
-		fclose(fpb);
-	}
+	//		for (int j = 0; j < pnum; j++) {
+	//			_stSDBWord sword;
+	//			fread(&sword, sizeof(_stSDBWord), 1, fpb);
+	//			m_mapSDB[hcode].push_back(sword);
+	//		}
+	//	}
+	//	fclose(fpb);
+	//}
 }
 
 void CMNDataManager::UpdateSDBFiles()
@@ -981,25 +988,133 @@ void CMNDataManager::UpdateSDBFiles()
 	}
 	//=================================================================
 
-	strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
-	sz = T2A(strFile);
+	//strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
+	//sz = T2A(strFile);
 
-	FILE* fp = 0;
-	fopen_s(&fp, sz, "wb");
-	if (fp) {
-		int wnum = m_mapSDB.size();
-		fwrite(&wnum, sizeof(int), 1, fp);
-		std::map<unsigned int, _stSDB>::iterator iter = m_mapSDB.begin();
-		for (; iter != m_mapSDB.end(); iter++) {
+	//FILE* fp = 0;
+	//fopen_s(&fp, sz, "wb");
+	//if (fp) {
+	//	int wnum = m_mapSDB.size();
+	//	fwrite(&wnum, sizeof(int), 1, fp);
+	//	std::map<unsigned int, _stSDB>::iterator iter = m_mapSDB.begin();
+	//	for (; iter != m_mapSDB.end(); iter++) {
 
-			int pnum = iter->second.size();
-			fwrite(&pnum, sizeof(unsigned int), 1, fp);
-			fwrite(&iter->first, sizeof(unsigned int), 1, fp);
+	//		int pnum = iter->second.size();
+	//		fwrite(&pnum, sizeof(unsigned int), 1, fp);
+	//		fwrite(&iter->first, sizeof(unsigned int), 1, fp);
 
-			for (int i=0; i<pnum; i++) {
-				fwrite(&iter->second[i], sizeof(_stSDBWord), 1, fp);
+	//		for (int i=0; i<pnum; i++) {
+	//			fwrite(&iter->second[i], sizeof(_stSDBWord), 1, fp);
+	//		}
+	//	}
+	//	fclose(fp);
+	//}
+}
+
+void CMNDataManager::DoKeywordSearch(CString strKeyword)
+{
+	// clear previous results //
+	std::map<unsigned long, CMNPageObject*>::iterator iter = m_mapImageData.begin();
+	for (; iter != m_mapImageData.end(); iter++) {
+		iter->second->ClearDBSearchResult();
+	}
+	//=========================================================//
+
+	USES_CONVERSION;
+
+	char char_str[_MAX_WORD_SIZE * 2];
+	memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+	int char_str_len = WideCharToMultiByte(CP_ACP, 0, strKeyword.GetBuffer(), -1, NULL, 0, NULL, NULL);
+	WideCharToMultiByte(CP_ACP, 0, strKeyword.GetBuffer(), -1, char_str, char_str_len, 0, 0);
+
+	unsigned int hcode = getHashCode(char_str);
+
+	if (m_mapGlobalSDB.find(hcode) != m_mapGlobalSDB.end()) {
+		for (int i = 0; i < m_mapGlobalSDB[hcode].size(); i++) {
+			_stSDBWord res = m_mapGlobalSDB[hcode][i];
+			CString strPath = m_mapFilePathTable[res.filecode];
+			_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+
+			if (m_mapImageData.find(res.filecode) != m_mapImageData.end()) {
+				CMNPageObject* pPage = m_mapImageData[res.filecode];
+				pPage->AddDBSearchResult(res.rect);
+			}
+			else {
+				// Load file and get pointer !!//
+
+				CString strPName, strName;
+				int nIndex = strPath.ReverseFind(_T('\\'));
+				int len = strPath.GetLength();
+				if (nIndex > 0) {
+					strPName = strPath.Left(nIndex);
+					strName = strPath.Right(len-(nIndex+1));
+				}
+				char* sz = 0;
+				sz = T2A(strPName);
+				unsigned long pCode = getHashCode(sz);
+
+				CMNPageObject* pPage = PushImageDataSet(strPath, strPName, strName, res.filecode, pCode);
+				pPage->LoadThumbImage(THUMBNAIL_SIZE);
+				pPage->UploadThumbImage();
+				SelectPages(pCode);
+
+				pPage->AddDBSearchResult(res.rect);
 			}
 		}
-		fclose(fp);
+	}	
+
+
+	
+
+}
+
+void CMNDataManager::InitSDB(CString strPath, CString strName)
+{
+	USES_CONVERSION;
+	char* sz = T2A(strPath);
+	unsigned long hcode = getHashCode(sz);
+
+	if (m_mapFilePathTable.find(hcode) == m_mapFilePathTable.end()) {
+		m_mapFilePathTable[hcode] = strPath;
+	}
+	else {
+		AfxMessageBox(L"Assert!! Error in generating file path table.");
+	}	
+	
+	// Generate SDB //
+	CString path, filename, sdbPath;
+	int nIndex = strPath.ReverseFind(_T('\\'));
+	int len = strPath.GetLength();
+	if (nIndex > 0) {
+		path = strPath.Left(nIndex);
+	}
+
+	nIndex = strName.ReverseFind(_T('.'));
+	if (nIndex > 0) {
+		filename = strName.Left(nIndex);
+	}
+	sdbPath = path + L"\\moon_db\\" + filename + L".sdb";
+
+
+	sz = T2A(sdbPath);
+	FILE* fpb = 0;
+	fopen_s(&fpb, sz, "rb");
+	if (fpb) {
+		int wnum = 0;
+		fread(&wnum, sizeof(int), 1, fpb);
+
+		for (int i = 0; i < wnum; i++) {
+			int pnum = 0;
+			unsigned int hcode = 0;
+			fread(&pnum, sizeof(int), 1, fpb);
+			fread(&hcode, sizeof(unsigned int), 1, fpb);
+
+			for (int j = 0; j < pnum; j++) {
+				_stSDBWord sword;
+				fread(&sword, sizeof(_stSDBWord), 1, fpb);
+				m_mapGlobalSDB[hcode].push_back(sword);
+			}
+		}
+		fclose(fpb);
 	}
 }

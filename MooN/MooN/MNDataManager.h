@@ -96,7 +96,7 @@ public:
 	void UpdatePageStatus(POINT3D camPos);
 
 	void InitData();
-	void PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode);
+	CMNPageObject* PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode);
 	void PopImageDataSet(unsigned long _pcode);
 	CBitmap* GetLogCBitmap(cv::Mat& pimg);
 	cv::Rect GetNomalizedWordSize(cv::Rect rect);
@@ -122,9 +122,12 @@ public:
 	void SetUserDataFolder(CString str) { m_strUserDataFolder = str; }
 	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
 
-	void AddSDBItem(_stSDBWord item, wchar_t* strCode);
+	void AddSDBItem(_stSDBWord item, wchar_t* strCode, unsigned int _pcode, CString strPName);
 	void UpdateSDBFiles();
 	void LoadSDBFiles();
+	void DoKeywordSearch(CString strKeyword);
+
+	void InitSDB(CString strPath, CString strName);
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -139,11 +142,12 @@ private:
 
 	// For Search DB ======================================//
 	std::map<unsigned int, _stSDBWordTable> m_mapWordTable;
-	std::map<unsigned int, _stSDB> m_mapSDB;
+	std::map<unsigned int, CString> m_mapFilePathTable;
+
+	std::map<unsigned int, _stSDB> m_mapGlobalSDB;
 	//=====================================================//
 
-	bool m_bIsUpdateTable;
-	
+	bool m_bIsUpdateTable;	
 
 	bool m_bSlot[MAX_SLOT_SIZE];
 	float m_xOffset, m_yOffset;

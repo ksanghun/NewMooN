@@ -131,6 +131,7 @@
 #define IDC_BN_ADD_MODIFYOCRRES         1027
 #define IDC_BN_DEL_OCRRES               1028
 #define IDC_EDIT3                       1029
+#define IDC_EDIT_KEYWORD_SEARCH         1029
 #define IDC_BN_KEYWORD_SEARCH           1030
 #define IDC_BN_RUNOCR                   1031
 #define IDC_CHECK_LINEBIOX              1032
