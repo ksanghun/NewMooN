@@ -110,6 +110,7 @@ public:
 	void ApplyDeskewPage();
 	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
 	void DBTraining();
+	void DBTrainingForPage(CMNPageObject* pPage);
 	bool IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
 	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);

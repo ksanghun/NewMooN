@@ -133,9 +133,11 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 					boundRect.push_back(res);
 
 					TRACE(L"Confidence: %s - %3.2f\n", res.strCode, res.fConfidence);
+
+					averConf += conf;
 				}
 
-				averConf += conf;
+				
 				cnt++;
 				delete[] word;
 			}

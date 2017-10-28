@@ -198,6 +198,7 @@
     <ClInclude Include="FileView.h" />
     <ClInclude Include="FormListView.h" />
     <ClInclude Include="FormProperties.h" />
+    <ClInclude Include="HoverButton.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="math_tool.h" />
     <ClInclude Include="MNButton.h" />
@@ -229,6 +230,7 @@
     <ClCompile Include="FileView.cpp" />
     <ClCompile Include="FormListView.cpp" />
     <ClCompile Include="FormProperties.cpp" />
+    <ClCompile Include="HoverButton.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="math_tool.cpp" />
     <ClCompile Include="MNButton.cpp" />

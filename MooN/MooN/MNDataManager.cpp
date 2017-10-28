@@ -738,6 +738,50 @@ bool CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classi
 	return true;
 }
 
+
+void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
+{
+
+		std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
+
+		for (int j = 0; j < ocrRes.size(); j++) {
+			if (ocrRes[j].bNeedToDB) {
+				cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
+				cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
+				int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect) - 1;
+				int imgid = m_refImgClass[classid].nCurrImgId;
+
+				cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+				// Verify to add into DB =====================================//
+				bool IsAdd = IsNeedToAddDB(cutimg, ocrRes[j].strCode, classid);
+				//===========================================================//
+
+				if ((classid < 8) && (classid >= 0) && (IsAdd)) {
+					int wordPosId = m_refImgClass[classid].vecStr.size();
+
+					int w = (classid + 1) * DB_IMGCHAR_SIZE;
+					int h = DB_IMGCHAR_SIZE;
+
+					norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
+					norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
+
+					cutimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+
+					int clen = m_refImgClass[classid].maxCharLen;
+					wchar_t* strcode = new wchar_t[clen];
+					memset(strcode, 0x00, sizeof(wchar_t)*clen);
+					memcpy(strcode, ocrRes[j].strCode, sizeof(wchar_t)*clen);
+					m_refImgClass[classid].vecStr.push_back(strcode);
+
+					m_refImgClass[classid].needToUpdate = true;
+					pPage->UpdateOCRResStatus(j, false);
+				}
+			}
+		}
+
+	UpdateImgClassDB();
+}
+
 void CMNDataManager::DBTraining()
 {
 	for (int i = 0; i < m_vecImgData.size(); i++) {

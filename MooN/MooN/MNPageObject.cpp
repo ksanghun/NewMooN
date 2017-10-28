@@ -176,7 +176,7 @@ GLuint CMNPageObject::LoadFullImage()
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false)) {
 
 		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 128, 255, cv::THRESH_OTSU);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
 
 		// Save original size //
 		m_nImgHeight = m_fullImg.rows;
@@ -1335,8 +1335,10 @@ void CMNPageObject::EncodeTexBox()
 		{
 			for (int j = 0; j < numItem - i - 1; j++)
 			{
-				int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
-				int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
+				//int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
+				//int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
+				int yj = vecEncode[j].rect.y;
+				int yj1 = vecEncode[j + 1].rect.y;
 				if (yj > yj1) /* For decreasing order use < */
 				{
 					_EWORDINFO swap = vecEncode[j];
@@ -1356,10 +1358,21 @@ void CMNPageObject::EncodeTexBox()
 					int my1 = vecEncode[j].rect.y + vecEncode[j].rect.height*0.5f;
 					int my2 = vecEncode[j + 1].rect.y + vecEncode[j + 1].rect.height*0.5f;
 
+					//cv::Rect baseRect = vecEncode[i].rect;
+					//baseRect.width = 1000;
+					//cv::Rect andRect_overlap = (baseRect & vecEncode[j].rect);
+
+					//if (andRect_overlap.area() > 0) {
+					//	float fOverlap_j = (float)vecEncode[j].rect.area() / (float)andRect_overlap.area();
+					//	if (fOverlap_j > 0.75f) {
+					//		_EWORDINFO swap = vecEncode[j];
+					//		vecEncode[j] = vecEncode[j + 1];
+					//		vecEncode[j + 1] = swap;
+					//	}
+					//}
 					//int my1 = vecEncode[j].rect.y2;
 					//int my2 = vecEncode[j + 1].rect.y2;
-
-					if (abs(my1 - my2) < (vecEncode[j].rect.height*0.5)) {
+					if (abs(my1 - my2) < (vecEncode[j].rect.height*0.75f)) {
 						_EWORDINFO swap = vecEncode[j];
 						vecEncode[j] = vecEncode[j + 1];
 						vecEncode[j + 1] = swap;
@@ -1392,27 +1405,51 @@ void CMNPageObject::EncodeTexBox()
 		int preYPos = 0, yPos = 0;
 		bool Isfirst = true;
 		int wNum = vecEncode.size();
-		int averHeight = vecEncode[0].rect.height;
+		int averHeight = 0;// = vecEncode[0].rect.height;
 		for (int i = 0; i < wNum; i++) {
+
+			if (i < wNum - 1) {
+				averHeight = vecEncode[i].rect.height > vecEncode[i + 1].rect.height ? vecEncode[i].rect.height : vecEncode[i + 1].rect.height;
+			}
+			else {
+				averHeight = vecEncode[i].rect.height;
+			}
 
 		//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
 			yPos = vecEncode[i].rect.y + vecEncode[i].rect.height*0.5f;
 
-			int diff = abs(preYPos - yPos);
-			if (diff > averHeight*0.75) {		
-
-				cfile.Write(L"\r\n", 4);
-
+			if (i == 0) {
 				preYPos = yPos;
-				averHeight += vecEncode[i].rect.height;
-				averHeight /= 2;
 			}
+			else {
+				int diff = abs(preYPos - yPos);
+				int enterCnt = diff / (averHeight*0.5f);
+			//	for (int i = 0; i < enterCnt; i++) {
+				if (diff > averHeight*0.5f) {
+					cfile.Write(L"\r\n", 4);
+				}
+			//	}
+				preYPos = yPos;
+			}
+
+			//int diff = abs(preYPos - yPos);
+			//int enterCnt = diff / averHeight*0.75f;
+
+
+		//	if (diff > averHeight*0.75) {		
+
+			//	cfile.Write(L"\r\n", 4);
+
+			//	preYPos = yPos;
+			//	//averHeight += vecEncode[i].rect.height;
+			//	//averHeight /= 2;
+			//}
 			int len = wcslen(vecEncode[i].str) *2;
 			cfile.Write(vecEncode[i].str, len);
 
 			if (i < wNum - 1) {
 				int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
-				if (diff > averHeight / 4) {
+				if (diff > averHeight / 5) {
 					cfile.Write(L" ", 2);		// Space
 				}
 			}		

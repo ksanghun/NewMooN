@@ -1158,6 +1158,7 @@ void CMNView::ConfirmOCRRes()
 	if ((m_pSelectPageForCNS)) {
 		m_pSelectPageForCNS->ConfirmOCRRes(m_selOCRId);
 		m_selOCRId = -1;
+		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
 
@@ -1166,6 +1167,7 @@ void CMNView::UpdateOCRCode(CString _strCode)
 	if ((m_pSelectPageForCNS)) {
 		m_pSelectPageForCNS->UpdateOCRCode(_strCode, m_selOCRId);
 		m_selOCRId = -1;
+		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
 
@@ -1435,7 +1437,8 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 			std::vector<_stOCRResult> ocrTmp;
 			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
 		
-			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.65f)) {
+			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.5f)) {
+		//	if ((averConf > ocrRes[k].fConfidence*1.2f)){// && (averConf > 0.5f)) {
 				ocrRes[k].type = 100; 
 				for (int m = 0; m < ocrTmp.size(); m++) {
 					ocrTmp[m].rect.x += ocrRes[k].rect.x;
@@ -1468,13 +1471,18 @@ bool CMNView::MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth)
 		for (int j = i + 1; j < tmp.size(); j++) {
 			cv::Rect andRect_overlap = (tmp[i].rect & tmp[j].rect);
 
-			if (andRect_overlap.area() > 1) {		// intersected
-				cv::Rect mergeBox = (tmp[i].rect | tmp[j].rect);
-
+			float fOverlap_i =  (float)andRect_overlap.area() / (float)tmp[i].rect.area();
+			float fOverlap_j =  (float)andRect_overlap.area() / (float)tmp[j].rect.area();
+			cv::Rect mergeBox = (tmp[i].rect | tmp[j].rect);
+			if (fOverlap_i > 0.5f) {		// Skip i !				
+				tmp[j].rect = mergeBox;
+				tmp[j].fConfidence = 0.1f;
+				tmp[i].type = -1;
+				IsMerged = true;
+			}else if(fOverlap_j > 0.5f){
 				tmp[i].rect = mergeBox;
 				tmp[i].fConfidence = 0.1f;
 				tmp[j].type = -1;
-				IsMerged = true;
 			}
 		}
 	}
@@ -1573,9 +1581,12 @@ void CMNView::TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect)
 			if ((tmp[i].strCode[0] == '.') || (tmp[i].strCode[0] == ',')) {
 				if (averHeight > 0) {
 					tmp[i].rect.y -= (averHeight - tmp[i].rect.height);
-					tmp[i].rect.height = averHeight;
+					tmp[i].rect.height = averHeight;					
 				}
 			}
+
+			if (tmp[i].rect.y < 0) tmp[i].rect.y = 0;
+			if (tmp[i].rect.x < 0) tmp[i].rect.x = 0;
 			ocrRes.push_back(tmp[i]);
 		}
 		tmp.clear();
@@ -1590,7 +1601,7 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 	// Flush OCR Results // !!!!
 	// 1. Merge text box if they are duplicated //
 	int depth = 0;
-//	MeargingtTextBox(ocrRes, depth);
+	MeargingtTextBox(ocrRes, depth);
 	TrimTextBox(ocrRes, rect);
 
 	std::vector<_stOCRResult> ocrAdd;
@@ -1771,29 +1782,32 @@ void CMNView::OcrEnglishword()
 		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 
-		cv::Rect r = ocrres.rect;
-		r.x -= 1;
-		r.y -= 1;
-		r.width += 2;
-		r.height += 2;
+		if ((ocrres.rect.width > 0) && (ocrres.rect.height>0)) {
 
-		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r);
+			cv::Rect r = ocrres.rect;
+			r.x -= 1;
+			r.y -= 1;
+			r.width += 2;
+			r.height += 2;
 
-		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
-		std::vector<_stOCRResult> ocrTmp;
-		float fScale = (float)m_extractionSetting.engSize / 32.0f;
-		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
+			cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r);
 
-		// Update OCR Res //
-		if (ocrTmp.size() >= 0) {
-			m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
-			for (int i = 0; i < ocrTmp.size(); i++) {
-				ocrTmp[i].rect.x += r.x;
-				ocrTmp[i].rect.y += r.y;
-				ocrTmp[i].type = 0;
-				m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
+			m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+			std::vector<_stOCRResult> ocrTmp;
+			float fScale = (float)m_extractionSetting.engSize / 32.0f;
+			m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
+
+			// Update OCR Res //
+			if (ocrTmp.size() >= 0) {
+				m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
+				for (int i = 0; i < ocrTmp.size(); i++) {
+					ocrTmp[i].rect.x += r.x;
+					ocrTmp[i].rect.y += r.y;
+					ocrTmp[i].type = 0;
+					m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
+				}
+				m_selOCRId = -1;
 			}
-			m_selOCRId = -1;
 		}
 	}
 }
