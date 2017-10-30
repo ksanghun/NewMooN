@@ -88,7 +88,7 @@ public:
 	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
 	bool GetPosByMatchID(int mid, POINT3D& pos);
 	void ClearMatchResult();
-	cv::Mat& GetSrcPageImg() { return m_thumbImg; }
+//	cv::Mat& GetSrcPageImg() { return m_thumbImg; }
 	cv::Mat& GetSrcPageGrayImg() { return m_srcGrayImg; }
 
 	bool IsCandidate() { return m_bCandidate; }
@@ -145,7 +145,8 @@ public:
 	void WriteSearchDBFile();
 	void UpdateDataBaseFiles();
 	bool LoadPageInfo(unsigned short& width, unsigned short& height);
-	void EncodeTexBox();
+	void EncodeTexBoxHori();
+	void EncodeTexBoxVerti();
 
 	void ClearParagraph();
 	void ClearOCRResult();

@@ -455,7 +455,7 @@ void CMNDataManager::SetMatchingResults()
 		if (matches.size() > 0) {
 			unsigned int matchFile = getHashCode((CStringA)m_vecImgData[i]->GetPath());
 		
-			cv::Mat srcImg = m_vecImgData[i]->GetSrcPageImg();
+			cv::Mat srcImg = m_vecImgData[i]->GetSrcPageGrayImg();
 	//		if (LoadImageData(m_vecImgData[i]->GetPath(), srcImg, false)) {
 			if (srcImg.ptr()) {
 
@@ -485,7 +485,7 @@ void CMNDataManager::SetMatchingResults()
 
 					// hold cut image data --> should be deleted //
 					cv::Rect nRect = GetNomalizedWordSize(matches[j].rect);
-					cv::Mat tmpcut = srcImg(matches[j].rect);
+					cv::Mat tmpcut = srcImg(matches[j].rect).clone();
 					cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
 
 					matchRes.cutImg = cv::Mat(cvSize(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H),srcImg.type());
@@ -682,7 +682,7 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
 		int clen = m_refImgClass[classid].maxCharLen;
-		float confi = TemplateMatching(cutimg, imgword)+0.12f;
+		float confi = TemplateMatching(cutimg, imgword)+0.1f;
 		if ((ocrres.fConfidence < confi )){  //( confi > 0.80f) && 
 			memset(ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			memcpy(ocrres.strCode, m_refImgClass[classid].vecStr[pos], sizeof(wchar_t)*clen);
@@ -1268,32 +1268,32 @@ void CMNDataManager::ExportDatabase()
 
 						int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
 						cfile.Write(strWord.GetBuffer(), len);
-						cfile.Write(L" ", 2);
+						cfile.Write(L",", 2);
 
 						strtmp.Format(L"%d", res.rect.x);		// position x
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L" ", 2);
+						cfile.Write(L",", 2);
 
 						strtmp.Format(L"%d", res.rect.y);		// position y
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L" ", 2);
+						cfile.Write(L",", 2);
 
 						strtmp.Format(L"%d", res.rect.width);		// size
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L" ", 2);
+						cfile.Write(L",", 2);
 
 						strtmp.Format(L"%3.2f", res.fConfi);		// confidence
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L" ", 2);
+						cfile.Write(L",", 2);
 
 						strtmp.Format(L"%3.2f", res.fDiff);		// confidence
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L" ", 2);
+						cfile.Write(L",", 2);
 
 						len = wcslen(strBase64.GetBuffer()) * 2;
 						cfile.Write(strBase64.GetBuffer(), len);

@@ -1261,7 +1261,13 @@ void CMNView::AddParagraph()
 void CMNView::EncodePage()
 {
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->EncodeTexBox();
+		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
+		if (m_extractionSetting.IsVerti) {
+			m_pSelectPageForCNS->EncodeTexBoxVerti();
+		}
+		else {
+			m_pSelectPageForCNS->EncodeTexBoxHori();
+		}
 	}
 }
 
@@ -1444,7 +1450,7 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 			std::vector<_stOCRResult> ocrTmp;
 			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
 		
-			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.65f)) {
+			if ((averConf > ocrRes[k].fConfidence*1.4f) && (averConf > 0.6f)) {
 		//	if ((averConf > ocrRes[k].fConfidence*1.2f)){// && (averConf > 0.5f)) {
 				ocrRes[k].type = 100; 
 				for (int m = 0; m < ocrTmp.size(); m++) {
@@ -1481,15 +1487,16 @@ bool CMNView::MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth)
 			float fOverlap_i =  (float)andRect_overlap.area() / (float)tmp[i].rect.area();
 			float fOverlap_j =  (float)andRect_overlap.area() / (float)tmp[j].rect.area();
 			cv::Rect mergeBox = (tmp[i].rect | tmp[j].rect);
-			if (fOverlap_i > 0.5f) {		// Skip i !				
+			if (fOverlap_i > 0.1f) {		// Skip i !				
 				tmp[j].rect = mergeBox;
 				tmp[j].fConfidence = 0.1f;
 				tmp[i].type = -1;
 				IsMerged = true;
-			}else if(fOverlap_j > 0.5f){
+			}else if(fOverlap_j > 0.1f){
 				tmp[i].rect = mergeBox;
 				tmp[i].fConfidence = 0.1f;
 				tmp[j].type = -1;
+				IsMerged = true;
 			}
 		}
 	}
@@ -1613,7 +1620,7 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 
 	std::vector<_stOCRResult> ocrAdd;
 	for (int k = 0; k < ocrRes.size(); k++) {
-		if ((ocrRes[k].fConfidence < 0.80f) && (ocrRes[k].type < 100)) {
+		if ((ocrRes[k].fConfidence < 0.9f) && (ocrRes[k].type < 100)) {
 			cv::Mat imgword = img(ocrRes[k].rect).clone();	
 			_stOCRResult dbRes = ocrRes[k];
 			SINGLETON_DataMng::GetInstance()->MatchingFromDB(imgword, dbRes);
@@ -1652,7 +1659,7 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		}		
 	}
 
-//	DoOCCorrection(img, rect, pPage, ocrRes);
+	DoOCCorrection(img, rect, pPage, ocrRes);
 
 	//===========Korean================================//
 	if (m_extractionSetting.isKor) {
@@ -1663,7 +1670,7 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		}
 		else {
 			if (m_extractionSetting.IsVerti) {
-				m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_AUTO_OSD);
+				m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
 			}
 			else {
 				m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
@@ -1681,7 +1688,7 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		}
 		else {
 			if (m_extractionSetting.IsVerti) {
-				m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_AUTO_OSD);
+				m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
 			}
 			else {
 				m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);

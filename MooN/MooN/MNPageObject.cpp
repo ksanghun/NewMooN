@@ -1309,7 +1309,7 @@ void CMNPageObject::WritePageInfo()
 
 
 
-void CMNPageObject::EncodeTexBox()
+void CMNPageObject::EncodeTexBoxHori()
 {
 	int wordheight = 32;
 	// Sorting by x, y pos //
@@ -1427,7 +1427,7 @@ void CMNPageObject::EncodeTexBox()
 				preYPos = yPos;
 			}
 			else {
-				int diff = abs(preYPos - yPos);
+				int diff = (yPos - preYPos);
 				int enterCnt = diff / (averHeight*0.5f);
 			//	for (int i = 0; i < enterCnt; i++) {
 				if (diff > averHeight*0.5f) {
@@ -1462,65 +1462,131 @@ void CMNPageObject::EncodeTexBox()
 	}
 	cfile.Close();
 	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+}
 
 
 
+void CMNPageObject::EncodeTexBoxVerti()
+{
+	int wordheight = 32;
+	// Sorting by x, y pos //
+	//=For Encoding======================//
+	typedef struct _EWORDINFO {
+		wchar_t* str;
+		cv::Rect rect;
+	}_EWORDINFO;
 
-	/*
-	if (fp){
-	wchar_t *wchar_str;
-	char *char_str;
-	int char_str_len;
-
-	int preYPos = 0, yPos = 0;
-	bool Isfirst = true;
-
-	if (vecEncode.size() > 0){
-	int averHeight = vecEncode[0].rect.height;
-	for (int i = 0; i < vecEncode.size(); i++){
-
-	yPos = vecEncode[i].rect.y1 + vecEncode[i].rect.height*0.5f;
-	//	yPos = vecEncode[i].rect.y2;
-
-	// 1. CString to wchar * conversion
-	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
-	char_str_len = WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, NULL, 0, NULL, NULL);
-	char_str = new char[char_str_len];
-
-	//// 2. wchar_t* to char* conversion
-	WideCharToMultiByte(CP_ACP, 0, wchar_str, -1, char_str, char_str_len, 0, 0);
-
-	int diff = abs(preYPos - yPos);
-	if (diff > averHeight){
-	fwprintf(fp, L"%ls", "\n");
-	//	fwrite("\n", 1, 1, fp);
-
-	//if ((diff > (iter_gr->second.matche[i].rect.height * 2)) &&  (Isfirst==false)){
-	//	int space = diff / (iter_gr->second.matche[i].rect.height*2.0f);
-	//	for (int k = 0; k < space; k++){
-	//		fwrite("\n", 1, 1, fp);
-	//	}
-	//}
-	preYPos = yPos;
-	//Isfirst = false;
-
-	averHeight += vecEncode[i].rect.height;
-	averHeight /= 2;
-
+	std::vector<_EWORDINFO> vecEncode;
+	for (int i = 0; i < m_ocrResult.size(); i++) {
+		_EWORDINFO tmp;
+		tmp.rect = m_ocrResult[i].rect;
+		tmp.str = m_ocrResult[i].strCode;
+		vecEncode.push_back(tmp);
 	}
 
-	//int len = strlen(char_str) + 1;
-	//int len = wcslen(wchar_str) + 1;
-	//fwrite(char_str, len, 1, fp);
+	//std::vector<_ENCODETEXT> encodeWord;
+	////==================================//
+	int minY = 10000, minX = 0;
+	RECT2D r1, r2;
+	int y1, y2, x1, x2;
 
-	fwprintf(fp, L"%ls", wchar_str);
-	delete[] char_str;
+	int numItem = vecEncode.size();
+	if (numItem > 1) {
+
+		for (int i = 0; i < numItem - 1; i++)
+		{
+			for (int j = 0; j < numItem - i - 1; j++)
+			{
+				if ((vecEncode[j].rect.x + vecEncode[j].rect.width) < (vecEncode[j + 1].rect.x+ vecEncode[j + 1].rect.width)) /* For decreasing order use < */
+				{
+					_EWORDINFO swap = vecEncode[j];
+					vecEncode[j] = vecEncode[j + 1];
+					vecEncode[j + 1] = swap;
+				}
+			}
+		}
+
+		for (int i = 0; i < numItem - 1; i++)
+		{
+			for (int j = 0; j < numItem - i - 1; j++)
+			{
+				if ((vecEncode[j].rect.y)  > (vecEncode[j + 1].rect.y) ) /* For decreasing order use < */
+				{
+					int averWidth = vecEncode[j].rect.width > vecEncode[j + 1].rect.width ? vecEncode[j].rect.width : vecEncode[j + 1].rect.width;
+					int my1 = vecEncode[j].rect.x + vecEncode[j].rect.width;
+					int my2 = vecEncode[j + 1].rect.x + vecEncode[j + 1].rect.width;
+
+					if (abs(my1 - my2) < (averWidth*0.75f)) {
+						_EWORDINFO swap = vecEncode[j];
+						vecEncode[j] = vecEncode[j + 1];
+						vecEncode[j + 1] = swap;
+					}
+				}
+
+				//if (vecEncode[j].rect.y > vecEncode[j + 1].rect.y) /* For decreasing order use < */
+				//{
+				//	_EWORDINFO swap = vecEncode[j];
+				//	vecEncode[j] = vecEncode[j + 1];
+				//	vecEncode[j + 1] = swap;
+				//}
+			}
+		}
 	}
+
+	CString strPath = GetPInfoPath(L".txt");
+	CFile cfile;
+	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+	{
+		return;
 	}
-	fclose(fp);
+
+	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+	cfile.Write(&nShort, 2);
+
+	//	file.Write(pStrWideChar, nSize * 2);
+	if (vecEncode.size() > 0) {
+
+		int preXPos = 0, xPos = 0;
+		bool Isfirst = true;
+		int wNum = vecEncode.size();
+		int averWidth = 0;// = vecEncode[0].rect.height;
+		for (int i = 0; i < wNum; i++) {
+
+			if (i < wNum - 1) {
+				averWidth = vecEncode[i].rect.width > vecEncode[i + 1].rect.width ? vecEncode[i].rect.width : vecEncode[i + 1].rect.width;
+			}
+			else {
+				averWidth = vecEncode[i].rect.width;
+			}
+
+			//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
+			xPos = vecEncode[i].rect.x;
+
+			if (i == 0) {
+				preXPos = xPos;
+			}
+			else {
+				int diff = abs(preXPos - xPos);
+				if (diff > averWidth*0.75f) {
+					cfile.Write(L"\r\n", 4);
+				}
+				//	}
+				preXPos = xPos;
+			}
+			int len = wcslen(vecEncode[i].str) * 2;
+			cfile.Write(vecEncode[i].str, len);
+
+			if (i < wNum - 1) {
+				int diff = vecEncode[i + 1].rect.y - (vecEncode[i].rect.y + vecEncode[i].rect.height);
+				if (diff > averWidth / 2) {
+					cfile.Write(L" ", 2);		// Space
+				}
+			}
+		}
+	}
+	cfile.Close();
 	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
-	}
-	*/
+
 }
 
 

@@ -41,6 +41,8 @@ bool COCRMng::InitOCRMng()
 	SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
 	SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
 
+
+//	m_tessEng.SetVariable("tessedit_char_blacklist", ":;()[]{}!?");
 	m_tessChi.SetVariable("tessedit_char_blacklist", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
 //	m_tessChi.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
@@ -99,7 +101,7 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 			float conf = ri->Confidence(level);
 			//	if (conf > 94.99f) continue;
 
-			if (word != 0) {
+		//	if (word != 0) {
 
 				//tesseract::ChoiceIterator ci(*ri);
 				//do{
@@ -119,28 +121,32 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 				w = x2 - x1;
 				h = y2 - y1;
 
+				_stOCRResult res;
+
+				res.init();
+				res.type = langType;
+				res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
+				res.fConfidence = conf*0.01f;
+
 				if ((word) && (w > 2) && (h > 2)) {
-					_stOCRResult res;
-					res.init();
-					
-					res.type = langType;
-					res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
-					res.fConfidence = conf*0.01f;
-
 					Utf8ToUnicode(word, res.strCode);
-					//res.strCode = tword;						
-					//SINGLETON_DataMng::GetInstance()->MultiToUniCode(word, res.strCode);
+
 					boundRect.push_back(res);
-
 					TRACE(L"Confidence: %s - %3.2f\n", res.strCode, res.fConfidence);
-
 					averConf += conf;
+					cnt++;
+
+					delete[] word;
 				}
 
+				//res.strCode = tword;						
+				//SINGLETON_DataMng::GetInstance()->MultiToUniCode(word, res.strCode);
+				//boundRect.push_back(res);
+				//TRACE(L"Confidence: %s - %3.2f\n", res.strCode, res.fConfidence);
+				//averConf += conf;
+				//cnt++;
 				
-				cnt++;
-				delete[] word;
-			}
+		//	}
 
 		} while (ri->Next(level));
 
