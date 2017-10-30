@@ -75,6 +75,7 @@ protected:
 
 	BOOL CreateDockingWindows();
 	void SetDockingWindowIcons(BOOL bHiColorIcons);
+	
 public:
 
 	afx_msg void OnViewInitialize();
@@ -99,6 +100,7 @@ public:
 	afx_msg void OnOcrKoreancharacter();
 	afx_msg void OnAnalysisDatatraining();
 	afx_msg void OnOcrRemovenoise();
+	afx_msg void OnFileExportdatabase();
 };
 
 

@@ -104,6 +104,9 @@ public:
 	void SetMatchingResults();
 	void SortMatchingResults();
 	CString base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
+	void ExportDatabase();
+	CString GetEditFilePath(CString strExtension, CString strOrigin);
+
 
 	void ResetResult();
 	void ResetMatchingResult();
@@ -123,7 +126,7 @@ public:
 	void SetUserDataFolder(CString str) { m_strUserDataFolder = str; }
 	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
 
-	void AddSDBItem(_stSDBWord item, wchar_t* strCode, unsigned int _pcode, CString strPName);
+	void AddSDBTable(unsigned int hcode, wchar_t* strCode);
 	void UpdateSDBFiles();
 	void LoadSDBFiles();
 	void DoKeywordSearch(CString strKeyword);

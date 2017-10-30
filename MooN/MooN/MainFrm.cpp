@@ -50,6 +50,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_OCR_KOREANCHARACTER, &CMainFrame::OnOcrKoreancharacter)
 	ON_COMMAND(ID_ANALYSIS_DATATRAINING, &CMainFrame::OnAnalysisDatatraining)
 	ON_COMMAND(ID_OCR_REMOVENOISE, &CMainFrame::OnOcrRemovenoise)
+	ON_COMMAND(ID_FILE_EXPORTDATABASE, &CMainFrame::OnFileExportdatabase)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -580,6 +581,7 @@ void CMainFrame::OnToolsSearch()
 void CMainFrame::OnToolsKeywordsearch()
 {
 	// TODO: Add your command handler code here
+	m_wndProperties.DoKeywordSearch();
 }
 
 
@@ -791,4 +793,11 @@ void CMainFrame::OnOcrRemovenoise()
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->RemoveNoise();
+}
+
+
+void CMainFrame::OnFileExportdatabase()
+{
+	// TODO: Add your command handler code here
+	SINGLETON_DataMng::GetInstance()->ExportDatabase();
 }

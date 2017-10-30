@@ -2,7 +2,7 @@
 #include "afxcmn.h"
 #include "afxcolorbutton.h"
 #include "afxwin.h"
-#include "MNButton.h"
+//#include "MNButton.h"
 
 
 // CFromProperties form view
@@ -45,6 +45,7 @@ public:
 	void SetParagraphInfo(float fskew, CString strName);
 	void GetCurrSetting();
 	void SetOCRInfo(wchar_t* strCode, float fConfi, int lang);
+	void DoKeywordSearch();
 
 	CMFCColorButton m_ctrlColorBtn;
 	afx_msg void OnNMReleasedcaptureSlider1(NMHDR *pNMHDR, LRESULT *pResult);
@@ -54,14 +55,14 @@ public:
 	BOOL m_bEnglish;
 	BOOL m_bChinese;
 	BOOL m_bKorean;
-	UINT m_nEngFontSize;
-	UINT m_nChiFontSize;
-	UINT m_nKorFontSize;
+	//UINT m_nEngFontSize;
+	//UINT m_nChiFontSize;
+	//UINT m_nKorFontSize;
 	BOOL m_nAlign;
 	afx_msg void OnBnClickedBnExtractline();
-	afx_msg void OnBnClickedBnEngFont();
-	afx_msg void OnBnClickedBnChiFont();
-	afx_msg void OnBnClickedBnKorFont();
+	//afx_msg void OnBnClickedBnEngFont();
+	//afx_msg void OnBnClickedBnChiFont();
+	//afx_msg void OnBnClickedBnKorFont();
 	CString m_strPageName;
 	float m_fDeskew;
 	afx_msg void OnBnClickedBnAppDeskew();
@@ -95,8 +96,9 @@ public:
 	afx_msg void OnEnChangeEditChiSize();
 	afx_msg void OnBnClickedBnAllDelOcrres();
 	afx_msg void OnBnClickedBnEncode();
-	afx_msg void OnBnClickedBnKeywordSearch();
+//	afx_msg void OnBnClickedBnKeywordSearch();
 	CString m_editKeyword;
+	afx_msg void OnBnClickedBnDeskewAll();
 };
 
 

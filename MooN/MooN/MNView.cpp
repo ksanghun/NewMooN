@@ -146,15 +146,15 @@ void CMNView::Render()
 	//_vecPageObj::iterator iter = SINGLETON_TMat::GetInstance()->GetVecImageBegin();
 	//for (; iter != SINGLETON_TMat::GetInstance()->GetVecImageEnd(); iter++) {
 	//	(*iter)->DrawWordBoundary(m_selWordId);
-	//}
-	
-	DrawCNSRect(0.0f, 0.99f, 0.1f, 1.0f);
+	//}	
+	DrawCNSRect(0.0f, 0.99f, 0.1f, 1.0f);	
 
-	if ((m_selParaId >= 0)&&(m_pSelectPageForCNS)){
-		m_pSelectPageForCNS->DrawSelectedParagraph(m_selParaId);
+	if (m_bIsShowParagraph) {
+		if ((m_selParaId >= 0) && (m_pSelectPageForCNS)) {
+			m_pSelectPageForCNS->DrawSelectedParagraph(m_selParaId);
+		}
+		DrawOCRRes();
 	}
-
-	DrawOCRRes();
 
 	Render2D();
 	SwapBuffers(m_CDCPtr->GetSafeHdc());
@@ -188,10 +188,14 @@ void CMNView::DrawBGPageAni()
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->RotatePos(1.0f);
 		vecImg[i]->DrawMatchItem();
-		vecImg[i]->DrawSDBItem();
+		
 
-		if(m_bIsShowParagraph)
+		if (m_bIsShowParagraph) {
 			vecImg[i]->DrawParagraph(m_selParaId);
+		}
+		else {
+			vecImg[i]->DrawSDBItem();
+		}
 	//	vecImg[i]->DrawOCRRes();
 	}
 	glPointSize(1);
@@ -205,6 +209,9 @@ void CMNView::DrawBGPage()
 		vecImg[i]->DrawMatchItem();
 		if (m_bIsShowParagraph)
 			vecImg[i]->DrawParagraph(m_selParaId);
+		else
+			vecImg[i]->DrawSDBItem();
+
 	//	vecImg[i]->DrawOCRRes();
 		vecImg[i]->DrawSDBItem();
 	}
@@ -1437,7 +1444,7 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 			std::vector<_stOCRResult> ocrTmp;
 			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
 		
-			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.5f)) {
+			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.65f)) {
 		//	if ((averConf > ocrRes[k].fConfidence*1.2f)){// && (averConf > 0.5f)) {
 				ocrRes[k].type = 100; 
 				for (int m = 0; m < ocrTmp.size(); m++) {

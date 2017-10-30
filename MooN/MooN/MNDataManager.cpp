@@ -13,6 +13,11 @@ static const std::string base64_chars =
 "abcdefghijklmnopqrstuvwxyz"
 "0123456789+/";
 //===================================//
+static inline bool is_base64(unsigned char c) {
+	return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+
 
 CMNDataManager::CMNDataManager()
 {
@@ -924,13 +929,13 @@ void CMNDataManager::DeSkew(cv::Mat& img)
 
 }
 
-void CMNDataManager::AddSDBItem(_stSDBWord item, wchar_t* strCode, unsigned int _pcode, CString strPName)
+void CMNDataManager::AddSDBTable(unsigned int hcode, wchar_t* strCode)
 {
 	// Update HashTable //
-	if (m_mapWordTable.find(item.strcode) == m_mapWordTable.end()) {
+	if (m_mapWordTable.find(hcode) == m_mapWordTable.end()) {
 		_stSDBWordTable htable;
 		memcpy(htable.str, strCode, sizeof(wchar_t)*(_MAX_WORD_SIZE));
-		m_mapWordTable[item.strcode] = htable;
+		m_mapWordTable[hcode] = htable;
 		m_bIsUpdateTable = true;
 	}
 
@@ -1058,6 +1063,19 @@ void CMNDataManager::UpdateSDBFiles()
 void CMNDataManager::DoKeywordSearch(CString strKeyword)
 {
 	// clear previous results //
+	std::vector<CString> vecWord;
+
+	int nIndex = strKeyword.ReverseFind(_T(' '));
+	while (nIndex > 0) {
+		vecWord.push_back(strKeyword.Left(nIndex));
+
+		int len = strKeyword.GetLength();
+		strKeyword = strKeyword.Right(len - (nIndex + 1));
+		nIndex = strKeyword.ReverseFind(_T(' '));
+	}
+	vecWord.push_back(strKeyword);
+	
+
 	std::map<unsigned long, CMNPageObject*>::iterator iter = m_mapImageData.begin();
 	for (; iter != m_mapImageData.end(); iter++) {
 		iter->second->ClearDBSearchResult();
@@ -1076,40 +1094,43 @@ void CMNDataManager::DoKeywordSearch(CString strKeyword)
 	if (m_mapGlobalSDB.find(hcode) != m_mapGlobalSDB.end()) {
 		for (int i = 0; i < m_mapGlobalSDB[hcode].size(); i++) {
 			_stSDBWord res = m_mapGlobalSDB[hcode][i];
-			CString strPath = m_mapFilePathTable[res.filecode];
-			_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
 
-			if (m_mapImageData.find(res.filecode) != m_mapImageData.end()) {
-				CMNPageObject* pPage = m_mapImageData[res.filecode];
-				pPage->AddDBSearchResult(res.rect);
-			}
-			else {
-				// Load file and get pointer !!//
+			if (m_mapFilePathTable.find(res.filecode) != m_mapFilePathTable.end()) {
+				CString strPath = m_mapFilePathTable[res.filecode];
+				if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+					_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
 
-				CString strPName, strName;
-				int nIndex = strPath.ReverseFind(_T('\\'));
-				int len = strPath.GetLength();
-				if (nIndex > 0) {
-					strPName = strPath.Left(nIndex);
-					strName = strPath.Right(len-(nIndex+1));
+					//==================================================================//
+					if (m_mapImageData.find(res.filecode) != m_mapImageData.end()) {
+						CMNPageObject* pPage = m_mapImageData[res.filecode];
+						pPage->AddDBSearchResult(res.rect);
+					}
+					else {
+						// Load file and get pointer !!//
+
+						CString strPName, strName;
+						int nIndex = strPath.ReverseFind(_T('\\'));
+						int len = strPath.GetLength();
+						if (nIndex > 0) {
+							strPName = strPath.Left(nIndex);
+							strName = strPath.Right(len - (nIndex + 1));
+						}
+						char* sz = 0;
+						sz = T2A(strPName);
+						unsigned long pCode = getHashCode(sz);
+
+						CMNPageObject* pPage = PushImageDataSet(strPath, strPName, strName, res.filecode, pCode);
+						pPage->LoadThumbImage(THUMBNAIL_SIZE);
+						pPage->UploadThumbImage();
+						SelectPages(pCode);
+
+						pPage->AddDBSearchResult(res.rect);
+					}
+					//================================================================//
 				}
-				char* sz = 0;
-				sz = T2A(strPName);
-				unsigned long pCode = getHashCode(sz);
-
-				CMNPageObject* pPage = PushImageDataSet(strPath, strPName, strName, res.filecode, pCode);
-				pPage->LoadThumbImage(THUMBNAIL_SIZE);
-				pPage->UploadThumbImage();
-				SelectPages(pCode);
-
-				pPage->AddDBSearchResult(res.rect);
-			}
+			}			
 		}
 	}	
-
-
-	
-
 }
 
 void CMNDataManager::InitSDB(CString strPath, CString strName)
@@ -1139,7 +1160,6 @@ void CMNDataManager::InitSDB(CString strPath, CString strName)
 	}
 	sdbPath = path + L"\\moon_db\\" + filename + L".sdb";
 
-
 	sz = T2A(sdbPath);
 	FILE* fpb = 0;
 	fopen_s(&fpb, sz, "rb");
@@ -1162,3 +1182,133 @@ void CMNDataManager::InitSDB(CString strPath, CString strName)
 		fclose(fpb);
 	}
 }
+
+
+CString CMNDataManager::GetEditFilePath(CString strExtension, CString strOrigin)
+{
+	CString path, strFolder, strFile;
+	int nIndex = strOrigin.ReverseFind(_T('\\'));
+	if (nIndex > 0) {
+		strFolder = strOrigin.Left(nIndex);
+	}
+	int len = strOrigin.GetLength();
+	strFile = strOrigin.Right(len - (nIndex + 1));
+
+	nIndex = strFile.ReverseFind(_T('.'));
+	if (nIndex > 0) {
+		strFile = strFile.Left(nIndex);
+	}	
+	
+	//	filename += strExtension;	
+	path = strFolder + L"\\moon_db\\" + strFile + strExtension;
+	return path;
+}
+
+
+
+
+
+
+
+
+
+void CMNDataManager::ExportDatabase()
+{
+	CFileDialog dlg(FALSE, L"*.csv", NULL, OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT, L"CSV Files(*.csv)|*.csv|");
+	if (dlg.DoModal() == IDOK)
+	{
+		CString strPath = dlg.GetPathName();
+		CFile cfile;
+		if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+		{
+			return;
+		}
+		USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+		cfile.Write(&nShort, 2);
+
+		CString strRecord = L"CODE POS_X POS_Y SIZE CONFIDENCE DIFFERENCE BASE64\n";
+		int len = wcslen(strRecord.GetBuffer()) * 2;		// word code //
+		cfile.Write(strRecord.GetBuffer(), len);
+
+		//====================================================================//
+		std::map<unsigned int, _stSDB>::iterator iter = m_mapGlobalSDB.begin();
+		unsigned int filecode = 0;
+		for (; iter != m_mapGlobalSDB.end(); iter++) {
+
+			cv::Mat pageImg;
+			CString strPath, filePath, strtmp;
+
+			for (int i = 0; i < iter->second.size(); i++) {
+				//	for (int i = 0; i < 1; i++) {
+				_stSDBWord res = iter->second[i];
+
+				if (filecode != res.filecode) {		// new filecode;
+					pageImg.release();
+					filecode = res.filecode;
+				}
+
+				if (m_mapFilePathTable.find(res.filecode) != m_mapFilePathTable.end()) {
+					if (pageImg.ptr() == NULL) {
+						strPath = m_mapFilePathTable[res.filecode];
+						filePath = GetEditFilePath(L".jp2", strPath);
+						LoadImageData(filePath, pageImg, true);
+					}
+
+					if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+						cv::Mat cutImg = pageImg(res.rect).clone();
+
+						std::vector<uchar> data_encode;
+						imencode(".bmp", cutImg, data_encode);
+						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
+						data_encode.clear();
+
+						_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+						CString strWord = tmpstr.str;
+						//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
+
+						int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
+						cfile.Write(strWord.GetBuffer(), len);
+						cfile.Write(L" ", 2);
+
+						strtmp.Format(L"%d", res.rect.x);		// position x
+						len = wcslen(strtmp.GetBuffer()) * 2;
+						cfile.Write(strtmp.GetBuffer(), len);
+						cfile.Write(L" ", 2);
+
+						strtmp.Format(L"%d", res.rect.y);		// position y
+						len = wcslen(strtmp.GetBuffer()) * 2;
+						cfile.Write(strtmp.GetBuffer(), len);
+						cfile.Write(L" ", 2);
+
+						strtmp.Format(L"%d", res.rect.width);		// size
+						len = wcslen(strtmp.GetBuffer()) * 2;
+						cfile.Write(strtmp.GetBuffer(), len);
+						cfile.Write(L" ", 2);
+
+						strtmp.Format(L"%3.2f", res.fConfi);		// confidence
+						len = wcslen(strtmp.GetBuffer()) * 2;
+						cfile.Write(strtmp.GetBuffer(), len);
+						cfile.Write(L" ", 2);
+
+						strtmp.Format(L"%3.2f", res.fDiff);		// confidence
+						len = wcslen(strtmp.GetBuffer()) * 2;
+						cfile.Write(strtmp.GetBuffer(), len);
+						cfile.Write(L" ", 2);
+
+						len = wcslen(strBase64.GetBuffer()) * 2;
+						cfile.Write(strBase64.GetBuffer(), len);
+						//cfile.Write(L",", 2);
+
+						cfile.Write(L"\r\n", 4);
+						cutImg.release();
+					}
+				}
+			}
+			pageImg.release();
+		}
+		cfile.Close();
+
+		AfxMessageBox(L"A csv file was exported");
+	}		
+}
+

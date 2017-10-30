@@ -21,6 +21,7 @@ public:
 	void GetCurrSetting();
 
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
+	void DoKeywordSearch() {		m_pProperties->DoKeywordSearch();	};
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

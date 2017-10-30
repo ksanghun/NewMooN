@@ -96,6 +96,7 @@
 #define IDC_BUTTON1                     1002
 #define IDC_BUTTON_BROWSER              1002
 #define IDC_BN_ENG_FONT                 1002
+#define IDC_BN_DESKEW_ALL               1002
 #define IDC_LIST1                       1003
 #define IDC_BN_CHI_FONT                 1003
 #define IDC_CHECK_AUTOFILL              1004
@@ -170,13 +171,14 @@
 #define ID_OCR_KOREANWO                 32796
 #define ID_ANALYSIS_DATATRAINING        32797
 #define ID_OCR_REMOVENOISE              32798
+#define ID_FILE_EXPORTDATABASE          32799
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32799
+#define _APS_NEXT_COMMAND_VALUE         32800
 #define _APS_NEXT_CONTROL_VALUE         1039
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

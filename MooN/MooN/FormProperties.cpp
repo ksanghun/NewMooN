@@ -18,15 +18,15 @@ CFormProperties::CFormProperties()
 	, m_bEnglish(TRUE)
 	, m_bChinese(TRUE)
 	, m_bKorean(FALSE)
-	, m_nEngFontSize(32)
-	, m_nChiFontSize(32)
-	, m_nKorFontSize(32)
+	//, m_nEngFontSize(32)
+	//, m_nChiFontSize(32)
+	//, m_nKorFontSize(32)
 	, m_nAlign(0)
 	, m_strPageName(_T(""))
 	, m_fDeskew(0)
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
-	, m_bLineBox(TRUE)
+	, m_bLineBox(FALSE)
 	, m_editConfi(80)
 	, m_editKeyword(_T(""))
 {
@@ -47,12 +47,12 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHECK_ENG, m_bEnglish);
 	DDX_Check(pDX, IDC_CHECK_CHI, m_bChinese);
 	DDX_Check(pDX, IDC_CHECK_KOR, m_bKorean);
-	DDX_Text(pDX, IDC_EDIT_ENG_SIZE, m_nEngFontSize);
-	DDV_MinMaxUInt(pDX, m_nEngFontSize, 1, 1000);
-	DDX_Text(pDX, IDC_EDIT_CHI_SIZE, m_nChiFontSize);
-	DDV_MinMaxUInt(pDX, m_nChiFontSize, 1, 1000);
-	DDX_Text(pDX, IDC_EDIT_KOR_SIZE, m_nKorFontSize);
-	DDV_MinMaxUInt(pDX, m_nKorFontSize, 1, 1000);
+	//DDX_Text(pDX, IDC_EDIT_ENG_SIZE, m_nEngFontSize);
+	//DDV_MinMaxUInt(pDX, m_nEngFontSize, 1, 1000);
+	//DDX_Text(pDX, IDC_EDIT_CHI_SIZE, m_nChiFontSize);
+	//DDV_MinMaxUInt(pDX, m_nChiFontSize, 1, 1000);
+	//DDX_Text(pDX, IDC_EDIT_KOR_SIZE, m_nKorFontSize);
+	//DDV_MinMaxUInt(pDX, m_nKorFontSize, 1, 1000);
 	DDX_Radio(pDX, IDC_RADIO_HORIZON, m_nAlign);
 	DDX_Text(pDX, IDC_EDIT_FILENAME, m_strPageName);
 	DDX_Text(pDX, IDC_EDIT_DESKEW, m_fDeskew);
@@ -77,9 +77,9 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER1, &CFormProperties::OnNMCustomdrawSlider1)
 	ON_NOTIFY(NM_GETCUSTOMSPLITRECT, IDC_MFCCOLORBUTTON1, &CFormProperties::OnNMGetCustomSplitRectMfccolorbutton1)
 	ON_BN_CLICKED(IDC_BN_EXTRACTLINE, &CFormProperties::OnBnClickedBnExtractline)
-	ON_BN_CLICKED(IDC_BN_ENG_FONT, &CFormProperties::OnBnClickedBnEngFont)
-	ON_BN_CLICKED(IDC_BN_CHI_FONT, &CFormProperties::OnBnClickedBnChiFont)
-	ON_BN_CLICKED(IDC_BN_KOR_FONT, &CFormProperties::OnBnClickedBnKorFont)
+	//ON_BN_CLICKED(IDC_BN_ENG_FONT, &CFormProperties::OnBnClickedBnEngFont)
+	//ON_BN_CLICKED(IDC_BN_CHI_FONT, &CFormProperties::OnBnClickedBnChiFont)
+	//ON_BN_CLICKED(IDC_BN_KOR_FONT, &CFormProperties::OnBnClickedBnKorFont)
 	ON_BN_CLICKED(IDC_BN_APP_DESKEW, &CFormProperties::OnBnClickedBnAppDeskew)
 	ON_BN_CLICKED(IDC_BN_CANCEL, &CFormProperties::OnBnClickedBnCancel)
 	ON_BN_CLICKED(IDC_BN_DEL_PARA, &CFormProperties::OnBnClickedBnDelPara)
@@ -101,7 +101,8 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_EN_CHANGE(IDC_EDIT_CHI_SIZE, &CFormProperties::OnEnChangeEditChiSize)
 	ON_BN_CLICKED(IDC_BN_ALL_DEL_OCRRES, &CFormProperties::OnBnClickedBnAllDelOcrres)
 	ON_BN_CLICKED(IDC_BN_ENCODE, &CFormProperties::OnBnClickedBnEncode)
-	ON_BN_CLICKED(IDC_BN_KEYWORD_SEARCH, &CFormProperties::OnBnClickedBnKeywordSearch)
+//	ON_BN_CLICKED(IDC_BN_KEYWORD_SEARCH, &CFormProperties::OnBnClickedBnKeywordSearch)
+ON_BN_CLICKED(IDC_BN_DESKEW_ALL, &CFormProperties::OnBnClickedBnDeskewAll)
 END_MESSAGE_MAP()
 
 
@@ -159,6 +160,8 @@ void CFormProperties::OnInitialUpdate()
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->SetDispConfidence(m_editConfi);
 
+	pImgView->EnableShowLine(false);
+
 	UpdateData(FALSE);
 
 }
@@ -213,9 +216,13 @@ void CFormProperties::GetCurrSetting()
 	extractonInfo.init();
 
 	extractonInfo.IsVerti = (bool)m_nAlign;
-	extractonInfo.chiSize = m_nChiFontSize;
-	extractonInfo.engSize = m_nEngFontSize;
-	extractonInfo.korSize = m_nEngFontSize;
+	//extractonInfo.chiSize = m_nChiFontSize;
+	//extractonInfo.engSize = m_nEngFontSize;
+	//extractonInfo.korSize = m_nEngFontSize;
+	extractonInfo.chiSize = 32;
+	extractonInfo.engSize = 32;
+	extractonInfo.korSize = 32;
+
 	extractonInfo.isChi = m_bChinese;
 	extractonInfo.isEng = m_bEnglish;
 	extractonInfo.isKor = m_bKorean;
@@ -247,31 +254,31 @@ void CFormProperties::OnBnClickedBnExtractline()
 }
 
 
-void CFormProperties::OnBnClickedBnEngFont()
-{
-	// TODO: Add your control notification handler code here
-	RECT2D rect = pView->GetSelectedAreaForCNS();
-	m_nEngFontSize = rect.width > rect.height ? rect.width : rect.height;
-	UpdateData(FALSE);
-}
-
-
-void CFormProperties::OnBnClickedBnChiFont()
-{
-	// TODO: Add your control notification handler code here
-	RECT2D rect = pView->GetSelectedAreaForCNS();
-	m_nChiFontSize = rect.width > rect.height ? rect.width : rect.height;
-	UpdateData(FALSE);
-}
-
-
-void CFormProperties::OnBnClickedBnKorFont()
-{
-	// TODO: Add your control notification handler code here
-	RECT2D rect = pView->GetSelectedAreaForCNS();
-	m_nKorFontSize = rect.width > rect.height ? rect.width : rect.height;
-	UpdateData(FALSE);
-}
+//void CFormProperties::OnBnClickedBnEngFont()
+//{
+//	// TODO: Add your control notification handler code here
+//	RECT2D rect = pView->GetSelectedAreaForCNS();
+////	m_nEngFontSize = rect.width > rect.height ? rect.width : rect.height;
+//	UpdateData(FALSE);
+//}
+//
+//
+//void CFormProperties::OnBnClickedBnChiFont()
+//{
+//	// TODO: Add your control notification handler code here
+//	RECT2D rect = pView->GetSelectedAreaForCNS();
+////	m_nChiFontSize = rect.width > rect.height ? rect.width : rect.height;
+//	UpdateData(FALSE);
+//}
+//
+//
+//void CFormProperties::OnBnClickedBnKorFont()
+//{
+//	// TODO: Add your control notification handler code here
+//	RECT2D rect = pView->GetSelectedAreaForCNS();
+////	m_nKorFontSize = rect.width > rect.height ? rect.width : rect.height;
+//	UpdateData(FALSE);
+//}
 
 void CFormProperties::SetParagraphInfo(float fskew, CString strName)
 {
@@ -406,7 +413,7 @@ void CFormProperties::OnEnChangeEditFilename()
 void CFormProperties::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
 	// TODO: Add your message handler code here and/or call default
-	//if ((nIDCtl == IDC_BN_RUNOCR) || (nIDCtl == IDC_BN_EXTRACTLINE))         //checking for the button 
+	//if ((nIDCtl == IDC_BN_RUNOCR))         //checking for the button 
 	//{
 	//	CDC dc;
 	//	RECT rect;
@@ -426,7 +433,7 @@ void CFormProperties::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	//	dc.Detach();  // Detach the Button DC
 	//}
 
-	//if (nIDCtl == IDC_BN_DEL_ALLLINBES)         //checking for the button 
+	//if (nIDCtl == IDC_BN_ENCODE)         //checking for the button 
 	//{
 	//	CDC dc;
 	//	RECT rect;
@@ -445,12 +452,6 @@ void CFormProperties::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	//	dc.DrawText(buffer, &rect, DT_CENTER | DT_VCENTER);//Redraw the  Caption of Button Window 
 	//	dc.Detach();  // Detach the Button DC
 	//}
-
-
-
-
-
-
 	CFormView::OnDrawItem(nIDCtl, lpDrawItemStruct);
 }
 
@@ -464,6 +465,8 @@ void CFormProperties::OnBnClickedCheckLinebiox()
 		m_btnLineAdd.EnableWindow(FALSE);
 		m_btnLineDel.EnableWindow(FALSE);
 		m_btnLineReExt.EnableWindow(FALSE);
+		
+
 
 		pImgView->EnableShowLine(false);
 	}
@@ -549,13 +552,25 @@ void CFormProperties::OnBnClickedBnEncode()
 }
 
 
-void CFormProperties::OnBnClickedBnKeywordSearch()
+//void CFormProperties::OnBnClickedBnKeywordSearch()
+//{
+//	// TODO: Add your control notification handler code here
+//	UpdateData(TRUE);
+//	SINGLETON_DataMng::GetInstance()->DoKeywordSearch(m_editKeyword);
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->InitCamera();
+//}
+
+void CFormProperties::DoKeywordSearch()
 {
-	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	SINGLETON_DataMng::GetInstance()->DoKeywordSearch(m_editKeyword);
-
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->InitCamera();
 }
 
+
+void CFormProperties::OnBnClickedBnDeskewAll()
+{
+	// TODO: Add your control notification handler code here
+}

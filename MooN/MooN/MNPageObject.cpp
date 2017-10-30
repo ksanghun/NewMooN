@@ -167,8 +167,12 @@ GLuint CMNPageObject::LoadFullImage()
 	CString strPath = m_strPath;
 	CString str = PathFindExtension(m_strPath);
 	CString tmpStr = GetPInfoPath(L".jp2");
+
+	m_bImageChanged = true;
 	if (PathFileExists(tmpStr)) {
 		strPath = tmpStr;
+		m_bImageChanged = false;
+
 	}
 
 
@@ -1170,6 +1174,7 @@ void CMNPageObject::WriteSearchDBFile()
 		sdword.fDiff = 0.0f;
 
 		m_mapSDB[sdword.strcode].push_back(sdword);		
+		SINGLETON_DataMng::GetInstance()->AddSDBTable(sdword.strcode, m_ocrResult[i].strCode);
 	}
 
 	USES_CONVERSION;
