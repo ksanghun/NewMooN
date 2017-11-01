@@ -534,7 +534,7 @@ void CMNPageObject::DrawParagraph(int selid)
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
-	glPointSize(2);
+	glLineWidth(2);
 	if (m_paragraph.size() > 0) {
 		// Draw detected position //
 		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
@@ -542,23 +542,26 @@ void CMNPageObject::DrawParagraph(int selid)
 		glScalef(m_fXScale, m_fYScale, 1.0f);
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
-		//if (m_bIsNear){		
-		glLineWidth(3);
-		
-		for (int i = 0; i < m_paragraph.size(); i++) {			
+		if (m_bIsNear) {
+			glEnable(GL_LINE_STIPPLE);
+			for (int i = 0; i < m_paragraph.size(); i++) {
 
-			glColor4f(0.5f, 0.5f, 1.0f, 0.5f);
-			if(i==selid)
-				glColor4f(0.1f, 0.2f, 1.0f, 0.99f);
+				glColor4f(0.99f, 0.0f, 0.0f, 0.3f);
+				if (i == selid)
+					glColor4f(0.99f, 0.0f, 0.0f, 0.99f);
 
-			glBegin(GL_LINE_STRIP);
-			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-			glVertex3f(m_paragraph[i].rect.x,						          m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-			glVertex3f(m_paragraph[i].rect.x,								  m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
-			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width,	  m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
-			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width,	  m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-			glVertex3f(m_paragraph[i].rect.x,								  m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-			glEnd();
+				glLineStipple(2, 0xAAAA);				
+				glBegin(GL_LINE_STRIP);
+				//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+				glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+				glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+				glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+				glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+				glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+				glEnd();
+
+			}
+			glDisable(GL_LINE_STIPPLE);			
 		}
 		glPopMatrix();
 	}
@@ -854,13 +857,13 @@ bool CMNPageObject::IsNeedToExtract()
 	}
 	return false;
 }
-void CMNPageObject::AddParagraph(cv::Rect rect, bool IsHori, float deskew)
+void CMNPageObject::AddParagraph(cv::Rect rect, bool IsVerti, float deskew)
 {
 	m_IsNeedToSave = true;
 	stParapgraphInfo para;
 	para.deSkewAngle = deskew;
 	para.rect = rect;
-	para.IsHori = IsHori;
+	para.IsVerti = IsVerti;
 	para.IsDeskewed = false;
 
 	//if (type == _UNKNOWN_ALIGN) {
@@ -965,13 +968,13 @@ void CMNPageObject::UpdateTexture(cv::Mat& texImg)
 	}
 }
 
-float CMNPageObject::GetDeskewParam(int pid)
-{
-	if (pid < m_paragraph.size()) {
-		return m_paragraph[pid].deSkewAngle;
-	}
-	return 0;
-}
+//float CMNPageObject::GetDeskewParam(int pid)
+//{
+//	if (pid < m_paragraph.size()) {
+//		return m_paragraph[pid].deSkewAngle;
+//	}
+//	return 0;
+//}
 
 void CMNPageObject::SetOCRResult(int _id, _stOCRResult _res)
 {
@@ -1626,4 +1629,16 @@ void CMNPageObject::DrawSDBItem()
 		glPopMatrix();
 	}
 	glPopMatrix();
+}
+
+stParapgraphInfo CMNPageObject::GetLineBoxInfo(int pid)
+{
+	stParapgraphInfo lineBox;
+	lineBox.init();
+	
+	if (m_paragraph.size() > 0) {
+		lineBox = m_paragraph[pid];
+	}
+
+	return lineBox;
 }

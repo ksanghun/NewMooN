@@ -32,15 +32,15 @@ CMNDataManager::CMNDataManager()
 	}
 
 	mtSetPoint3D(&m_AccColor[9], 1.0f, 0.0f, 0.0f);
-	mtSetPoint3D(&m_AccColor[8], 1.0f, 0.2f, 0.0f);
-	mtSetPoint3D(&m_AccColor[7], 1.0f, 0.4f, 0.0f);
-	mtSetPoint3D(&m_AccColor[6], 1.0f, 0.6f, 0.0f);
-	mtSetPoint3D(&m_AccColor[5], 1.0f, 0.8f, 0.0f);
-	mtSetPoint3D(&m_AccColor[4], 1.0f, 1.0f, 0.0f);
-	mtSetPoint3D(&m_AccColor[3], 0.8f, 1.0f, 0.0f);
-	mtSetPoint3D(&m_AccColor[2], 0.6f, 1.0f, 0.0f);
-	mtSetPoint3D(&m_AccColor[1], 0.4f, 1.0f, 0.0f);
-	mtSetPoint3D(&m_AccColor[0], 0.2f, 1.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[8], 1.0f, 0.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[7], 1.0f, 0.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[6], 1.0f, 0.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[5], 1.0f, 0.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[4], 1.0f, 0.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[3], 1.8f, 0.5f, 0.0f);
+	mtSetPoint3D(&m_AccColor[2], 1.0f, 1.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[1], 0.5f, 1.0f, 0.0f);
+	mtSetPoint3D(&m_AccColor[0], 0.0f, 1.0f, 0.0f);
 
 	m_maxCutWidth = _NORMALIZE_SIZE_W + 5;
 
@@ -50,6 +50,47 @@ CMNDataManager::CMNDataManager()
 
 CMNDataManager::~CMNDataManager()
 {	
+	//for (size_t i = 0; i < m_vecImgData.size(); i++) {
+	//	GLuint tex = m_vecImgData[i]->GetThumbnailTex();
+	//	GLuint texfull = m_vecImgData[i]->GetTexId();
+	//	if (tex > 0) {
+	//		glDeleteTextures(1, &tex);
+	//	}
+	//	if (texfull > 0) {
+	//		glDeleteTextures(1, &texfull);
+	//	}
+	//	delete m_vecImgData[i];
+	//}
+
+	//m_vecImgData.clear();
+	//m_mapImageData.clear();
+	//m_mapGrupImg.clear();
+	ClearAllImages();
+
+	for (int i = 0; i < DB_CLASS_NUM; i++) {
+		for (int j = 0; j < m_refImgClass[i].vecStr.size(); j++) {
+			m_refImgClass[i].img[0].release();
+			delete m_refImgClass[i].vecStr[j];
+		}
+	}
+
+	
+	UpdateSDBFiles();
+}
+
+POINT3D CMNDataManager::GetColor(float fvalue)
+{
+	int idx = (10-fvalue * 10);
+	if (idx<1)
+		idx = 0;
+	if (idx>3)
+		idx = 9;
+
+	return m_AccColor[idx];
+}
+
+void CMNDataManager::ClearAllImages()
+{
 	for (size_t i = 0; i < m_vecImgData.size(); i++) {
 		GLuint tex = m_vecImgData[i]->GetThumbnailTex();
 		GLuint texfull = m_vecImgData[i]->GetTexId();
@@ -66,15 +107,9 @@ CMNDataManager::~CMNDataManager()
 	m_mapImageData.clear();
 	m_mapGrupImg.clear();
 
-	for (int i = 0; i < DB_CLASS_NUM; i++) {
-		for (int j = 0; j < m_refImgClass[i].vecStr.size(); j++) {
-			m_refImgClass[i].img[0].release();
-			delete m_refImgClass[i].vecStr[j];
-		}
-	}
-
-	
-	UpdateSDBFiles();
+	memset(m_bSlot, 0x00, sizeof(m_bSlot));
+	m_xOffset = DEFAULT_X_OFFSET;
+	m_yOffset = DEFAULT_Y_OFFSET;
 }
 
 CMNPageObject* CMNDataManager::GetPageByOrderID(int idx)
@@ -750,7 +785,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 		std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
 
 		for (int j = 0; j < ocrRes.size(); j++) {
-			if (ocrRes[j].bNeedToDB) {
+			if ((ocrRes[j].bNeedToDB) && (ocrRes[j].fConfidence<=1.0f)) {
 				cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
 				cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 				int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect) - 1;
@@ -1063,6 +1098,7 @@ void CMNDataManager::UpdateSDBFiles()
 void CMNDataManager::DoKeywordSearch(CString strKeyword)
 {
 	// clear previous results //
+	ClearAllImages();
 	std::vector<CString> vecWord;
 
 	int nIndex = strKeyword.ReverseFind(_T(' '));

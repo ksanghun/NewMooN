@@ -25,6 +25,7 @@ public:
 	// Thread Functions===========//
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
+	void ProcDoSearchSelection();
 	void ProcExtractBoundary();
 	void ProcOCR(bool IsAll);
 	void GenerateThumbnail();
@@ -34,12 +35,13 @@ public:
 	void DoOCRForPage(CMNPageObject* pPage);
 
 	// OCR POP-UP Menu //
-	void OcrEnglishword();
-	void OcrEnglishChar();
-	void OcrChiChar();
-	void OcrChiWord();
-	void OcrKorWord();
-	void OcrKorChar();
+	//void OcrEnglishword();
+	//void OcrEnglishChar();
+	//void OcrChiChar();
+	//void OcrChiWord();
+	//void OcrKorWord();
+	//void OcrKorChar();
+	void OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType);  // search type 0: character, 1: word
 	void RemoveNoise();
 
 	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
@@ -68,6 +70,7 @@ public:
 
 	void InitCamera(bool movexy = true);
 	int SelectObject3D(int x, int y, int rect_width, int rect_height, int selmode);
+	int SelectObject3DForMouseOver(int x, int y, int rect_width, int rect_height, int selmode);
 	void IDragMap(int x, int y, short sFlag);
 
 	// For Picking =============//
@@ -149,6 +152,7 @@ private:
 	int m_cnsSearchId;
 	int m_selParaId;
 	int m_selOCRId;
+	int m_selOCRIdforMouseHover;
 
 	CMNPageObject* m_pSelectPageForCNS;
 	COCRMng m_OCRMng;

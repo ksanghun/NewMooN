@@ -17,11 +17,12 @@ public:
 
 	float GetThreshold();// { return m_pProperties->GetThreshold(); }
 	COLORREF GetMatchingColor();// { return m_pProperties->GetMatchingColor(); }
-	void SetParagraphInfo(float fskew, CString strName);
+	void SetParagraphInfo(float fskew, CString strName, bool IsVerti);
 	void GetCurrSetting();
 
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
 	void DoKeywordSearch() {		m_pProperties->DoKeywordSearch();	};
+	void RotateSelLinebox() {		m_pProperties->RotateSelLinebox();	 };
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

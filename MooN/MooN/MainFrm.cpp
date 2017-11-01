@@ -51,6 +51,16 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_ANALYSIS_DATATRAINING, &CMainFrame::OnAnalysisDatatraining)
 	ON_COMMAND(ID_OCR_REMOVENOISE, &CMainFrame::OnOcrRemovenoise)
 	ON_COMMAND(ID_FILE_EXPORTDATABASE, &CMainFrame::OnFileExportdatabase)
+	ON_COMMAND(ID_OCR_SEARCH_SELECTION, &CMainFrame::OnOcrSearchSelection)
+	ON_COMMAND(ID_OCR_ADD_LINEBOX, &CMainFrame::OnOcrAddLinebox)
+	ON_COMMAND(ID_OCR_DELETEL_INEBOX, &CMainFrame::OnOcrDeletelInebox)
+	ON_COMMAND(ID_OCR_ROTATE_LINE, &CMainFrame::OnOcrRotateLine)
+	ON_COMMAND(ID_OCR_UNDOROTAION_LINE, &CMainFrame::OnOcrUndorotaionLine)
+	ON_COMMAND(ID_OCR_SPLITE_LINE, &CMainFrame::OnOcrSpliteLine)
+	ON_COMMAND(ID_OCR_ADD_TEXTBOX, &CMainFrame::OnOcrAddTextbox)
+	ON_COMMAND(ID_OCR_DELETETE_XTBOX32820, &CMainFrame::OnOcrDeleteteXtbox32820)
+	ON_COMMAND(ID_OCR_TRAIN_TEXT, &CMainFrame::OnOcrTrainText)
+	ON_COMMAND(ID_RECOGNIZETEXT_FROMUSERDB, &CMainFrame::OnRecognizetextFromuserdb)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -721,9 +731,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 }
 
 
-void CMainFrame::SetParagraphInfo(float fdeskew, CString strName)
+void CMainFrame::SetParagraphInfo(float fdeskew, CString strName, bool IsVerti)
 {
-	m_wndProperties.SetParagraphInfo(fdeskew, strName);
+	m_wndProperties.SetParagraphInfo(fdeskew, strName, IsVerti);
 }
 
 void CMainFrame::SetOCRResInfo(wchar_t* strCode, float fConfi, int lang)
@@ -735,7 +745,8 @@ void CMainFrame::OnOcrEnglishword()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrEnglishword();
+//	pViewImage->OcrEnglishword();
+	pViewImage->OcrFromTextBox(__ENG, 1);
 }
 
 
@@ -743,7 +754,8 @@ void CMainFrame::OnOcrChinesecharacter()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrChiChar();
+//	pViewImage->OcrChiChar();
+	pViewImage->OcrFromTextBox(__CHI, 0);
 }
 
 
@@ -751,7 +763,8 @@ void CMainFrame::OnOcrChineseword()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrChiWord();
+//	pViewImage->OcrChiWord();
+	pViewImage->OcrFromTextBox(__CHI, 1);
 }
 
 
@@ -759,7 +772,8 @@ void CMainFrame::OnOcrEnglishcharacter()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrEnglishChar();
+//	pViewImage->OcrEnglishChar();
+	pViewImage->OcrFromTextBox(__ENG, 0);
 }
 
 
@@ -767,7 +781,8 @@ void CMainFrame::OnOcrKoreanwo()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrKorWord();
+//	pViewImage->OcrKorWord();
+	pViewImage->OcrFromTextBox(__KOR, 1);
 }
 
 
@@ -775,7 +790,8 @@ void CMainFrame::OnOcrKoreancharacter()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrKorChar();
+//	pViewImage->OcrKorChar();
+	pViewImage->OcrFromTextBox(__KOR, 0);
 }
 
 
@@ -800,4 +816,85 @@ void CMainFrame::OnFileExportdatabase()
 {
 	// TODO: Add your command handler code here
 	SINGLETON_DataMng::GetInstance()->ExportDatabase();
+}
+
+
+void CMainFrame::OnOcrSearchSelection()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcDoSearchSelection();
+	
+}
+
+
+void CMainFrame::OnOcrAddLinebox()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->AddParagraph();
+}
+
+
+void CMainFrame::OnOcrDeletelInebox()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteSelParagraph();
+}
+
+
+void CMainFrame::OnOcrRotateLine()
+{
+	// TODO: Add your command handler code here
+	m_wndProperties.RotateSelLinebox();
+}
+
+
+void CMainFrame::OnOcrUndorotaionLine()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->UndoDeskewParagraph();
+}
+
+
+void CMainFrame::OnOcrSpliteLine()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	GetCurrSetting();
+	pImgView->ReExtractParagraph();
+}
+
+
+void CMainFrame::OnOcrAddTextbox()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->AddOCRRes();
+}
+
+
+void CMainFrame::OnOcrDeleteteXtbox32820()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeleteSelOCRRes();
+}
+
+
+void CMainFrame::OnOcrTrainText()
+{
+	// TODO: Add your command handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->ConfirmOCRRes();
+}
+
+
+void CMainFrame::OnRecognizetextFromuserdb()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->OcrFromTextBox(_NONE, 0);
 }

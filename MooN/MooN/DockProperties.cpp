@@ -82,10 +82,10 @@ void CDockProperties::GetCurrSetting()
 	m_pProperties->GetCurrSetting();
 }
 
-void CDockProperties::SetParagraphInfo(float fskew, CString strName)
+void CDockProperties::SetParagraphInfo(float fskew, CString strName, bool IsVerti)
 {
 	if (m_pProperties) {
-		m_pProperties->SetParagraphInfo(fskew, strName);
+		m_pProperties->SetParagraphInfo(fskew, strName, IsVerti);
 	}
 }
 

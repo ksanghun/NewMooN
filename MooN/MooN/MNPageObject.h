@@ -28,10 +28,18 @@ struct stParapgraphInfo
 	cv::Rect rect;
 	float deSkewAngle;
 	bool IsDeskewed;
-	bool IsHori;
+	bool IsVerti;
 //	unsigned short alignType;
 //	_ALIGHN_TYPE alignType;
 //	POINT3D color;
+
+	void init() {
+		rect = cv::Rect(0, 0, 0, 0);
+		deSkewAngle = 0.0f;
+		IsDeskewed = false;
+		IsVerti = false;
+	};
+
 };
 
 struct stDBSearchRes
@@ -116,10 +124,10 @@ public:
 	float SetSelectionPosition(int nSlot, float xOffset, float yOffset, bool IsAni);
 	void SetSelection(bool _isSel);
 	bool AddMatchedPoint(stMatchInfo info, int search_size);
-	void AddParagraph(cv::Rect rect, bool IsHori, float deskew);
+	void AddParagraph(cv::Rect rect, bool IsVerti, float deskew);
 	bool IsDuplicate(stMatchInfo& info, int search_size);
 
-	float GetDeskewParam(int pid);
+//	float GetDeskewParam(int pid);
 	_stOCRResult GetOCRResult(int _id);
 	void CMNPageObject::SetOCRResult(int _id, _stOCRResult _res);
 
@@ -153,6 +161,8 @@ public:
 
 	bool IsNeedToExtract();
 
+
+	stParapgraphInfo GetLineBoxInfo(int pid);
 private:
 	// Basic Information //
 	CString m_strPath;

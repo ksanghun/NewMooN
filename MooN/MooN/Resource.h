@@ -172,13 +172,47 @@
 #define ID_ANALYSIS_DATATRAINING        32797
 #define ID_OCR_REMOVENOISE              32798
 #define ID_FILE_EXPORTDATABASE          32799
+#define ID_OCR_CHARACTERRECOGNITION     32800
+#define ID_CHARACTERRECOGNITION_ENGLISH 32801
+#define ID_ENGLISH_WORD                 32802
+#define ID_ENGLISH_CHARACTER            32803
+#define ID_CHARACTERRECOGNITION_CHINESE 32804
+#define ID_CHINESE_WORD                 32805
+#define ID_CHINESE_CHARACTER            32806
+#define ID_CHARACTERRECOGNITION_KOREAN  32807
+#define ID_KOREAN_WORD                  32808
+#define ID_KOREAN_CHARACTER             32809
+#define ID_OCR_ENGLISHCHARACTE          32810
+#define ID_OCR_SEARCH32811              32811
+#define ID_OCR_SEARCH_SELECTION         32812
+#define ID_OCR_ADDTEXTBOX               32813
+#define ID_OCR_DELETETEXTBOX            32814
+#define ID_TEXTBOX_ADD                  32815
+#define ID_TEXTBOX_DELETE               32816
+#define ID_LINEBOX_ADD                  32817
+#define ID_LINEBOX_DELETE               32818
+#define ID_OCR_DELETELINEBOX            32819
+#define ID_OCR_DELETETEXTBOX32820       32820
+#define ID_OCR_ROTATELINE               32821
+#define ID_OCR_SPLITELINE               32822
+#define ID_OCR_TRAINTEXT                32823
+#define ID_OCR_ADD_LINEBOX              32824
+#define ID_OCR_DELETEL_INEBOX           32825
+#define ID_OCR_ROTATE_LINE              32826
+#define ID_OCR_SPLITE_LINE              32827
+#define ID_OCR_ADD_TEXTBOX              32828
+#define ID_OCR_DELETETE_XTBOX32820      32829
+#define ID_OCR_TRAIN_TEXT               32830
+#define ID_OCR_UNDOROTAION              32831
+#define ID_OCR_UNDOROTAION_LINE         32832
+#define ID_RECOGNIZETEXT_FROMUSERDB     32833
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32800
+#define _APS_NEXT_COMMAND_VALUE         32834
 #define _APS_NEXT_CONTROL_VALUE         1039
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

@@ -364,14 +364,37 @@ IDR_MENU_OCR MENU
 BEGIN
     POPUP "OCR"
     BEGIN
-        MENUITEM "English Word",                ID_OCR_ENGLISHWORD
-        MENUITEM "English Character",           ID_OCR_ENGLISHCHARACTER
+        POPUP "Recognize text"
+        BEGIN
+            POPUP "English"
+            BEGIN
+                MENUITEM "Word",                        ID_OCR_ENGLISHWORD
+                MENUITEM "Character",                   ID_OCR_ENGLISHCHARACTER
+            END
+            POPUP "Chinese"
+            BEGIN
+                MENUITEM "Word",                        ID_OCR_CHINESEWORD
+                MENUITEM "Character",                   ID_OCR_CHINESECHARACTER
+            END
+            POPUP "Korean"
+            BEGIN
+                MENUITEM "Word",                        ID_OCR_KOREANWO
+                MENUITEM "Character",                   ID_OCR_KOREANCHARACTER
+            END
+            MENUITEM "From User DB ",               ID_RECOGNIZETEXT_FROMUSERDB
+        END
         MENUITEM SEPARATOR
-        MENUITEM "Chinese Word",                ID_OCR_CHINESEWORD
-        MENUITEM "Chinese Character",           ID_OCR_CHINESECHARACTER
+        MENUITEM "Search text",                 ID_OCR_SEARCH_SELECTION
         MENUITEM SEPARATOR
-        MENUITEM "Korean Word",                 ID_OCR_KOREANWO
-        MENUITEM "Korean Character",            ID_OCR_KOREANCHARACTER
+        MENUITEM "Add text",                    ID_OCR_ADD_TEXTBOX
+        MENUITEM "Delete text ",                ID_OCR_DELETETE_XTBOX32820
+        MENUITEM "Train text",                  ID_OCR_TRAIN_TEXT
+        MENUITEM SEPARATOR
+        MENUITEM "Add line",                    ID_OCR_ADD_LINEBOX
+        MENUITEM "Delete Line",                 ID_OCR_DELETEL_INEBOX
+        MENUITEM "Rotate line",                 ID_OCR_ROTATE_LINE
+        MENUITEM "Undo Rotaion",                ID_OCR_UNDOROTAION_LINE
+        MENUITEM "Splite line",                 ID_OCR_SPLITE_LINE
         MENUITEM SEPARATOR
         MENUITEM "Remove Noise",                ID_OCR_REMOVENOISE
     END

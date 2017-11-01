@@ -81,7 +81,9 @@ public:
 
 	// TEST //
 	void Test();
+	POINT3D GetColor(float fvalue);
 
+	void ClearAllImages();
 	bool LoadImageData(CString strPath, cv::Mat& pimg, bool IsGray);
 	short SelectPages(unsigned long cCode);
 	// Getter ========================//

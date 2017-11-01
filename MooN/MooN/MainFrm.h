@@ -28,7 +28,7 @@ public:
 	float GetThreshold() { return m_wndProperties.GetThreshold(); }
 	COLORREF GetMatchingColor() { return m_wndProperties.GetMatchingColor(); }
 
-	void SetParagraphInfo(float fdeskew, CString strName);
+	void SetParagraphInfo(float fdeskew, CString strName, bool IsVerti);
 	void GetCurrSetting() { return m_wndProperties.GetCurrSetting(); }
 
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
@@ -101,6 +101,16 @@ public:
 	afx_msg void OnAnalysisDatatraining();
 	afx_msg void OnOcrRemovenoise();
 	afx_msg void OnFileExportdatabase();
+	afx_msg void OnOcrSearchSelection();
+	afx_msg void OnOcrAddLinebox();
+	afx_msg void OnOcrDeletelInebox();
+	afx_msg void OnOcrRotateLine();
+	afx_msg void OnOcrUndorotaionLine();
+	afx_msg void OnOcrSpliteLine();
+	afx_msg void OnOcrAddTextbox();
+	afx_msg void OnOcrDeleteteXtbox32820();
+	afx_msg void OnOcrTrainText();
+	afx_msg void OnRecognizetextFromuserdb();
 };
 
 

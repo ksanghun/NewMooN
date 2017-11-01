@@ -26,7 +26,7 @@ CFormProperties::CFormProperties()
 	, m_fDeskew(0)
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
-	, m_bLineBox(FALSE)
+	, m_bLineBox(TRUE)
 	, m_editConfi(80)
 	, m_editKeyword(_T(""))
 {
@@ -80,25 +80,25 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	//ON_BN_CLICKED(IDC_BN_ENG_FONT, &CFormProperties::OnBnClickedBnEngFont)
 	//ON_BN_CLICKED(IDC_BN_CHI_FONT, &CFormProperties::OnBnClickedBnChiFont)
 	//ON_BN_CLICKED(IDC_BN_KOR_FONT, &CFormProperties::OnBnClickedBnKorFont)
-	ON_BN_CLICKED(IDC_BN_APP_DESKEW, &CFormProperties::OnBnClickedBnAppDeskew)
-	ON_BN_CLICKED(IDC_BN_CANCEL, &CFormProperties::OnBnClickedBnCancel)
-	ON_BN_CLICKED(IDC_BN_DEL_PARA, &CFormProperties::OnBnClickedBnDelPara)
-	ON_BN_CLICKED(IDC_BN_ADD_PARA, &CFormProperties::OnBnClickedBnAddPara)
-	ON_BN_CLICKED(IDC_BN_RE_EXTRACT, &CFormProperties::OnBnClickedBnReExtract)
+	//ON_BN_CLICKED(IDC_BN_APP_DESKEW, &CFormProperties::OnBnClickedBnAppDeskew)
+	//ON_BN_CLICKED(IDC_BN_CANCEL, &CFormProperties::OnBnClickedBnCancel)
+	//ON_BN_CLICKED(IDC_BN_DEL_PARA, &CFormProperties::OnBnClickedBnDelPara)
+	//ON_BN_CLICKED(IDC_BN_ADD_PARA, &CFormProperties::OnBnClickedBnAddPara)
+	//ON_BN_CLICKED(IDC_BN_RE_EXTRACT, &CFormProperties::OnBnClickedBnReExtract)
 	ON_BN_CLICKED(IDC_BN_DEL_ALLLINBES, &CFormProperties::OnBnClickedBnDelAlllinbes)
 //	ON_BN_CLICKED(IDC_BN_DEL_ALLOCR, &CFormProperties::OnBnClickedBnDelAllocr)
 	ON_BN_CLICKED(IDC_BN_RUNOCR, &CFormProperties::OnBnClickedBnRunocr)
-	ON_BN_CLICKED(IDC_BN_DEL_OCRRES, &CFormProperties::OnBnClickedBnDelOcrres)
+	//ON_BN_CLICKED(IDC_BN_DEL_OCRRES, &CFormProperties::OnBnClickedBnDelOcrres)
 	ON_BN_CLICKED(IDC_BN_ADD_MODIFYOCRRES, &CFormProperties::OnBnClickedBnAddModifyocrres)
-	ON_BN_CLICKED(IDC_BN_WORD_CONFIRM, &CFormProperties::OnBnClickedBnWordConfirm)
-	ON_BN_CLICKED(IDC_BN_ADD_OCRRES, &CFormProperties::OnBnClickedBnAddOcrres)
+	//ON_BN_CLICKED(IDC_BN_WORD_CONFIRM, &CFormProperties::OnBnClickedBnWordConfirm)
+	//ON_BN_CLICKED(IDC_BN_ADD_OCRRES, &CFormProperties::OnBnClickedBnAddOcrres)
 	ON_EN_CHANGE(IDC_EDIT_FILENAME, &CFormProperties::OnEnChangeEditFilename)
 	ON_WM_DRAWITEM()
 	ON_BN_CLICKED(IDC_CHECK_LINEBIOX, &CFormProperties::OnBnClickedCheckLinebiox)
 	ON_EN_CHANGE(IDC_EDIT_CONFI, &CFormProperties::OnEnChangeEditConfi)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_CONFI, &CFormProperties::OnNMCustomdrawSliderConfi)
-	ON_EN_CHANGE(IDC_EDIT_KOR_SIZE, &CFormProperties::OnEnChangeEditKorSize)
-	ON_EN_CHANGE(IDC_EDIT_CHI_SIZE, &CFormProperties::OnEnChangeEditChiSize)
+	//ON_EN_CHANGE(IDC_EDIT_KOR_SIZE, &CFormProperties::OnEnChangeEditKorSize)
+	//ON_EN_CHANGE(IDC_EDIT_CHI_SIZE, &CFormProperties::OnEnChangeEditChiSize)
 	ON_BN_CLICKED(IDC_BN_ALL_DEL_OCRRES, &CFormProperties::OnBnClickedBnAllDelOcrres)
 	ON_BN_CLICKED(IDC_BN_ENCODE, &CFormProperties::OnBnClickedBnEncode)
 //	ON_BN_CLICKED(IDC_BN_KEYWORD_SEARCH, &CFormProperties::OnBnClickedBnKeywordSearch)
@@ -160,8 +160,7 @@ void CFormProperties::OnInitialUpdate()
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->SetDispConfidence(m_editConfi);
 
-	pImgView->EnableShowLine(false);
-
+	pImgView->EnableShowLine(true);
 	UpdateData(FALSE);
 
 }
@@ -280,11 +279,19 @@ void CFormProperties::OnBnClickedBnExtractline()
 //	UpdateData(FALSE);
 //}
 
-void CFormProperties::SetParagraphInfo(float fskew, CString strName)
+void CFormProperties::SetParagraphInfo(float fskew, CString strName, bool IsVerti)
 {
 	UpdateData(TRUE);
 	m_strPageName = strName;
 	m_fDeskew = fskew;
+	
+	if (IsVerti) {
+		m_nAlign = 1;
+	}
+	else {
+		m_nAlign = 0;
+	}
+
 	UpdateData(FALSE);
 }
 
@@ -297,47 +304,53 @@ void CFormProperties::SetOCRInfo(wchar_t* strCode, float fConfi, int lang)
 	UpdateData(FALSE);
 }
 
-void CFormProperties::OnBnClickedBnAppDeskew()
+//void CFormProperties::OnBnClickedBnAppDeskew()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();	
+//	UpdateData(TRUE);
+//	pImgView->DeskewParagraph(m_fDeskew);
+//}
+
+void CFormProperties::RotateSelLinebox()
 {
-	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
-	
 	UpdateData(TRUE);
 	pImgView->DeskewParagraph(m_fDeskew);
 }
 
 
-void CFormProperties::OnBnClickedBnCancel()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	pImgView->UndoDeskewParagraph();
-}
+//void CFormProperties::OnBnClickedBnCancel()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->UndoDeskewParagraph();
+//}
 
 
-void CFormProperties::OnBnClickedBnDelPara()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	pImgView->DeleteSelParagraph();
-}
+//void CFormProperties::OnBnClickedBnDelPara()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->DeleteSelParagraph();
+//}
 
 
-void CFormProperties::OnBnClickedBnAddPara()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	pImgView->AddParagraph();
-}
+//void CFormProperties::OnBnClickedBnAddPara()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->AddParagraph();
+//}
 
 
-void CFormProperties::OnBnClickedBnReExtract()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	GetCurrSetting();
-	pImgView->ReExtractParagraph();
-}
+//void CFormProperties::OnBnClickedBnReExtract()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	GetCurrSetting();
+//	pImgView->ReExtractParagraph();
+//}
 
 
 void CFormProperties::OnBnClickedBnDelAlllinbes()
@@ -366,12 +379,12 @@ void CFormProperties::OnBnClickedBnRunocr()
 }
 
 
-void CFormProperties::OnBnClickedBnDelOcrres()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	pImgView->DeleteSelOCRRes();
-}
+//void CFormProperties::OnBnClickedBnDelOcrres()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->DeleteSelOCRRes();
+//}
 
 
 void CFormProperties::OnBnClickedBnAddModifyocrres()
@@ -383,20 +396,20 @@ void CFormProperties::OnBnClickedBnAddModifyocrres()
 }
 
 
-void CFormProperties::OnBnClickedBnWordConfirm()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	pImgView->ConfirmOCRRes();
-}
+//void CFormProperties::OnBnClickedBnWordConfirm()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->ConfirmOCRRes();
+//}
 
 
-void CFormProperties::OnBnClickedBnAddOcrres()
-{
-	// TODO: Add your control notification handler code here
-	CMNView* pImgView = pView->GetImageView();
-	pImgView->AddOCRRes();
-}
+//void CFormProperties::OnBnClickedBnAddOcrres()
+//{
+//	// TODO: Add your control notification handler code here
+//	CMNView* pImgView = pView->GetImageView();
+//	pImgView->AddOCRRes();
+//}
 
 
 void CFormProperties::OnEnChangeEditFilename()
@@ -514,26 +527,26 @@ void CFormProperties::OnNMCustomdrawSliderConfi(NMHDR *pNMHDR, LRESULT *pResult)
 }
 
 
-void CFormProperties::OnEnChangeEditKorSize()
-{
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CFormView::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
+//void CFormProperties::OnEnChangeEditKorSize()
+//{
+//	// TODO:  If this is a RICHEDIT control, the control will not
+//	// send this notification unless you override the CFormView::OnInitDialog()
+//	// function and call CRichEditCtrl().SetEventMask()
+//	// with the ENM_CHANGE flag ORed into the mask.
+//
+//	// TODO:  Add your control notification handler code here
+//}
 
-	// TODO:  Add your control notification handler code here
-}
 
-
-void CFormProperties::OnEnChangeEditChiSize()
-{
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CFormView::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
-}
+//void CFormProperties::OnEnChangeEditChiSize()
+//{
+//	// TODO:  If this is a RICHEDIT control, the control will not
+//	// send this notification unless you override the CFormView::OnInitDialog()
+//	// function and call CRichEditCtrl().SetEventMask()
+//	// with the ENM_CHANGE flag ORed into the mask.
+//
+//	// TODO:  Add your control notification handler code here
+//}
 
 
 void CFormProperties::OnBnClickedBnAllDelOcrres()
