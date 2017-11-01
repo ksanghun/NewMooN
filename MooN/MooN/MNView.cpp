@@ -1239,6 +1239,7 @@ void CMNView::AddOCRRes()
 
 void CMNView::AddParagraph()
 {
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 	RECT2D rect = GetSelectedAreaForCNS();
 	if ((m_pSelectPageForCNS)) {
 		if ((rect.width > 0) && (rect.height > 0)) {
@@ -1254,7 +1255,7 @@ void CMNView::AddParagraph()
 
 				cv::Mat para = srcImg(r);
 				float deskew = m_Extractor.DeSkewImg(para);
-				m_pSelectPageForCNS->AddParagraph(r, _HORIZON_ALIGN, deskew);
+				m_pSelectPageForCNS->AddParagraph(r, m_extractionSetting.IsVerti, deskew);
 
 			//	cv::Mat resizeImg;
 			//	cv::resize(para, resizeImg, cv::Size(para.cols*2, para.rows*2));

@@ -643,7 +643,8 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 
 	if (pMsg->message == WM_KEYDOWN) {
 		int nChar = (int)pMsg->wParam;
-		if (nChar == 90) {  // Ctrl key
+//		if (nChar == 90) {  // Ctrl key
+		if (nChar == 17) {  // Ctrl key
 			if (pViewImage) {
 				pViewImage->EnableCutSearchMode(true, true);
 				pViewImage->SendMessage(WM_SETCURSOR);
@@ -708,7 +709,8 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 
 	if (pMsg->message == WM_KEYUP) {
 		int nChar = (int)pMsg->wParam;
-		if (nChar == 90) {  // z key
+//		if (nChar == 90) {  // z key
+		if (nChar == 17) {  // z key
 			if (pViewImage) {
 				pViewImage->EnableCutSearchMode(false, false);
 				pViewImage->SendMessage(WM_SETCURSOR);

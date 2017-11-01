@@ -86,9 +86,9 @@ public:
 	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
 	BOOL m_bLineBox;
 	afx_msg void OnBnClickedCheckLinebiox();
-	CButton m_btnLineAdd;
-	CButton m_btnLineDel;
-	CButton m_btnLineReExt;
+	//CButton m_btnLineAdd;
+	//CButton m_btnLineDel;
+	//CButton m_btnLineReExt;
 	CSliderCtrl m_sliderConfi;
 	long m_editConfi;
 	afx_msg void OnEnChangeEditConfi();

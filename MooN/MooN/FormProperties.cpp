@@ -62,9 +62,9 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_LANG, m_comboLanguage);
 	DDX_Control(pDX, IDC_BN_RUNOCR, m_btnOCR);
 	DDX_Check(pDX, IDC_CHECK_LINEBIOX, m_bLineBox);
-	DDX_Control(pDX, IDC_BN_ADD_PARA, m_btnLineAdd);
-	DDX_Control(pDX, IDC_BN_DEL_PARA, m_btnLineDel);
-	DDX_Control(pDX, IDC_BN_RE_EXTRACT, m_btnLineReExt);
+	//DDX_Control(pDX, IDC_BN_ADD_PARA, m_btnLineAdd);
+	//DDX_Control(pDX, IDC_BN_DEL_PARA, m_btnLineDel);
+	//DDX_Control(pDX, IDC_BN_RE_EXTRACT, m_btnLineReExt);
 	DDX_Control(pDX, IDC_SLIDER_CONFI, m_sliderConfi);
 	DDX_Text(pDX, IDC_EDIT_CONFI, m_editConfi);
 	DDV_MinMaxLong(pDX, m_editConfi, 0, 100);
@@ -475,18 +475,18 @@ void CFormProperties::OnBnClickedCheckLinebiox()
 	UpdateData(TRUE);
 	CMNView* pImgView = pView->GetImageView();
 	if (m_bLineBox == FALSE) {
-		m_btnLineAdd.EnableWindow(FALSE);
-		m_btnLineDel.EnableWindow(FALSE);
-		m_btnLineReExt.EnableWindow(FALSE);
+		//m_btnLineAdd.EnableWindow(FALSE);
+		//m_btnLineDel.EnableWindow(FALSE);
+		//m_btnLineReExt.EnableWindow(FALSE);
 		
 
 
 		pImgView->EnableShowLine(false);
 	}
 	else {
-		m_btnLineReExt.EnableWindow(TRUE);
-		m_btnLineAdd.EnableWindow(TRUE);
-		m_btnLineDel.EnableWindow(TRUE);
+		//m_btnLineReExt.EnableWindow(TRUE);
+		//m_btnLineAdd.EnableWindow(TRUE);
+		//m_btnLineDel.EnableWindow(TRUE);
 
 		pImgView->EnableShowLine(true);
 	}
