@@ -293,7 +293,7 @@ bool CFileView::IsSupportFormat(CString strPath)
 		(str == L".jpg") || (str == L".JPG") ||
 		(str == L".bmp") || (str == L".BMP") ||
 		(str == L".png") || (str == L".PNG") ||
-		(str == L".tiff") || (str == L".TIFF"))
+		(str == L".tiff") || (str == L".TIFF") || (str == L".TIF") || (str == L".tif"))
 	{
 		return true;
 	}

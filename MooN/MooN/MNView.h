@@ -28,11 +28,13 @@ public:
 	void ProcDoSearchSelection();
 	void ProcExtractBoundary();
 	void ProcOCR(bool IsAll);
+	void ProcTrainingOCRResbyConfidence(float fConfi);
 	void GenerateThumbnail();
 	bool DoSearch();
 	void DoExtractBoundary();
 	void DoOCR();
 	void DoOCRForPage(CMNPageObject* pPage);
+	void DoOCRFromMooN();
 
 	// OCR POP-UP Menu //
 	//void OcrEnglishword();
@@ -49,6 +51,7 @@ public:
 	void DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType);
 	void DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes);
 	bool MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth);
+	bool MeargingtLineBox(std::vector<stParapgraphInfo>& vecBox, int& depth);
 	void TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect);
 	bool IsSymbol(wchar_t ch);
 	void DoExtractBoundaryForSelected();
@@ -108,6 +111,7 @@ public:
 	RECT2D GetSelectedAreaForCNS();
 	void EnableShowLine(bool Isshow) {		m_bIsShowParagraph = Isshow;	}
 	void SetDispConfidence(long nConfi) { m_dispConfi = (float)nConfi*0.01f; }
+	void SetDBTreshold(long nDbth) { m_dbTreshold = (float)nDbth*0.01f; }
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -161,6 +165,7 @@ private:
 	_stExtractionSetting m_extractionSetting;
 
 	float m_dispConfi;
+	float m_dbTreshold;
 
 public:
 	DECLARE_MESSAGE_MAP()

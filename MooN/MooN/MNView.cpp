@@ -20,10 +20,10 @@ enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, 
 CMNView::CMNView()
 {
 	memset(&m_LogFont, 0, sizeof(m_LogFont));
-	m_LogFont.lfCharSet = DEFAULT_CHARSET;
-	m_LogFont.lfHeight = -14;
+	m_LogFont.lfCharSet = CHINESEBIG5_CHARSET;
+	m_LogFont.lfHeight = -30;
 	m_LogFont.lfWidth = 0;
-//	m_LogFont.lfWeight = FW_BOLD;
+	m_LogFont.lfWeight = FW_BOLD;
 
 	m_pBmpInfo = (BITMAPINFO *)malloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256));
 
@@ -567,14 +567,19 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 				if (m_pSelectPageForCNS) {
 					m_pSelectPageForCNS->SetSelection(true);
 					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(0);
-					pM->SetParagraphInfo(lineInfo.deSkewAngle, L"", lineInfo.IsVerti);
+					if (lineInfo.rect.width > 0) {
+						pM->SetParagraphInfo(lineInfo.deSkewAngle, L"", lineInfo.IsVerti);
+					}
+					m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 				}
 			}
 			else if ((selid >= _PICK_PARA) && (selid < _PICK_WORD)) {		// Text block selectoin
 				m_selParaId = selid - _PICK_PARA;
 				if (m_pSelectPageForCNS) {
 					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(m_selParaId);
-					pM->SetParagraphInfo(lineInfo.deSkewAngle, m_pSelectPageForCNS->GetName(), lineInfo.IsVerti);
+					if (lineInfo.rect.width > 0) {
+						pM->SetParagraphInfo(lineInfo.deSkewAngle, m_pSelectPageForCNS->GetName(), lineInfo.IsVerti);
+					}
 				}
 			}
 			else if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)){		// Word selection
@@ -968,6 +973,24 @@ void CMNView::DoExtractBoundary()
 	vecImg[i - 1]->SetIsSearched(false);
 
 	m_bIsThreadEnd = true;
+}
+
+void CMNView::ProcTrainingOCRResbyConfidence(float fConfi)
+{
+	if (m_pSelectPageForCNS) {
+		std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNS->GetVecOCRResult();
+		if (ocrRes.size() > 0) {
+			for (int j = 0; j < ocrRes.size(); j++) {
+				//mtSetPoint3D(&tColor, 0.0f, 1.0f, 0.0f);
+				if (ocrRes[j].fConfidence > m_dispConfi) {
+				//	ocrRes[j].bNeedToDB = true;
+					m_pSelectPageForCNS->UpdateOCRResStatus(j, true);
+				}
+			}
+		}
+
+		SINGLETON_DataMng::GetInstance()->DBTraining(m_pSelectPageForCNS);
+	}
 }
 
 void CMNView::ProcOCR(bool IsAll)
@@ -1419,17 +1442,25 @@ void CMNView::DrawOCRRes()
 
 					rect.set(ocrRes[j].rect.x, ocrRes[j].rect.x + ocrRes[j].rect.width, ocrRes[j].rect.y, ocrRes[j].rect.y + ocrRes[j].rect.height);
 
-					// Draw Text //
-					glColor4f(0.0f, 0.0f, 1.0f, 0.99f);
-					mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
-					gl_DrawText(tPos, ocrRes[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
+					
 
 
 					//mtSetPoint3D(&tColor, 0.0f, 1.0f, 0.0f);
 					if (ocrRes[j].fConfidence > m_dispConfi) {
+						
+						// Draw Text //
+						glColor4f(0.0f, 0.0f, 1.0f, 0.99f);
+						if (m_extractionSetting.IsVerti) {
+							mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
+						}
+						else {
+							mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
+						}
+						gl_DrawText(tPos, ocrRes[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
+
 						//	mtSetPoint3D(&tColor, 1.0f, 0.0f, 0.0f);
 						tColor = SINGLETON_DataMng::GetInstance()->GetColor(ocrRes[j].fConfidence);
-						glColor4f(tColor.x, tColor.y, tColor.z, 0.2f);
+						glColor4f(tColor.x, tColor.y, tColor.z, 0.5f);
 
 						glBegin(GL_QUADS);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
@@ -1440,7 +1471,7 @@ void CMNView::DrawOCRRes()
 						glEnd();
 
 						if ((ocrRes[j].type == 3)) {
-							glColor4f(0.0f, 0.0f, 1.0f, 0.99f);
+							glColor4f(1.0f, 0.0f, 0.0f, 0.99f);
 							glBegin(GL_LINE_STRIP);
 							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
@@ -1452,7 +1483,17 @@ void CMNView::DrawOCRRes()
 					}
 
 					glLineWidth(2);
-					if ((j == m_selOCRIdforMouseHover)) {						
+					if ((j == m_selOCRIdforMouseHover)) {	
+
+						glColor4f(1.0f, 0.0f, 0.0f, 0.99f);
+						if (m_extractionSetting.IsVerti) {
+							mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
+						}
+						else {
+							mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
+						}
+						gl_DrawText(tPos, ocrRes[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
+
 						glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
 						glBegin(GL_LINE_STRIP);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
@@ -1493,7 +1534,7 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 			std::vector<_stOCRResult> ocrTmp;
 			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
 		
-			if ((averConf > ocrRes[k].fConfidence*1.4f) && (averConf > 0.6f)) {
+			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.6f)) {
 		//	if ((averConf > ocrRes[k].fConfidence*1.2f)){// && (averConf > 0.5f)) {
 				ocrRes[k].type = 100; 
 				for (int m = 0; m < ocrTmp.size(); m++) {
@@ -1663,7 +1704,7 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 
 	std::vector<_stOCRResult> ocrAdd;
 	for (int k = 0; k < ocrRes.size(); k++) {
-		if ((ocrRes[k].fConfidence < 0.9f) && (ocrRes[k].type < 100)) {
+		if ((ocrRes[k].fConfidence < m_dbTreshold) && (ocrRes[k].type < 100)) {
 			cv::Mat imgword = img(ocrRes[k].rect).clone();	
 			_stOCRResult dbRes = ocrRes[k];
 			SINGLETON_DataMng::GetInstance()->MatchingFromDB(imgword, dbRes);
@@ -1684,11 +1725,42 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 	ocrAdd.clear();
 }
 
+void CMNView::DoOCRFromMooN()
+{
+	if (m_pSelectPageForCNS) {
+		std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNS->GetVecOCRResult();
+		cv::Mat gray = m_pSelectPageForCNS->GetSrcPageGrayImg();
+		cv::Rect rect = cv::Rect(0, 0, gray.cols, gray.rows);
+		DoOCCorrection(gray, rect, m_pSelectPageForCNS, ocrRes);
+
+		m_pSelectPageForCNS->DeleteAllOcrRes();
+
+		for (int k = 0; k < ocrRes.size(); k++) {
+			if (ocrRes[k].type < 100) {
+				m_pSelectPageForCNS->AddOCRResult(ocrRes[k]);
+			}
+		}
+	}
+}
+
 void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 {
 	std::vector<_stOCRResult> ocrRes;// = pPage->GetVecOCRResult();
 	float fScale = 1.0f;
 
+
+	cv::Rect r = rect;
+	r.x -= 2;
+	r.y -= 2;
+	r.width += 4;
+	r.height += 4;
+
+	if (r.x < 0) r.x = 0;
+	if (r.y < 0) r.y = 0;
+	if (r.width > img.cols) r.width = img.cols;
+	if (r.height > img.rows) r.height = img.rows;
+
+	
 	//================Start With English =============================//
 	if (m_extractionSetting.isEng){
 		fScale = 32.0f / (float)m_extractionSetting.engSize;
@@ -1702,8 +1774,7 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage)
 		}		
 	}
 
-	DoOCCorrection(img, rect, pPage, ocrRes);
-
+//	DoOCCorrection(img, rect, pPage, ocrRes);
 	//===========Korean================================//
 	if (m_extractionSetting.isKor) {
 		fScale = 32.0f / (float)m_extractionSetting.korSize;
@@ -2055,12 +2126,60 @@ void CMNView::RemoveNoise()
 //	}
 //}
 
+
+bool CMNView::MeargingtLineBox(std::vector<stParapgraphInfo>& vecBox, int& depth)
+{
+	std::vector<stParapgraphInfo> tmp = vecBox;
+	vecBox = std::vector<stParapgraphInfo>();
+
+	int nWidth = 0, nHeight = 0;
+	bool IsMerged = false;
+	for (int i = 0; i < tmp.size(); i++) {
+
+		for (int j = i + 1; j < tmp.size(); j++) {
+			cv::Rect andRect_overlap = (tmp[i].rect & tmp[j].rect);
+
+			float fOverlap_i = (float)andRect_overlap.area() / (float)tmp[i].rect.area();
+			float fOverlap_j = (float)andRect_overlap.area() / (float)tmp[j].rect.area();
+			cv::Rect mergeBox = (tmp[i].rect | tmp[j].rect);
+			//if (fOverlap_i > 0.1f) {		// Skip i !				
+			//	tmp[j].rect = mergeBox;
+			//	tmp[j].fConfidence = 0.1f;
+			//	tmp[i].type = -1;
+			//	IsMerged = true;
+			//}
+			//else if (fOverlap_j > 0.1f) {
+			//	tmp[i].rect = mergeBox;
+			//	tmp[i].fConfidence = 0.1f;
+			//	tmp[j].type = -1;
+			//	IsMerged = true;
+			//}
+		}
+	}
+
+	for (int i = 0; i < tmp.size(); i++) {
+		//if (tmp[i].type != -1) {
+		//	vecBox.push_back(tmp[i]);
+		//}
+	}
+	tmp.clear();
+
+	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
+		depth++;
+		MeargingtLineBox(vecBox, depth);
+	}
+	return true;
+}
+
+
+
 void CMNView::DoOCRForPage(CMNPageObject* pPage)
 {
 	if (pPage) {
 
-		if (pPage->GetVecOCRResult().size() == 0) {
-		}
+		pPage->DeleteAllOcrRes();
+		//if (pPage->GetVecOCRResult().size() == 0) {
+		//}
 
 		cv::Mat gray = pPage->GetSrcPageGrayImg();
 		std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
@@ -2070,28 +2189,28 @@ void CMNView::DoOCRForPage(CMNPageObject* pPage)
 		int x1 = 9999, y1=9999, x2=0, y2=0;
 		for (int i = 0; i < para.size(); i++) {
 
-			//if (m_extractionSetting.IsVerti == false) {
+			if (m_extractionSetting.IsVerti == false) {
 				cv::Mat pimg = gray(para[i].rect).clone();
 				DoOCRForCutImg(pimg, para[i].rect, pPage);
 				pimg.release();
-			//}
-			//else {
-			//	if (x1 > para[i].rect.x)		x1 = para[i].rect.x;
-			//	if (y1 > para[i].rect.y)		y1 = para[i].rect.y;
-			//	if (x2 < (para[i].rect.x + para[i].rect.width))		x2 = para[i].rect.x + para[i].rect.width;
-			//	if (y2 < (para[i].rect.y + para[i].rect.height))	y2 = para[i].rect.y + para[i].rect.height;
-			//}
+			}
+			else {
+				if (x1 > para[i].rect.x)		x1 = para[i].rect.x;
+				if (y1 > para[i].rect.y)		y1 = para[i].rect.y;
+				if (x2 < (para[i].rect.x + para[i].rect.width))		x2 = para[i].rect.x + para[i].rect.width;
+				if (y2 < (para[i].rect.y + para[i].rect.height))	y2 = para[i].rect.y + para[i].rect.height;
+			}
 		}
-		//if (m_extractionSetting.IsVerti) {
-		//	cv::Rect maxRect;
-		//	maxRect.x = x1;
-		//	maxRect.y = y1;
-		//	maxRect.width = x2 - x1;
-		//	maxRect.height = y2 - y1;
-		//	cv::Mat pimg = gray(maxRect).clone();
-		//	DoOCRForCutImg(pimg, maxRect, pPage);
-		//	pimg.release();
-		//}
+		if (m_extractionSetting.IsVerti) {
+			cv::Rect maxRect;
+			maxRect.x = x1;
+			maxRect.y = y1;
+			maxRect.width = x2 - x1;
+			maxRect.height = y2 - y1;
+			cv::Mat pimg = gray(maxRect).clone();
+			DoOCRForCutImg(pimg, maxRect, pPage);
+			pimg.release();
+		}
 	//	DoOCRForCutImg(gray, cv::Rect(0, 0, 100, 100), pPage);
 	}	
 }

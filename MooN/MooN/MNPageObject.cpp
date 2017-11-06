@@ -821,7 +821,7 @@ bool CMNPageObject::AddMatchedPoint(stMatchInfo info, int search_size)
 bool CMNPageObject::GetPosByMatchID(int mid, POINT3D& pos)
 {
 	mtSetPoint3D(&pos, 0.0f, 0.0f, 0.0f);
-	if ((mid>=0) &&(mid <= (int)m_matched_pos.size())) {
+	if ((mid>=0) &&(mid < (int)m_matched_pos.size())) {
 		pos = m_matched_pos[mid].pos;
 
 		pos.x = (pos.x - m_nImgWidth*0.5f)*m_fXScale + m_pos.x;
@@ -842,12 +842,25 @@ void CMNPageObject::ClearParagraph()
 {
 	m_IsNeedToSave = true;
 	m_paragraph.clear();
+	m_ocrResult.clear();
 }
 
-void CMNPageObject::ClearOCRResult()
+void CMNPageObject::DeleteAllOcrRes()
 {
 	m_IsNeedToSave = true;
 	m_ocrResult.clear();
+}
+void CMNPageObject::ClearOCRResult()
+{
+	m_IsNeedToSave = true;
+//	m_ocrResult.clear();
+
+	for (auto i = 0; i < m_ocrResult.size(); i++) {
+		m_ocrResult[i].fConfidence = 0.0f;
+//		m_ocrResult[i].strCode 
+		memset(&m_ocrResult[i].strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+		wsprintf(m_ocrResult[i].strCode, L"Unknown");
+	}
 }
 
 bool CMNPageObject::IsNeedToExtract()
@@ -1343,10 +1356,10 @@ void CMNPageObject::EncodeTexBoxHori()
 		{
 			for (int j = 0; j < numItem - i - 1; j++)
 			{
-				//int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
-				//int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
-				int yj = vecEncode[j].rect.y;
-				int yj1 = vecEncode[j + 1].rect.y;
+				int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
+				int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
+				//int yj = vecEncode[j].rect.y;
+				//int yj1 = vecEncode[j + 1].rect.y;
 				if (yj > yj1) /* For decreasing order use < */
 				{
 					_EWORDINFO swap = vecEncode[j];
@@ -1457,7 +1470,7 @@ void CMNPageObject::EncodeTexBoxHori()
 
 			if (i < wNum - 1) {
 				int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
-				if (diff > averHeight / 5) {
+				if (diff > averHeight / 4) {
 					cfile.Write(L" ", 2);		// Space
 				}
 			}		
@@ -1635,6 +1648,7 @@ stParapgraphInfo CMNPageObject::GetLineBoxInfo(int pid)
 {
 	stParapgraphInfo lineBox;
 	lineBox.init();
+
 	
 	if (m_paragraph.size() > 0) {
 		lineBox = m_paragraph[pid];

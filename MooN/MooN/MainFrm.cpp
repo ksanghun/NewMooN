@@ -443,7 +443,7 @@ void CMainFrame::InitConfituration()
 		CreateDirectory(strfolder, NULL);
 	}
 	
-	SINGLETON_DataMng::GetInstance()->SetUserDataFolder(strfolder);
+	
 
 
 	// Load Config
@@ -486,6 +486,7 @@ void CMainFrame::InitConfituration()
 	}
 
 //	SINGLETON_DataMng::GetInstance()->Test();
+	SINGLETON_DataMng::GetInstance()->SetUserDBFolder(m_strLogPath);
 
 	m_wndFileView.FillFileView(m_strSrcPath);
 	GetImgFilePath(m_strSrcPath);
@@ -571,6 +572,38 @@ void CMainFrame::OnProjectRemoveimage()
 void CMainFrame::OnProjectConfiguration()
 {
 	// TODO: Add your command handler code here
+	CDlgConfig dlg(NULL, m_strSrcPath, m_strLogPath);
+
+
+	CString sPath;
+	GetModuleFileName(nullptr, sPath.GetBuffer(_MAX_PATH + 1), _MAX_PATH);
+	sPath.ReleaseBuffer();
+	CString path = sPath.Left(sPath.ReverseFind(_T('\\')));
+	CString strFle = path + "\\userdata\\conf.bin";
+
+	if (dlg.DoModal() == IDOK)
+	{
+		m_strSrcPath = dlg.GetSrcPath();
+
+		const int pathSize = 256;
+		char srcPath[pathSize];
+		// Save Config //
+		// for MS
+		FILE* fp = 0;
+		fopen_s(&fp, (CStringA)strFle, "wb");
+		SYSTEMTIME st;
+		GetSystemTime(&st);
+		if (fp) {
+			sprintf_s(srcPath, sizeof(srcPath), (CStringA)m_strSrcPath, fp);
+			fwrite(&st, sizeof(SYSTEMTIME), 1, fp);
+			fwrite(srcPath, pathSize, 1, fp);
+			fclose(fp);
+		}
+
+		m_wndFileView.FillFileView(m_strSrcPath);
+		GetImgFilePath(m_strSrcPath);
+		//	InitConfituration();
+	}
 }
 
 
@@ -801,7 +834,10 @@ void CMainFrame::OnAnalysisDatatraining()
 {
 	// TODO: Add your command handler code here
 	BeginWaitCursor();
-	SINGLETON_DataMng::GetInstance()->DBTraining();
+
+//	SINGLETON_DataMng::GetInstance()->DBTraining();
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcTrainingOCRResbyConfidence(0.0f);
 	EndWaitCursor();
 }
 

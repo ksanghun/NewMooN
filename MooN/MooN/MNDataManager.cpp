@@ -770,7 +770,7 @@ bool CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classi
 			cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
 			m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
 
-			if (TemplateMatching(cutimg, imgword) > 0.85f) {
+			if (TemplateMatching(cutimg, imgword) > 0.8f) {
 				return false;
 			}
 		}
@@ -778,12 +778,41 @@ bool CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classi
 	return true;
 }
 
+void CMNDataManager::ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight)
+{
+	int basePixel = 8;	
+	cv::Rect copyRect = cv::Rect(0,0,norWidth, norHeight);
+
+	if ((cutimg.cols < basePixel) && (cutimg.rows < basePixel)) {// in case of small character: , .  smaller than 8 pixel;
+		copyRect.x = 12;
+		copyRect.y = 12;
+		copyRect.width = basePixel;
+		copyRect.height = basePixel;
+	}
+	else {		// Check aspect ratio //
+		float aRatio = (float)cutimg.cols / (float)cutimg.rows;
+		//if (aRatio > 2.67f) {  // horizontal
+		//	copyRect.x = 0;
+		//	copyRect.y = 10;
+		//	copyRect.width = norWidth;
+		//	copyRect.height = 12;
+		//}
+		//else 
+		if (aRatio < 0.375f) {  // vertical //
+			copyRect.x = 10;
+			copyRect.y = 0;
+			copyRect.width = 12;
+			copyRect.height = norHeight;
+		}
+	}	
+	cv::resize(cutimg, cutimg, cvSize(copyRect.width, copyRect.height));
+	cutimg.copyTo(dstimg(copyRect));
+}
+
 
 void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 {
-
 		std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
-
 		for (int j = 0; j < ocrRes.size(); j++) {
 			if ((ocrRes[j].bNeedToDB) && (ocrRes[j].fConfidence<=1.0f)) {
 				cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
@@ -791,9 +820,14 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 				int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect) - 1;
 				int imgid = m_refImgClass[classid].nCurrImgId;
 
-				cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+				cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
+				resimg.setTo(255);
+				//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+				ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
+
+
 				// Verify to add into DB =====================================//
-				bool IsAdd = IsNeedToAddDB(cutimg, ocrRes[j].strCode, classid);
+				bool IsAdd = IsNeedToAddDB(resimg, ocrRes[j].strCode, classid);
 				//===========================================================//
 
 				if ((classid < 8) && (classid >= 0) && (IsAdd)) {
@@ -805,7 +839,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 					norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
 					norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
 
-					cutimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+					resimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
 
 					int clen = m_refImgClass[classid].maxCharLen;
 					wchar_t* strcode = new wchar_t[clen];
@@ -822,14 +856,15 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 	UpdateImgClassDB();
 }
 
-void CMNDataManager::DBTraining()
+void CMNDataManager::DBTraining(CMNPageObject* pPage)
 {
-	for (int i = 0; i < m_vecImgData.size(); i++) {
-		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+	//for (int i = 0; i < m_vecImgData.size(); i++) {
+	//	std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+	std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
 
 		for (int j = 0; j < ocrRes.size(); j++) {
 			if (ocrRes[j].bNeedToDB) {
-				cv::Mat cutimg = m_vecImgData[i]->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
+				cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
 				cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 				int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect)-1;
 				int imgid = m_refImgClass[classid].nCurrImgId;
@@ -857,11 +892,11 @@ void CMNDataManager::DBTraining()
 					m_refImgClass[classid].vecStr.push_back(strcode);
 
 					m_refImgClass[classid].needToUpdate = true;
-					m_vecImgData[i]->UpdateOCRResStatus(j, false);
+					pPage->UpdateOCRResStatus(j, false);
 				}
 			}
 		}
-	}
+//	}
 	UpdateImgClassDB();
 }
 
@@ -1304,32 +1339,32 @@ void CMNDataManager::ExportDatabase()
 
 						int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
 						cfile.Write(strWord.GetBuffer(), len);
-						cfile.Write(L",", 2);
+						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%d", res.rect.x);		// position x
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L",", 2);
+						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%d", res.rect.y);		// position y
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L",", 2);
+						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%d", res.rect.width);		// size
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L",", 2);
+						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%3.2f", res.fConfi);		// confidence
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L",", 2);
+						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%3.2f", res.fDiff);		// confidence
 						len = wcslen(strtmp.GetBuffer()) * 2;
 						cfile.Write(strtmp.GetBuffer(), len);
-						cfile.Write(L",", 2);
+						cfile.Write(L" ", 2);
 
 						len = wcslen(strBase64.GetBuffer()) * 2;
 						cfile.Write(strBase64.GetBuffer(), len);

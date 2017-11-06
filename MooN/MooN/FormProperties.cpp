@@ -29,6 +29,8 @@ CFormProperties::CFormProperties()
 	, m_bLineBox(TRUE)
 	, m_editConfi(80)
 	, m_editKeyword(_T(""))
+	, m_editDefaultFontSize(32)
+	, m_editDBth(90)
 {
 }
 
@@ -69,6 +71,11 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_CONFI, m_editConfi);
 	DDV_MinMaxLong(pDX, m_editConfi, 0, 100);
 	DDX_Text(pDX, IDC_EDIT_KEYWORD_SEARCH, m_editKeyword);
+	DDX_Text(pDX, IDC_EDIT_DEFAULT_FONT_SIZE, m_editDefaultFontSize);
+	DDV_MinMaxUInt(pDX, m_editDefaultFontSize, 1, 1000);
+	DDX_Control(pDX, IDC_SLIDER_DBTH, m_sliderForDBTh);
+	DDX_Text(pDX, IDC_EDIT_DBTH, m_editDBth);
+	DDV_MinMaxUInt(pDX, m_editDBth, 0, 100);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -103,6 +110,9 @@ BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
 	ON_BN_CLICKED(IDC_BN_ENCODE, &CFormProperties::OnBnClickedBnEncode)
 //	ON_BN_CLICKED(IDC_BN_KEYWORD_SEARCH, &CFormProperties::OnBnClickedBnKeywordSearch)
 ON_BN_CLICKED(IDC_BN_DESKEW_ALL, &CFormProperties::OnBnClickedBnDeskewAll)
+ON_BN_CLICKED(IDC_BN_SETFONTSIZE, &CFormProperties::OnBnClickedBnSetfontsize)
+ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_DBTH, &CFormProperties::OnNMCustomdrawSliderDbth)
+ON_BN_CLICKED(IDC_BN_MATCH_FROM_DB, &CFormProperties::OnBnClickedBnMatchFromDb)
 END_MESSAGE_MAP()
 
 
@@ -152,13 +162,18 @@ void CFormProperties::OnInitialUpdate()
 	m_comboLanguage.SetCurSel(0);
 
 
-	m_sliderConfi.SetRange(0, 100, TRUE);
+	m_sliderConfi.SetRange(1, 100, TRUE);
 	m_sliderConfi.SetTicFreq(100);
 	m_sliderConfi.SetPos(m_editConfi);
+
+	m_sliderForDBTh.SetRange(1, 100, TRUE);
+	m_sliderForDBTh.SetTicFreq(100);
+	m_sliderForDBTh.SetPos(m_editConfi);
 
 
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->SetDispConfidence(m_editConfi);
+	pImgView->SetDBTreshold(m_editDBth);
 
 	pImgView->EnableShowLine(true);
 	UpdateData(FALSE);
@@ -446,18 +461,18 @@ void CFormProperties::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	//	dc.Detach();  // Detach the Button DC
 	//}
 
-	//if (nIDCtl == IDC_BN_ENCODE)         //checking for the button 
+	//if (nIDCtl == IDC_BN_ALL_DEL_OCRRES)         //checking for the button 
 	//{
 	//	CDC dc;
 	//	RECT rect;
 	//	dc.Attach(lpDrawItemStruct->hDC);   // Get the Button DC to CDC
 	//	rect = lpDrawItemStruct->rcItem;     //Store the Button rect to our local rect.
 	//	dc.Draw3dRect(&rect, RGB(0, 0, 0), RGB(0, 0, 0));
-	//	dc.FillSolidRect(&rect, RGB(250, 250, 150));//Here you can define the required color to appear on the Button.
+	//	dc.FillSolidRect(&rect, RGB(250, 250, 0));//Here you can define the required color to appear on the Button.
 	//	UINT state = lpDrawItemStruct->itemState;  //This defines the state of the Push button either pressed or not. 
 	//	if ((state & ODS_SELECTED))		dc.DrawEdge(&rect, EDGE_SUNKEN, BF_RECT);
 	//	else			dc.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
-	//	dc.SetBkColor(RGB(250, 250, 150));   //Setting the Text Background color
+	//	dc.SetBkColor(RGB(250, 250, 0));   //Setting the Text Background color
 	//	dc.SetTextColor(RGB(0, 0, 0));     //Setting the Text Color
 	//	TCHAR buffer[MAX_PATH];           //To store the Caption of the button.
 	//	ZeroMemory(buffer, MAX_PATH);     //Intializing the buffer to zero
@@ -586,4 +601,37 @@ void CFormProperties::DoKeywordSearch()
 void CFormProperties::OnBnClickedBnDeskewAll()
 {
 	// TODO: Add your control notification handler code here
+}
+
+
+void CFormProperties::OnBnClickedBnSetfontsize()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CFormProperties::OnNMCustomdrawSliderDbth(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	UpdateData(TRUE);
+	int pos = m_sliderForDBTh.GetPos();
+
+	if (pos != (int)m_fEditTh) {
+		m_editDBth = pos;
+		UpdateData(FALSE);
+
+		CMNView* pImgView = pView->GetImageView();
+		pImgView->SetDBTreshold(m_editDBth);
+	}
+}
+
+
+void CFormProperties::OnBnClickedBnMatchFromDb()
+{
+	// TODO: Add your control notification handler code here
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DoOCRFromMooN();
 }

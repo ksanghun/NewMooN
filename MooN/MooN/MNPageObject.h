@@ -158,6 +158,7 @@ public:
 
 	void ClearParagraph();
 	void ClearOCRResult();
+	void DeleteAllOcrRes();
 
 	bool IsNeedToExtract();
 

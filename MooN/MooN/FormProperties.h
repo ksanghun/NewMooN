@@ -100,6 +100,12 @@ public:
 //	afx_msg void OnBnClickedBnKeywordSearch();
 	CString m_editKeyword;
 	afx_msg void OnBnClickedBnDeskewAll();
+	afx_msg void OnBnClickedBnSetfontsize();
+	UINT m_editDefaultFontSize;
+	CSliderCtrl m_sliderForDBTh;
+	UINT m_editDBth;
+	afx_msg void OnNMCustomdrawSliderDbth(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBnMatchFromDb();
 };
 
 

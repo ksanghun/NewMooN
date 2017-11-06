@@ -142,6 +142,12 @@
 #define IDC_BN_ALL_DEL_OCRRES           1036
 #define IDC_EDIT_CONFI                  1037
 #define IDC_BN_ENCODE                   1038
+#define IDC_EDIT_DEFAULT_FONT_SIZE      1039
+#define IDC_BN_SETFONTSIZE              1040
+#define IDC_SLIDER_DBTH                 1041
+#define IDC_EDIT_DBTH                   1042
+#define IDC_BUTTON2                     1043
+#define IDC_BN_MATCH_FROM_DB            1043
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -206,14 +212,15 @@
 #define ID_OCR_UNDOROTAION              32831
 #define ID_OCR_UNDOROTAION_LINE         32832
 #define ID_RECOGNIZETEXT_FROMUSERDB     32833
+#define ID_FILE_CONFIGURATION           32834
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32834
-#define _APS_NEXT_CONTROL_VALUE         1039
+#define _APS_NEXT_COMMAND_VALUE         32835
+#define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

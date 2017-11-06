@@ -114,8 +114,9 @@ public:
 	void ResetMatchingResult();
 	void ApplyDeskewPage();
 	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
-	void DBTraining();
+	void DBTraining(CMNPageObject* pPage);
 	void DBTrainingForPage(CMNPageObject* pPage);
+	void ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight);
 	bool IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
 	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);
@@ -125,7 +126,7 @@ public:
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
 	_stExtractionSetting GetExtractionSetting();// { return m_extractonInfo; }
 
-	void SetUserDataFolder(CString str) { m_strUserDataFolder = str; }
+	void SetUserDBFolder(CString str) { m_strUserDataFolder = str; }
 	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
 
 	void AddSDBTable(unsigned int hcode, wchar_t* strCode);
