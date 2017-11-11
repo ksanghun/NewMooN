@@ -84,11 +84,118 @@ CMainFrame::~CMainFrame()
 	SINGLETON_DataMng::Destory();
 }
 
+bool CMainFrame::checkMacAddr()
+{
+	// Known MAC Address ====================//
+	// CString authorized = L"00:0D:3A:A2:E7:C2";	// VM in Azure
+	//========================================
+	const int numMacAddr = 15;
+	CString arrAutho[numMacAddr];
+	arrAutho[0] = L"30:5A:3A:75:B6:45";		// FGS Desttop 01
+	arrAutho[1] = L"3C:52:82:B9:A9:03";		// FGS Laptop 01
+	arrAutho[2] = L"00:0D:3A:72:7B:89";
+	arrAutho[3] = L"00:0D:3A:72:7B:89";
+	arrAutho[4] = L"00:0D:3A:72:7B:89";
+	arrAutho[5] = L"00:0D:3A:72:7B:89";
+	arrAutho[6] = L"00:0D:3A:72:7B:89";
+	arrAutho[7] = L"00:0D:3A:72:7B:89";
+	arrAutho[8] = L"00:0D:3A:72:7B:89";
+	arrAutho[9] = L"00:0D:3A:72:7B:89";
+	arrAutho[10] = L"00:0D:3A:72:7B:89";
+	arrAutho[11] = L"00:0D:3A:72:7B:89";
+	arrAutho[12] = L"00:0D:3A:72:7B:89";
+	arrAutho[13] = L"84:3A:4B:73:38:11";
+	arrAutho[14] = L"9C:B6:D0:63:F3:D7";		// My laptop 
+
+
+	PIP_ADAPTER_INFO AdapterInfo;
+	DWORD dwBufLen = sizeof(AdapterInfo);
+	//	char *mac_addr = (char*)malloc(17);
+	CString strMacAddr = L"";
+
+	AdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
+	if (AdapterInfo == NULL) {
+		return false;
+	}
+
+	if (GetAdaptersInfo(AdapterInfo, &dwBufLen) == ERROR_BUFFER_OVERFLOW) {
+		AdapterInfo = (IP_ADAPTER_INFO *)malloc(dwBufLen);
+		if (AdapterInfo == NULL) {
+			return false;
+		}
+	}
+
+	if (GetAdaptersInfo(AdapterInfo, &dwBufLen) == NO_ERROR) {
+		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info
+		do {
+			strMacAddr.Format(L"%02X:%02X:%02X:%02X:%02X:%02X",
+				pAdapterInfo->Address[0], pAdapterInfo->Address[1],
+				pAdapterInfo->Address[2], pAdapterInfo->Address[3],
+				pAdapterInfo->Address[4], pAdapterInfo->Address[5]);
+			pAdapterInfo = pAdapterInfo->Next;
+		} while (pAdapterInfo);
+	}
+	free(AdapterInfo);
+
+
+	for (int i = 0; i < numMacAddr; i++) {
+		if (strMacAddr == arrAutho[i]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CMainFrame::checkCurrTime()
+{
+	WORD eYear = 2017;
+	WORD eMonth = 12;
+	WORD eDay = 30;
+
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+
+
+	if ((st.wYear < eYear)) {
+		return true;
+	}
+	else if (st.wYear==eYear){
+		if (st.wMonth < eMonth) {
+			return true;
+		}
+		else if (st.wMonth == eMonth) {
+			if ((st.wDay <= eDay)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CMainFrame::Authorization()
+{
+	//if (checkMacAddr() == false){
+	//	AfxMessageBox(L"Authorization failed");
+	//	return false;
+	//}
+
+	if (checkCurrTime() == false) {
+		AfxMessageBox(L"Authentication has expired");
+		return false;
+	}
+	return true;
+}
+
+
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
+	if (Authorization() == false) {
+		exit(0);
+	}
 
 	DWORD dwCtrlStyle = TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CBRS_SIZE_DYNAMIC;
 	DWORD dwStyle = AFX_DEFAULT_TOOLBAR_STYLE;
@@ -600,8 +707,8 @@ void CMainFrame::OnProjectConfiguration()
 			fclose(fp);
 		}
 
-		m_wndFileView.FillFileView(m_strSrcPath);
-		GetImgFilePath(m_strSrcPath);
+		//m_wndFileView.FillFileView(m_strSrcPath);
+		//GetImgFilePath(m_strSrcPath);
 		//	InitConfituration();
 	}
 }
@@ -707,9 +814,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			}
 		}
 
-		else if (nChar == 88) {	// excute search
-			pView->DoCurNSearch();
-		}
+		//else if (nChar == 88) {	// excute search
+		//	pView->DoCurNSearch();
+		//}
 
 		else if (nChar == 46) {		// Delete Key
 			if (pViewImage) {

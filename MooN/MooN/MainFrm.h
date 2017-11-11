@@ -9,6 +9,10 @@
 #include "DockFormView.h"
 #include "DockProperties.h"
 
+
+#include <Iphlpapi.h>
+#pragma comment(lib, "iphlpapi.lib")
+
 class CMainFrame : public CFrameWndEx
 {
 	
@@ -36,7 +40,10 @@ public:
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);
-	
+
+	bool Authorization();
+	bool checkMacAddr();
+	bool checkCurrTime();
 
 // Overrides
 public:

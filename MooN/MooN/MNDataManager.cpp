@@ -714,8 +714,8 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		rect.height = h;
 
 
-		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
+		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 		int clen = m_refImgClass[classid].maxCharLen;
 		float confi = TemplateMatching(cutimg, imgword)+0.1f;
 		if ((ocrres.fConfidence < confi )){  //( confi > 0.80f) && 

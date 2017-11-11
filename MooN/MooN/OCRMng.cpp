@@ -160,6 +160,8 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 	if (cnt > 0)
 		averConf /= cnt;
 	return averConf*0.01f;
+
+	// Need to return the lowest value //
 }
 
 

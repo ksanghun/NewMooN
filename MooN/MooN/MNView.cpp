@@ -12,7 +12,7 @@ enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, 
 
 #define MAX_CAM_HIGHTLEVEL 5000
 #define MIN_CAM_HIGHTLEVEL 2
-#define MAX_CAM_FOV 45.0f
+#define MAX_CAM_FOV 20.0f
 
 #define ANI_FRAME_CNT 10
 
@@ -21,9 +21,9 @@ CMNView::CMNView()
 {
 	memset(&m_LogFont, 0, sizeof(m_LogFont));
 	m_LogFont.lfCharSet = CHINESEBIG5_CHARSET;
-	m_LogFont.lfHeight = -30;
+	m_LogFont.lfHeight = -45;
 	m_LogFont.lfWidth = 0;
-	m_LogFont.lfWeight = FW_BOLD;
+//	m_LogFont.lfWeight = FW_BOLD;
 
 	m_pBmpInfo = (BITMAPINFO *)malloc(sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256));
 
@@ -1462,17 +1462,18 @@ void CMNView::DrawOCRRes()
 						tColor = SINGLETON_DataMng::GetInstance()->GetColor(ocrRes[j].fConfidence);
 						glColor4f(tColor.x, tColor.y, tColor.z, 0.5f);
 
-						glBegin(GL_QUADS);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						//glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glEnd();
-
-						if ((ocrRes[j].type == 3)) {
-							glColor4f(1.0f, 0.0f, 0.0f, 0.99f);
-							glBegin(GL_LINE_STRIP);
+						if ((ocrRes[j].type < 3)) {
+							glBegin(GL_QUADS);
+							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
+							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
+							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+							//glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+							glEnd();
+						}
+						else {
+							glColor4f(0.0f, 0.3f, 1.0f, 0.5f);
+							glBegin(GL_QUADS);
 							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
 							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
@@ -1480,6 +1481,17 @@ void CMNView::DrawOCRRes()
 							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 							glEnd();
 						}
+
+						//if ((ocrRes[j].type == 3)) {
+						//	glColor4f(1.0f, 0.0f, 0.0f, 0.99f);
+						//	glBegin(GL_LINE_STRIP);
+						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
+						//	glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
+						//	glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						//	glEnd();
+						//}
 					}
 
 					glLineWidth(2);
@@ -2178,40 +2190,47 @@ void CMNView::DoOCRForPage(CMNPageObject* pPage)
 	if (pPage) {
 
 		pPage->DeleteAllOcrRes();
-		//if (pPage->GetVecOCRResult().size() == 0) {
-		//}
+		if (pPage->GetVecOCRResult().size() == 0) {
 
-		cv::Mat gray = pPage->GetSrcPageGrayImg();
-		std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
-		if (para.size() == 0)
-			return;
 
-		int x1 = 9999, y1=9999, x2=0, y2=0;
-		for (int i = 0; i < para.size(); i++) {
+			cv::Mat gray = pPage->GetSrcPageGrayImg();
+			std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
+			if (para.size() == 0)
+				return;
 
-			if (m_extractionSetting.IsVerti == false) {
-				cv::Mat pimg = gray(para[i].rect).clone();
-				DoOCRForCutImg(pimg, para[i].rect, pPage);
+			int x1 = 9999, y1 = 9999, x2 = 0, y2 = 0;
+			for (int i = 0; i < para.size(); i++) {
+
+				if (m_extractionSetting.IsVerti == false) {
+					cv::Mat pimg = gray(para[i].rect).clone();
+					DoOCRForCutImg(pimg, para[i].rect, pPage);
+					pimg.release();
+				}
+				else {
+					if (x1 > para[i].rect.x)		x1 = para[i].rect.x;
+					if (y1 > para[i].rect.y)		y1 = para[i].rect.y;
+					if (x2 < (para[i].rect.x + para[i].rect.width))		x2 = para[i].rect.x + para[i].rect.width;
+					if (y2 < (para[i].rect.y + para[i].rect.height))	y2 = para[i].rect.y + para[i].rect.height;
+				}
+			}
+			if (m_extractionSetting.IsVerti) {
+				cv::Rect maxRect;
+				maxRect.x = x1;
+				maxRect.y = y1;
+				maxRect.width = x2 - x1;
+				maxRect.height = y2 - y1;
+				cv::Mat pimg = gray(maxRect).clone();
+				DoOCRForCutImg(pimg, maxRect, pPage);
 				pimg.release();
 			}
-			else {
-				if (x1 > para[i].rect.x)		x1 = para[i].rect.x;
-				if (y1 > para[i].rect.y)		y1 = para[i].rect.y;
-				if (x2 < (para[i].rect.x + para[i].rect.width))		x2 = para[i].rect.x + para[i].rect.width;
-				if (y2 < (para[i].rect.y + para[i].rect.height))	y2 = para[i].rect.y + para[i].rect.height;
-			}
-		}
-		if (m_extractionSetting.IsVerti) {
-			cv::Rect maxRect;
-			maxRect.x = x1;
-			maxRect.y = y1;
-			maxRect.width = x2 - x1;
-			maxRect.height = y2 - y1;
-			cv::Mat pimg = gray(maxRect).clone();
-			DoOCRForCutImg(pimg, maxRect, pPage);
-			pimg.release();
 		}
 	//	DoOCRForCutImg(gray, cv::Rect(0, 0, 100, 100), pPage);
+		else {
+			// Do OCR by character segmentation information.
+
+
+
+		}
 	}	
 }
 
