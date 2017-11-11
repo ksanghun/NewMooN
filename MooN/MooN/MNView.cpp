@@ -1707,6 +1707,8 @@ void CMNView::TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect)
 
 void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes)
 {
+
+	TRACE(L"OCR correctrion\n");
 	// check duplication of ocr res rect //
 	// Flush OCR Results // !!!!
 	// 1. Merge text box if they are duplicated //

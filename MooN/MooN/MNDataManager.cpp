@@ -755,27 +755,36 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 
 bool CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
 {
-	for (auto pos=0; pos<m_refImgClass[classid].vecStr.size(); pos++){
-		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {	
-			int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
-			// Template Matching //
-			int w = (classid + 1) * DB_IMGCHAR_SIZE;
-			int h = DB_IMGCHAR_SIZE;
-			cv::Rect rect;
-			rect.x = (pos % m_refImgClass[classid].wNum)*w;
-			rect.y = (pos / m_refImgClass[classid].wNum)*h;
-			rect.width = w;
-			rect.height = h;
+	int res = false;
+	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
-			cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
-			m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
+		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
+		// Template Matching //
+		int w = (classid + 1) * DB_IMGCHAR_SIZE;
+		int h = DB_IMGCHAR_SIZE;
+		cv::Rect rect;
+		rect.x = (pos % m_refImgClass[classid].wNum)*w;
+		rect.y = (pos / m_refImgClass[classid].wNum)*h;
+		rect.width = w;
+		rect.height = h;
 
-			if (TemplateMatching(cutimg, imgword) > 0.8f) {
-				return false;
+		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
+
+		if (TemplateMatching(cutimg, imgword) > 0.8f) {
+			if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) != 0) {  // same shape but different code  --> update code!!!//
+				int clen = m_refImgClass[classid].maxCharLen;
+				memset(m_refImgClass[classid].vecStr[pos], 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+				memcpy(m_refImgClass[classid].vecStr[pos], strcode, sizeof(wchar_t)*clen);
+				m_refImgClass[classid].needToUpdate = true;
 			}
+			res = false;			
 		}
-	}	
-	return true;
+		else {
+			res = true;
+		}
+	}
+	return res;
 }
 
 void CMNDataManager::ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight)
