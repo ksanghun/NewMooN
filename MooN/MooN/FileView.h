@@ -41,7 +41,7 @@ protected:
 
 	HTREEITEM m_rootItem;
 	unsigned short m_nWidth;
-
+	CString m_strExtractDBFolder;
 protected:
 	
 
@@ -51,6 +51,7 @@ public:
 
 	void FillFileView(CString strFolder);
 	CDragDropTreeCtrl* GetTreeCtrl() { return &m_wndFileView; }
+	CString GetExtractDBFolder() { return m_strExtractDBFolder; }
 private:
 	HTREEITEM ExtractFolder(CString strFolder, CString strName, _strlist& filelist, HTREEITEM& parentItem);
 	bool IsSupportFormat(CString strPath);

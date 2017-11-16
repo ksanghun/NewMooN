@@ -180,7 +180,7 @@ GLuint CMNPageObject::LoadFullImage()
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false)) {
 
 		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 170, 255, cv::THRESH_OTSU);
 
 		// Save original size //
 		m_nImgHeight = m_fullImg.rows;
@@ -818,6 +818,16 @@ bool CMNPageObject::AddMatchedPoint(stMatchInfo info, int search_size)
 	return true;
 }
 
+bool CMNPageObject::GetRectByMatchID(int mid, cv::Rect& rect)
+{
+	rect = cv::Rect();
+	if ((mid >= 0) && (mid < (int)m_matched_pos.size())) {
+		rect = m_matched_pos[mid].rect;
+		return true;
+	}
+	return false;
+}
+
 bool CMNPageObject::GetPosByMatchID(int mid, POINT3D& pos)
 {
 	mtSetPoint3D(&pos, 0.0f, 0.0f, 0.0f);
@@ -1139,13 +1149,8 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 			res.init();
 			fread(&res, sizeof(_stOCRResult), 1, fp);
 			m_ocrResult.push_back(res);
-
 			// Generate SDB MAP //
 		//	if()
-
-
-
-
 		}
 
 		for (int i = 0; i < pnum; i++) {
@@ -1337,10 +1342,13 @@ void CMNPageObject::EncodeTexBoxHori()
 
 	std::vector<_EWORDINFO> vecEncode;
 	for (int i = 0; i < m_ocrResult.size(); i++) {
-		_EWORDINFO tmp;
-		tmp.rect = m_ocrResult[i].rect;
-		tmp.str = m_ocrResult[i].strCode;
-		vecEncode.push_back(tmp);
+
+		if (m_ocrResult[i].fConfidence > 0.1f) {
+			_EWORDINFO tmp;
+			tmp.rect = m_ocrResult[i].rect;
+			tmp.str = m_ocrResult[i].strCode;
+			vecEncode.push_back(tmp);
+		}
 	}
 
 	//std::vector<_ENCODETEXT> encodeWord;
@@ -1494,10 +1502,13 @@ void CMNPageObject::EncodeTexBoxVerti()
 
 	std::vector<_EWORDINFO> vecEncode;
 	for (int i = 0; i < m_ocrResult.size(); i++) {
-		_EWORDINFO tmp;
-		tmp.rect = m_ocrResult[i].rect;
-		tmp.str = m_ocrResult[i].strCode;
-		vecEncode.push_back(tmp);
+
+		if (m_ocrResult[i].fConfidence > 0.1f) {
+			_EWORDINFO tmp;
+			tmp.rect = m_ocrResult[i].rect;
+			tmp.str = m_ocrResult[i].strCode;
+			vecEncode.push_back(tmp);
+		}
 	}
 
 	//std::vector<_ENCODETEXT> encodeWord;

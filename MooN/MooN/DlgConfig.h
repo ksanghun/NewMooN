@@ -17,6 +17,7 @@ public:
 	void SetLogPath(CString str) { strLogPath = str; }
 	void UpdateStrData() { UpdateData(FALSE); }
 
+
 // Dialog Data
 	enum { IDD = IDD_DLG_CINFIG };
 

@@ -51,6 +51,7 @@ public:
 	void ResetLogList();
 	void AddRecord();
 
+	afx_msg void OnBnClickedBnAddToOcr();
 };
 
 

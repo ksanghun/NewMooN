@@ -46,7 +46,7 @@ public:
 	void OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType);  // search type 0: character, 1: word
 	void RemoveNoise();
 
-	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage);
+	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, int lineId);
 	
 	void DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType);
 	void DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes);
@@ -166,6 +166,8 @@ private:
 
 	float m_dispConfi;
 	float m_dbTreshold;
+
+	GLuint m_glListIdForDrawOCRRes;
 
 public:
 	DECLARE_MESSAGE_MAP()

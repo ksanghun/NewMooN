@@ -481,7 +481,7 @@ struct _stOCRResult {
 	float fConfidence;
 	wchar_t strCode[_MAX_WORD_SIZE];
 	unsigned int hcode;
-	int type;  // 0 Eng, 1: chi, 2: Kor
+	int type;  // 0 Eng, 1: chi, 2: Kor   + line information withouth changing format
 	bool bNeedToDB;
 
 	void init() {

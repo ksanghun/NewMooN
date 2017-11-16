@@ -280,16 +280,7 @@ IDR_POPUP_EXPLORER MENU
 BEGIN
     POPUP "Explorer"
     BEGIN
-        MENUITEM "&Open",                       ID_OPEN
-        MENUITEM "Open &With....",              ID_OPEN_WITH
-        MENUITEM SEPARATOR
-        MENUITEM "&Compile",                    ID_DUMMY_COMPILE
-        MENUITEM SEPARATOR
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Remove",                     ID_EDIT_CLEAR
-        MENUITEM SEPARATOR
-        MENUITEM "&Properties...",              ID_PROPERTIES
+        MENUITEM "Export Database",             ID_EXPLORER_EXPORTDATABASE
     END
 END
 
@@ -451,12 +442,13 @@ BEGIN
     PUSHBUTTON      "Browser...",IDC_BUTTON_BROWSER,300,24,50,14
 END
 
-IDD_FORMLISTVIEW DIALOGEX 0, 0, 117, 156
+IDD_FORMLISTVIEW DIALOGEX 0, 0, 156, 156
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    CONTROL         "Auto Fill",IDC_CHECK_AUTOFILL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,0,41,10
+    CONTROL         "Auto Fill",IDC_CHECK_AUTOFILL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,10,41,10
     CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,24,102,125
+    PUSHBUTTON      "Train Results",IDC_BN_ADD_TO_OCR,7,7,65,15
 END
 
 IDD_FROMPROPERTIES DIALOGEX 0, 0, 190, 523
@@ -574,7 +566,7 @@ BEGIN
     IDD_FORMLISTVIEW, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 110
+        RIGHTMARGIN, 149
         TOPMARGIN, 7
         BOTTOMMARGIN, 149
     END

@@ -1,4 +1,4 @@
-// DlgConfig.cpp : implementation file
+ï»¿// DlgConfig.cpp : implementation file
 //
 
 #include "stdafx.h"
@@ -43,37 +43,32 @@ END_MESSAGE_MAP()
 
 void CDlgConfig::OnBnClickedButtonBrowser()
 {
-	// TODO: Add your control notification handler code here
 	ITEMIDLIST *pidlBrowse;
-	CString strPath;
-
-	BROWSEINFO BrInfo;
+	TCHAR       pszPathname[MAX_PATH];
+	BROWSEINFO  BrInfo;
 
 	BrInfo.hwndOwner = GetSafeHwnd();
 	BrInfo.pidlRoot = NULL;
 
 	memset(&BrInfo, 0, sizeof(BrInfo));
-	BrInfo.pszDisplayName = (LPWSTR)(LPCTSTR)strPath;
-	BrInfo.lpszTitle = _T("Select Source Location");
+	BrInfo.pszDisplayName = pszPathname;
+	BrInfo.lpszTitle = _T("Select Directory");
 	BrInfo.ulFlags = BIF_RETURNONLYFSDIRS;
-
-	// ´ÙÀÌ¾ó·Î±× ¶ç¿ì±â
-	pidlBrowse = SHBrowseForFolder(&BrInfo);
-
+	pidlBrowse = ::SHBrowseForFolder(&BrInfo);
 	if (pidlBrowse != NULL)
 	{
-		BOOL bSuccess = ::SHGetPathFromIDList(pidlBrowse, (LPWSTR)(LPCTSTR)strPath);
-		if (!bSuccess)
-		{
-			MessageBox(_T("Wrong folder name."), _T(""), MB_OKCANCEL | MB_ICONASTERISK);
-			return;
-		}
+		SHGetPathFromIDList(pidlBrowse, pszPathname);
 	}
 
-	strSrcPath = strPath;
-	strLogPath = strPath;
+	strSrcPath = (LPCTSTR)pszPathname;
+	strLogPath = strSrcPath;
+
+
 	UpdateData(FALSE);
 }
+
+
+
 
 
 void CDlgConfig::OnBnClickedOk()

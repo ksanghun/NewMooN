@@ -100,7 +100,7 @@ void CFileView::FillFileView(CString strFolder)
 
 void CFileView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	CTreeCtrl* pWndTree = (CTreeCtrl*) &m_wndFileView;
+	CDragDropTreeCtrl* pWndTree = (CDragDropTreeCtrl*) &m_wndFileView;
 	ASSERT_VALID(pWndTree);
 
 	if (pWnd != pWndTree)
@@ -120,11 +120,26 @@ void CFileView::OnContextMenu(CWnd* pWnd, CPoint point)
 		if (hTreeItem != NULL)
 		{
 			pWndTree->SelectItem(hTreeItem);
+			pWndTree->SetFocus();
+
+			//HTREEITEM childItem = GetItem
+			HTREEITEM hChildItem = pWndTree->GetChildItem(hTreeItem);
+			if (hChildItem != NULL) {
+			//	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EXPLORER, point.x, point.y, this, TRUE);
+
+
+				m_strExtractDBFolder = pWndTree->GetItemFullPath(hTreeItem);
+
+				CMenu menu;
+				menu.LoadMenuW(IDR_POPUP_EXPLORER);
+				CMenu* pMenu = menu.GetSubMenu(0);
+				pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, AfxGetMainWnd());
+			}
 		}
 	}
 
-	pWndTree->SetFocus();
-	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EXPLORER, point.x, point.y, this, TRUE);
+	//pWndTree->SetFocus();
+	//theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EXPLORER, point.x, point.y, this, TRUE);
 }
 
 void CFileView::AdjustLayout()

@@ -70,6 +70,7 @@ protected:  // control bar embedded members
 	CString			m_strSrcPath;
 	CString			m_strLogPath;
 
+	BOOL m_bFlag;  // for restarting
 // Generated message map functions
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -118,6 +119,9 @@ public:
 	afx_msg void OnOcrDeleteteXtbox32820();
 	afx_msg void OnOcrTrainText();
 	afx_msg void OnRecognizetextFromuserdb();
+	afx_msg void OnClose();
+	afx_msg void OnNcDestroy();
+	afx_msg void OnExplorerExportdatabase();
 };
 
 

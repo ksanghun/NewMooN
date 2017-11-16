@@ -95,6 +95,7 @@ public:
 	CString GetName() { return m_strName; };
 	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
 	bool GetPosByMatchID(int mid, POINT3D& pos);
+	bool GetRectByMatchID(int mid, cv::Rect& rect);
 	void ClearMatchResult();
 //	cv::Mat& GetSrcPageImg() { return m_thumbImg; }
 	cv::Mat& GetSrcPageGrayImg() { return m_srcGrayImg; }

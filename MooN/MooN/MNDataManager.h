@@ -73,6 +73,8 @@ struct stDBRefImage {
 };
 
 
+enum DB_CHK {SDB_ADD=0, SDB_SKIP, SDB_UPDATE};
+
 class CMNDataManager
 {
 public:
@@ -106,6 +108,7 @@ public:
 	void SetMatchingResults();
 	void SortMatchingResults();
 	CString base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
+	void ExportDatabase(CString _strFolder);
 	void ExportDatabase();
 	CString GetEditFilePath(CString strExtension, CString strOrigin);
 
@@ -114,10 +117,11 @@ public:
 	void ResetMatchingResult();
 	void ApplyDeskewPage();
 	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
-	void DBTraining(CMNPageObject* pPage);
+//	void DBTraining(CMNPageObject* pPage);
 	void DBTrainingForPage(CMNPageObject* pPage);
+	void DBTrainingFromCutSearch(cv::Mat& cutimg, CString _strCode);
 	void ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight);
-	bool IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
+	DB_CHK IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
 	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);
 
@@ -126,7 +130,7 @@ public:
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
 	_stExtractionSetting GetExtractionSetting();// { return m_extractonInfo; }
 
-	void SetUserDBFolder(CString str) { m_strUserDataFolder = str; }
+	void SetUserDBFolder(CString str);// { m_strUserDataFolder = str; }
 	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
 
 	void AddSDBTable(unsigned int hcode, wchar_t* strCode);

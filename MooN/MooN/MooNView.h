@@ -4,8 +4,9 @@
 
 #pragma once
 #include "MNView.h"
+#include "DragDropTreeCtrl.h"
 
-class CDragDropTreeCtrl;
+//class CDragDropTreeCtrl;
 class CMooNView : public CView
 {
 protected: // create from serialization only
@@ -18,7 +19,9 @@ public:
 
 // Operations
 public:
-	void SetTreeDragItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl);
+//	void SetTreeDragItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl);
+	void SetTreeDragItem(SEL_ITEM_LIST& itemList, CDragDropTreeCtrl* pCtrl);
+
 	short ProcSetSelectedItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl);
 	short SetSelectedItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl, float& offset);
 	void EnableCutSearchMode();
@@ -32,6 +35,7 @@ public:
 	void RemoveImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl);
 
 	void SetPositionByList(CString strPid, CString strMid);
+	void AddListToTraining(int pageid, int matchid, CString strCode);
 	CMNView* GetImageView() { return m_pViewImage; }
 
 	//void SetThresholdValue(float _th);

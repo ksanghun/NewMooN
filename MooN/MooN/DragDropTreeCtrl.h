@@ -47,11 +47,12 @@ private:
 	BOOL IsItemPresent(HTREEITEM hItem);
 	BOOL IsInTheSameLevel(HTREEITEM hItem);
 
-	void SelectPages(unsigned long pCode, unsigned long cCode);
+//	void SelectPages(unsigned long pCode, unsigned long cCode);
 	// Construction
 public:
 	CDragDropTreeCtrl();
 	SEL_ITEM_LIST* GetSelItemList() { return &m_vSelItem; }
+
 	// Attributes
 public:
 

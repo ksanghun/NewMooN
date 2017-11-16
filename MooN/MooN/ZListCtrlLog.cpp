@@ -98,6 +98,17 @@ void CZListCtrlLog::ResetListCtrl()
 
 }
 
+void CZListCtrlLog::AddListToTraining()
+{
+	for (int row = 0; row < GetItemCount(); ++row)
+	{
+		int pageId = _ttoi(GetItemText(row, 13));
+		int matchId = _ttoi(GetItemText(row, 14));
+		CString strCode = GetItemText(row, 1);
+
+		pView->AddListToTraining(pageId, matchId, strCode);
+	}
+}
 
 
 void CZListCtrlLog::OnNMClick(NMHDR *pNMHDR, LRESULT *pResult)

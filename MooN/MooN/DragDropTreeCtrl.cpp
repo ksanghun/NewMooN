@@ -102,9 +102,11 @@ void CDragDropTreeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 		//if (pwndCtrl->IsKindOf(RUNTIME_CLASS(CWnd))){
 		//	int a = 0;
 		//}
-		for (unsigned int i = 0; i < m_vSelItem.size(); i++){
-			pView->SetTreeDragItem(m_vSelItem[i], this);			
-		}
+		//for (unsigned int i = 0; i < m_vSelItem.size(); i++){
+		//	pView->SetTreeDragItem(m_vSelItem[i], this);			
+		//}
+
+		pView->SetTreeDragItem(m_vSelItem, this);
 	}
 
 
@@ -144,7 +146,7 @@ void CDragDropTreeCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CDragDropTreeCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	ClearSelection();
+//	ClearSelection();
 	SetFocus();
 
 	

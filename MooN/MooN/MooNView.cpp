@@ -97,11 +97,15 @@ void CMooNView::Dump(CDumpContext& dc) const
 // CMooNView message handlers
 
 
-void CMooNView::SetTreeDragItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl)
+void CMooNView::SetTreeDragItem(SEL_ITEM_LIST& itemList, CDragDropTreeCtrl* pCtrl)
 {
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	int addcnt = 0;
-	AddImageData(hItem, pCtrl, addcnt);
+
+	for (auto i = 0; i < itemList.size(); i++) {
+		AddImageData(itemList[i], pCtrl, addcnt);
+	}
+	
 
 
 	CString str;
@@ -112,13 +116,15 @@ void CMooNView::SetTreeDragItem(HTREEITEM hItem, CDragDropTreeCtrl* pCtrl)
 		m_pViewImage->ProcGenerateThumbnail();
 	}
 
-	HTREEITEM hChildItem = pCtrl->GetChildItem(hItem);
-	if (hChildItem == NULL) {  // No Child!! File
-		HTREEITEM hPItem = pCtrl->GetParentItem(hItem);
-		ProcSetSelectedItem(hPItem, pCtrl);
-	}
-	else {
-		ProcSetSelectedItem(hItem, pCtrl);
+	if (itemList.size() > 0) {
+		HTREEITEM hChildItem = pCtrl->GetChildItem(itemList[0]);
+		if (hChildItem == NULL) {  // No Child!! File
+			HTREEITEM hPItem = pCtrl->GetParentItem(itemList[0]);
+			ProcSetSelectedItem(hPItem, pCtrl);
+		}
+		else {
+			ProcSetSelectedItem(itemList[0], pCtrl);
+		}
 	}
 }
 
@@ -354,6 +360,23 @@ void CMooNView::DoOCR()
 		m_pViewImage->ProcOCR(true);
 	}
 }
+
+
+void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
+{
+	CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(pageid);
+	if (pPage) {
+		cv::Rect rect;
+		if (pPage->GetRectByMatchID(matchid, rect)) {
+
+			cv::Mat cutImg = pPage->GetSrcPageGrayImg()(rect).clone();
+			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, strCode);
+			cutImg.release();		
+
+		}
+	}
+}
+
 
 void CMooNView::SetPositionByList(CString strPid, CString strMid)
 {

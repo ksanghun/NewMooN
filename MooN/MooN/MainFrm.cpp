@@ -61,6 +61,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_OCR_DELETETE_XTBOX32820, &CMainFrame::OnOcrDeleteteXtbox32820)
 	ON_COMMAND(ID_OCR_TRAIN_TEXT, &CMainFrame::OnOcrTrainText)
 	ON_COMMAND(ID_RECOGNIZETEXT_FROMUSERDB, &CMainFrame::OnRecognizetextFromuserdb)
+	ON_WM_CLOSE()
+	ON_WM_NCDESTROY()
+	ON_COMMAND(ID_EXPLORER_EXPORTDATABASE, &CMainFrame::OnExplorerExportdatabase)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -91,11 +94,11 @@ bool CMainFrame::checkMacAddr()
 	//========================================
 	const int numMacAddr = 15;
 	CString arrAutho[numMacAddr];
-	arrAutho[0] = L"30:5A:3A:75:B6:45";		// FGS Desttop 01
-	arrAutho[1] = L"3C:52:82:B9:A9:03";		// FGS Laptop 01
-	arrAutho[2] = L"00:0D:3A:72:7B:89";
-	arrAutho[3] = L"00:0D:3A:72:7B:89";
-	arrAutho[4] = L"00:0D:3A:72:7B:89";
+	arrAutho[0] = L"30:5A:3A:75:B6:45";		// FGS  01
+	arrAutho[1] = L"00:1A:7D:DA:71:13";		// FGS  02
+	arrAutho[2] = L"9C:5C:8E:BC:2D:A3";		// FGS  03
+	arrAutho[3] = L"90:E6:BA:46:53:C6";		// FGS  04  
+	arrAutho[4] = L"10:F0:05:A7:2F:FC";		// FGS	05
 	arrAutho[5] = L"00:0D:3A:72:7B:89";
 	arrAutho[6] = L"00:0D:3A:72:7B:89";
 	arrAutho[7] = L"00:0D:3A:72:7B:89";
@@ -105,7 +108,7 @@ bool CMainFrame::checkMacAddr()
 	arrAutho[11] = L"00:0D:3A:72:7B:89";
 	arrAutho[12] = L"00:0D:3A:72:7B:89";
 	arrAutho[13] = L"84:3A:4B:73:38:11";
-	arrAutho[14] = L"9C:B6:D0:63:F3:D7";		// My laptop 
+	arrAutho[14] = L"9E:B6:D0:63:F3:D7";		// My laptop 
 
 
 	PIP_ADAPTER_INFO AdapterInfo;
@@ -175,10 +178,10 @@ bool CMainFrame::checkCurrTime()
 
 bool CMainFrame::Authorization()
 {
-	//if (checkMacAddr() == false){
-	//	AfxMessageBox(L"Authorization failed");
-	//	return false;
-	//}
+	if (checkMacAddr() == false){
+		AfxMessageBox(L"Authorization failed");
+		return false;
+	}
 
 	if (checkCurrTime() == false) {
 		AfxMessageBox(L"Authentication has expired");
@@ -194,7 +197,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;
 
 	if (Authorization() == false) {
-		exit(0);
+	//	SendMessage(WM_CLOSE, 0, 0);
+		return -1;
 	}
 
 	DWORD dwCtrlStyle = TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CBRS_SIZE_DYNAMIC;
@@ -659,9 +663,10 @@ void CMainFrame::OnProjectAddimage()
 {
 	// TODO: Add your command handler code here
 	CDragDropTreeCtrl* pCtrl = m_wndFileView.GetTreeCtrl();
-	for (unsigned int i = 0; i < pCtrl->GetSelItemList()->size(); i++) {
-		pView->SetTreeDragItem((*pCtrl->GetSelItemList())[i], pCtrl);
-	}
+	//for (unsigned int i = 0; i < pCtrl->GetSelItemList()->size(); i++) {
+	//	pView->SetTreeDragItem((*pCtrl->GetSelItemList())[i], pCtrl);
+	//}
+	pView->SetTreeDragItem((*pCtrl->GetSelItemList()), pCtrl);
 }
 
 
@@ -688,6 +693,7 @@ void CMainFrame::OnProjectConfiguration()
 	CString path = sPath.Left(sPath.ReverseFind(_T('\\')));
 	CString strFle = path + "\\userdata\\conf.bin";
 
+	bool isOK = false;
 	if (dlg.DoModal() == IDOK)
 	{
 		m_strSrcPath = dlg.GetSrcPath();
@@ -709,8 +715,16 @@ void CMainFrame::OnProjectConfiguration()
 
 		//m_wndFileView.FillFileView(m_strSrcPath);
 		//GetImgFilePath(m_strSrcPath);
-		//	InitConfituration();
+
+		isOK = true;
 	}
+
+
+	//if (isOK) {
+	//	m_bFlag = FALSE;
+	////	PostQuitMessage(0);
+	//	SendMessage(WM_CLOSE, 0, 0);
+	//}
 }
 
 
@@ -1042,4 +1056,31 @@ void CMainFrame::OnRecognizetextFromuserdb()
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->OcrFromTextBox(_NONE, 0);
+}
+
+
+void CMainFrame::OnClose()
+{
+	// TODO: Add your message handler code here and/or call default
+//	m_bFlag = TRUE;
+	CFrameWndEx::OnClose();
+}
+
+
+void CMainFrame::OnNcDestroy()
+{
+	CFrameWndEx::OnNcDestroy();
+
+	// TODO: Add your message handler code here
+	//USES_CONVERSION;
+	//if (m_bFlag != FALSE) return;
+	//Sleep(300);                                                         // To Delay...
+	//WinExec((LPCSTR)AfxGetApp()->m_pszExeName, SW_SHOW);
+}
+
+
+void CMainFrame::OnExplorerExportdatabase()
+{
+	// TODO: Add your command handler code here
+	SINGLETON_DataMng::GetInstance()->ExportDatabase(m_wndFileView.GetExtractDBFolder());
 }

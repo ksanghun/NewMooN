@@ -16,6 +16,7 @@ public:
 	void AddUserColumn(CString strLable, unsigned short colWidth);
 	void AddRecode();
 	void ResetListCtrl();
+	void AddListToTraining();
 
 // ColumnHeader Class============================//
 	class CCustomDrawHeaderCtrl : public CHeaderCtrl

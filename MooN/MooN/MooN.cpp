@@ -181,8 +181,9 @@ void CMooNApp::PreLoadState()
 	ASSERT(bNameValid);
 	GetContextMenuManager()->AddMenu(strName, IDR_POPUP_EDIT);
 	bNameValid = strName.LoadString(IDS_EXPLORER);
-	ASSERT(bNameValid);
-	GetContextMenuManager()->AddMenu(strName, IDR_POPUP_EXPLORER);
+	//ASSERT(bNameValid);
+	//GetContextMenuManager()->AddMenu(strName, IDR_POPUP_EXPLORER);
+
 }
 
 void CMooNApp::LoadCustomState()
