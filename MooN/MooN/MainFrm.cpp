@@ -64,6 +64,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_WM_CLOSE()
 	ON_WM_NCDESTROY()
 	ON_COMMAND(ID_EXPLORER_EXPORTDATABASE, &CMainFrame::OnExplorerExportdatabase)
+	ON_COMMAND(ID_FILE_SAVEALL, &CMainFrame::OnFileSaveall)
+	ON_COMMAND(ID_OCR_CUTSEARCH, &CMainFrame::OnOcrCutsearch)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -99,16 +101,16 @@ bool CMainFrame::checkMacAddr()
 	arrAutho[2] = L"9C:5C:8E:BC:2D:A3";		// FGS  03
 	arrAutho[3] = L"90:E6:BA:46:53:C6";		// FGS  04  
 	arrAutho[4] = L"10:F0:05:A7:2F:FC";		// FGS	05
-	arrAutho[5] = L"00:0D:3A:72:7B:89";
-	arrAutho[6] = L"00:0D:3A:72:7B:89";
-	arrAutho[7] = L"00:0D:3A:72:7B:89";
+	arrAutho[5] = L"00:FF:19:CC:CE:96";		// Wayne's Destop
+	arrAutho[6] = L"00-0D-3A-A0-1C-A5";		// Azura VM 01
+	arrAutho[7] = L"00-0D-3A-A1-AA-7F";		// Azura VM 02
 	arrAutho[8] = L"00:0D:3A:72:7B:89";
 	arrAutho[9] = L"00:0D:3A:72:7B:89";
 	arrAutho[10] = L"00:0D:3A:72:7B:89";
 	arrAutho[11] = L"00:0D:3A:72:7B:89";
 	arrAutho[12] = L"00:0D:3A:72:7B:89";
-	arrAutho[13] = L"84:3A:4B:73:38:11";
-	arrAutho[14] = L"9E:B6:D0:63:F3:D7";		// My laptop 
+	arrAutho[13] = L"84:3A:4B:73:38:11";	// Wayne 
+	arrAutho[14] = L"9E:B6:D0:63:F3:D7";	// My laptop 
 
 
 	PIP_ADAPTER_INFO AdapterInfo;
@@ -118,6 +120,8 @@ bool CMainFrame::checkMacAddr()
 
 	AdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
 	if (AdapterInfo == NULL) {
+
+		AfxMessageBox(L"couldn't read MAC Address");
 		return false;
 	}
 
@@ -172,21 +176,21 @@ bool CMainFrame::checkCurrTime()
 			}
 		}
 	}
-
 	return false;
 }
 
 bool CMainFrame::Authorization()
 {
-	if (checkMacAddr() == false){
-		AfxMessageBox(L"Authorization failed");
-		return false;
-	}
+	//if (checkMacAddr() == false){
+	//	AfxMessageBox(L"Authorization failed");
+	//	return false;
+	//}
 
 	if (checkCurrTime() == false) {
 		AfxMessageBox(L"Authentication has expired");
 		return false;
 	}
+
 	return true;
 }
 
@@ -806,26 +810,26 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		}
 
 		else if (nChar == 39) {
-			if (pViewImage) {
-				pViewImage->MoveNextPage();
-			}
+			//if (pViewImage) {
+			//	pViewImage->MoveNextPage();
+			//}
 		}
 		else if (nChar == 37) {
-			if (pViewImage) {
-				pViewImage->MovePrePage();
-			}
+			//if (pViewImage) {
+			//	pViewImage->MovePrePage();
+			//}
 		}
 
 		else if (nChar == 38) {
-			if (pViewImage) {
-				pViewImage->MoveNextUp();
-			}
+			//if (pViewImage) {
+			//	pViewImage->MoveNextUp();
+			//}
 		}
 
 		else if (nChar == 40) {
-			if (pViewImage) {
-				pViewImage->MoveNextDown();
-			}
+			//if (pViewImage) {
+			//	pViewImage->MoveNextDown();
+			//}
 		}
 
 		//else if (nChar == 88) {	// excute search
@@ -1083,4 +1087,19 @@ void CMainFrame::OnExplorerExportdatabase()
 {
 	// TODO: Add your command handler code here
 	SINGLETON_DataMng::GetInstance()->ExportDatabase(m_wndFileView.GetExtractDBFolder());
+}
+
+
+void CMainFrame::OnFileSaveall()
+{
+	// TODO: Add your command handler code here
+	SINGLETON_DataMng::GetInstance()->Save();
+}
+
+
+void CMainFrame::OnOcrCutsearch()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcDoSearchBySelection();
 }

@@ -170,11 +170,16 @@ void CZListCtrlLog::UpdateCodeValue()
 		m_Edit.GetWindowText(str);	
 
 		// Update all rows===========================//
-		for (int row = 0; row < GetItemCount(); ++row)
-		{
-			if (GetItemText(row, 3) == m_strSearchId) {
-				SetItem(row, 1, LVIF_TEXT, str, 0, 0, 0, NULL);
+		if (m_bIsAutoFill) {
+			for (int row = 0; row < GetItemCount(); ++row)
+			{
+				if (GetItemText(row, 3) == m_strSearchId) {
+					SetItem(row, 1, LVIF_TEXT, str, 0, 0, 0, NULL);
+				}
 			}
+		}
+		else {
+			SetItem(m_selItem, 1, LVIF_TEXT, str, 0, 0, 0, NULL);
 		}
 		//===========================================//
 

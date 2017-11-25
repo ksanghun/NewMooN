@@ -83,6 +83,7 @@ public:
 
 	// TEST //
 	void Test();
+	void Save();
 	POINT3D GetColor(float fvalue);
 
 	void ClearAllImages();
@@ -135,6 +136,8 @@ public:
 
 	void AddSDBTable(unsigned int hcode, wchar_t* strCode);
 	void UpdateSDBFiles();
+	void UpdateImgClassDB();
+	void UpdateAllImgVecData();
 	void LoadSDBFiles();
 	void DoKeywordSearch(CString strKeyword);
 
@@ -172,8 +175,7 @@ private:
 
 	//=====For DataBase==============================//
 	stDBRefImage m_refImgClass[DB_CLASS_NUM];
-	void InitDataBaseFiles();
-	void UpdateImgClassDB();
+	void InitDataBaseFiles();	
 //	void UpdateImgClassImgCodes();
 	void DeSkew(cv::Mat& img);
 	//=====================//

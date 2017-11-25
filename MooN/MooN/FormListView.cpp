@@ -12,6 +12,7 @@ IMPLEMENT_DYNCREATE(CFormListView, CFormView)
 
 CFormListView::CFormListView()
 	: CFormView(IDD_FORMLISTVIEW)
+	, m_bIsAutoFill(TRUE)
 {
 	m_bIsCreated = false;
 	m_cutMaxWidth = _NORMALIZE_SIZE_H;
@@ -19,17 +20,23 @@ CFormListView::CFormListView()
 
 CFormListView::~CFormListView()
 {
+	for (int i = 0; i < m_imgList.GetImageCount(); i++)
+	{
+		m_imgList.Remove(i);
+	}
 }
 
 void CFormListView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST1, m_ctrlList);
+	DDX_Check(pDX, IDC_CHECK_AUTOFILL, m_bIsAutoFill);
 }
 
 BEGIN_MESSAGE_MAP(CFormListView, CFormView)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BN_ADD_TO_OCR, &CFormListView::OnBnClickedBnAddToOcr)
+	ON_BN_CLICKED(IDC_CHECK_AUTOFILL, &CFormListView::OnBnClickedCheckAutofill)
 END_MESSAGE_MAP()
 
 
@@ -118,13 +125,28 @@ void CFormListView::OnInitialUpdate()
 
 	m_nRecordNum = 0;
 	m_imgListId = 0;
+
+	m_bIsAutoFill = TRUE;
+	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
 }
 
 void CFormListView::ResetLogList()
 {
-	m_imgList.DeleteImageList();
-	UINT nFlags = ILC_MASK;
-	m_imgList.Create(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H, nFlags, 0, 0);
+//	m_imgList.DeleteImageList();
+	//int imglistcnt = m_imgList.GetImageCount();
+	//for (int i = 0; i < imglistcnt; i++){
+	//	m_imgList.Remove(i);
+	//}
+
+	while (m_imgList.GetImageCount()) m_imgList.Remove(0);
+
+
+	//m_imgList.DeleteImageList();
+	//UINT nFlags = ILC_MASK;
+	//nFlags |= (theApp.m_bHiColorIcons) ? ILC_COLOR24 : ILC_COLOR4;
+	//m_imgList.Create(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H, nFlags, 0, 0);
+	//m_ctrlList.SetImageList(&m_imgList, LVSIL_SMALL);
+
 	m_ctrlList.ResetListCtrl();
 
 	m_nRecordNum = 0;
@@ -214,4 +236,17 @@ void CFormListView::OnBnClickedBnAddToOcr()
 	// TODO: Add your control notification handler code here
 
 	m_ctrlList.AddListToTraining();
+}
+
+
+void CFormListView::OnBnClickedCheckAutofill()
+{
+	// TODO: Add your control notification handler code here
+	if (m_bIsAutoFill == TRUE) {
+		m_bIsAutoFill = FALSE;
+	}
+	else {
+		m_bIsAutoFill = TRUE;
+	}
+	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
 }

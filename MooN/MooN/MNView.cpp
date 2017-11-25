@@ -1059,6 +1059,7 @@ void CMNView::ProcDoSearch()
 
 		// Prepare Cut&Search ==========================================//
 		RECT2D rect = GetSelectedAreaForCNS();
+		if (rect.width == 0) return;
 
 		// Update Font Size ==//
 		m_Extractor.SetFontSize(rect.width, rect.height);
@@ -1110,9 +1111,6 @@ void CMNView::ProcDoSearch()
 		SetTimer(_DO_SEARCH, 100, NULL);
 	}
 	
-	
-
-
 	//RECT2D rect = GetSelectedAreaForCNS();
 	//if (rect.width > 0) {
 	//	m_pMatchingProcessor.PrepareCutNSearch(m_pViewImage->GetSelectedPageForCNS(), m_pViewImage->GetSelectedAreaForCNS());
@@ -1125,10 +1123,7 @@ void CMNView::ProcDoSearch()
 	//else {
 	//	AfxMessageBox(L"Select area for Searching");
 	//}
-
 }
-
-
 
 void CMNView::MovePrePage()
 {
@@ -1145,6 +1140,7 @@ void CMNView::MovePrePage()
 		}
 	}
 }
+
 void CMNView::MoveNextPage()
 {
 	if (m_cameraPri.GetLevelHeight() < DEFAULT_PAGE_SIZE + 250) {
@@ -2443,7 +2439,9 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 			}			
 			fScale = (float)m_extractionSetting.chiSize / 32.0f;
 			m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
-			for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __CHI;
+			for (int i = 0; i < ocrTmp.size(); i++) {
+				ocrTmp[i].type = __CHI;
+			}
 			break;
 		case __KOR:
 			if (searchType == 0) {
@@ -2513,7 +2511,67 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 	}
 }
 
+void CMNView::ProcDoSearchBySelection()
+{
+	InitCamera(false);
+	if ((m_pSelectPageForCNS) && (m_selOCRId >=0)){
 
+		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
+		// Prepare Cut&Search ==========================================//
+		RECT2D rect;
+		rect.set(ocrres.rect.x, ocrres.rect.x + ocrres.rect.width, ocrres.rect.y, ocrres.rect.y + ocrres.rect.height);
+
+
+		// Update Font Size ==//
+		m_Extractor.SetFontSize(rect.width, rect.height);
+
+		if (m_pCut.ptr() != NULL) {
+			m_pCut.release();
+		}
+		CString strpath = m_pSelectPageForCNS->GetPath();
+		cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();;
+		if (srcImg.ptr()) {
+			m_pCut = srcImg(cv::Rect(rect.x1, rect.y1, rect.width, rect.height));
+		}
+
+
+		m_cutInfo.fileid = getHashCode((CStringA)m_pSelectPageForCNS->GetPath());
+		m_cutInfo.posid = (int)rect.x1 * 10000 + (int)rect.y1;
+		CString strId;
+		strId.Format(L"%u%u", m_cutInfo.fileid, m_cutInfo.posid);
+		m_cutInfo.id = getHashCode((CStringA)strId);
+		m_cutInfo.th = m_fThreshold;
+
+		srcImg.release();
+		//==============================================================//
+
+
+		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+		// Load Full image //
+		for (size_t i = 0; i < imgVec.size(); i++) {
+			imgVec[i]->LoadFullImage();
+		}
+
+
+		CWinThread* pl;
+		m_bIsThreadEnd = false;
+		pl = AfxBeginThread(ThreadDoSearch, this);
+
+		//	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+		for (size_t i = 0; i < imgVec.size(); i++) {
+			imgVec[i]->SetIsSearched(false);
+		}
+
+		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+		m_fThreshold = pM->GetThreshold()*0.01f;
+		COLORREF resColor = pM->GetMatchingColor();
+		m_resColor.r = (float)GetRValue(resColor)*0.00392f;
+		m_resColor.g = (float)GetGValue(resColor)*0.00392f;
+		m_resColor.b = (float)GetBValue(resColor)*0.00392f;
+
+		SetTimer(_DO_SEARCH, 100, NULL);
+	}
+}
 
 
 

@@ -1280,7 +1280,8 @@ void CMNPageObject::UpdateDataBaseFiles()
 {
 	if (m_IsNeedToSave) {
 		WriteSearchDBFile();
-		WritePageInfo();		
+		WritePageInfo();	
+		m_IsNeedToSave = false;
 	}
 
 	if (m_bImageChanged) {
@@ -1288,6 +1289,7 @@ void CMNPageObject::UpdateDataBaseFiles()
 		CString imgpath = GetPInfoPath(L".jp2");
 		char* szimg = T2A(imgpath);
 		cv::imwrite(szimg, m_srcGrayImg);
+		m_bImageChanged = false;
 	}
 }
 

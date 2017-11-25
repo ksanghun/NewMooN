@@ -122,6 +122,8 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnNcDestroy();
 	afx_msg void OnExplorerExportdatabase();
+	afx_msg void OnFileSaveall();
+	afx_msg void OnOcrCutsearch();
 };
 
 

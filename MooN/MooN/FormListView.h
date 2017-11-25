@@ -52,6 +52,8 @@ public:
 	void AddRecord();
 
 	afx_msg void OnBnClickedBnAddToOcr();
+	afx_msg void OnBnClickedCheckAutofill();
+	BOOL m_bIsAutoFill;
 };
 
 

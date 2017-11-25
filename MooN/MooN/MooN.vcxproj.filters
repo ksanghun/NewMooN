@@ -111,6 +111,9 @@
     <ClInclude Include="HoverButton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DlgFileSaving.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MooN.cpp">
@@ -192,6 +195,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HoverButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgFileSaving.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

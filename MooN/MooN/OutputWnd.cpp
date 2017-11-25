@@ -109,17 +109,23 @@ void COutputWnd::UpdateFonts()
 
 void COutputWnd::AddString(CString str)
 {
-	m_wndOutputDebug.AddString(str);
+//	m_wndOutputDebug.AddString(str);
+	m_wndOutputDebug.InsertString(1, str);
+
 }
 
 void COutputWnd::ReplaceString(CString str)
 {
-	int idx = m_wndOutputDebug.GetCount() - 1;
-	if (idx < 0)
-		idx = 0;
+	m_wndOutputDebug.DeleteString(1);
+	m_wndOutputDebug.InsertString(1, str);
 
-	m_wndOutputDebug.DeleteString(idx);
-	m_wndOutputDebug.AddString(str);
+	//int idx = m_wndOutputDebug.GetCount() - 1;
+	//if (idx < 0)
+	//	idx = 0;
+
+	//m_wndOutputDebug.DeleteString(idx);
+	//m_wndOutputDebug.AddString(str);
+
 }
 
 /////////////////////////////////////////////////////////////////////////////

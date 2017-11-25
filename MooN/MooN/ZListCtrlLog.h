@@ -17,6 +17,7 @@ public:
 	void AddRecode();
 	void ResetListCtrl();
 	void AddListToTraining();
+	void SetAutoFillOption(BOOL IsAutoFill) { m_bIsAutoFill = IsAutoFill; }
 
 // ColumnHeader Class============================//
 	class CCustomDrawHeaderCtrl : public CHeaderCtrl
@@ -45,6 +46,8 @@ public:
 
 	int		m_selItem;
 	CString	m_strSearchId;
+
+	BOOL	m_bIsAutoFill;
 
 
 protected:

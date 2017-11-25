@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "MNDataManager.h"
 #include "MainFrm.h"
+#include "DlgFileSaving.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,6 +52,12 @@ CMNDataManager::CMNDataManager()
 
 CMNDataManager::~CMNDataManager()
 {	
+
+	UpdateImgClassDB();
+	UpdateSDBFiles();
+	
+
+
 	//for (size_t i = 0; i < m_vecImgData.size(); i++) {
 	//	GLuint tex = m_vecImgData[i]->GetThumbnailTex();
 	//	GLuint texfull = m_vecImgData[i]->GetTexId();
@@ -72,11 +80,26 @@ CMNDataManager::~CMNDataManager()
 			m_refImgClass[i].img[0].release();
 			delete m_refImgClass[i].vecStr[j];
 		}
-	}
+	}	
+}
+
+
+void CMNDataManager::Save()
+{
+	CDlgFileSaving dlg;
+	int result  = dlg.DoModal();
+//	dlg.SaveAllFiles();
+
 
 	
-	UpdateSDBFiles();
+//	dlg
+	//if (dlg.DoModal() == IDOK) {
+	//	//UpdateImgClassDB();
+	//	//UpdateSDBFiles();
+	//}	
 }
+
+
 
 POINT3D CMNDataManager::GetColor(float fvalue)
 {
@@ -869,7 +892,7 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, CString _strCode)
 
 		m_refImgClass[classid].needToUpdate = true;
 
-		UpdateImgClassDB();
+	//	UpdateImgClassDB();
 	}	
 }
 
@@ -917,7 +940,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 		}
 	}
 
-	UpdateImgClassDB();
+//	UpdateImgClassDB();
 }
 
 //void CMNDataManager::DBTraining(CMNPageObject* pPage)
@@ -963,6 +986,14 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 ////	}
 //	UpdateImgClassDB();
 //}
+
+
+void CMNDataManager::UpdateAllImgVecData() 
+{
+	for (size_t i = 0; i < m_vecImgData.size(); i++) {
+		m_vecImgData[i]->UpdateDataBaseFiles();
+	}
+}
 
 void CMNDataManager::UpdateImgClassDB()
 {

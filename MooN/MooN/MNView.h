@@ -25,6 +25,8 @@ public:
 	// Thread Functions===========//
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
+	void ProcDoSearchBySelection();
+
 	void ProcDoSearchSelection();
 	void ProcExtractBoundary();
 	void ProcOCR(bool IsAll);

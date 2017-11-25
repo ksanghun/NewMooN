@@ -89,6 +89,7 @@
 #define IDR_MAINMENU                    312
 #define IDD_FROMPROPERTIES              313
 #define IDR_MENU_OCR                    316
+#define IDD_DIG_SAVEFILES               317
 #define IDC_EDIT_SRCPATH                1000
 #define IDC_EDIT2                       1001
 #define IDC_EDIT_LOGPATH                1001
@@ -214,13 +215,15 @@
 #define ID_RECOGNIZETEXT_FROMUSERDB     32833
 #define ID_FILE_CONFIGURATION           32834
 #define ID_EXPLORER_EXPORTDATABASE      32835
+#define ID_FILE_SAVEALL                 32836
+#define ID_OCR_CUTSEARCH                32837
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        317
-#define _APS_NEXT_COMMAND_VALUE         32836
+#define _APS_NEXT_RESOURCE_VALUE        319
+#define _APS_NEXT_COMMAND_VALUE         32838
 #define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

@@ -191,6 +191,7 @@
     <ClInclude Include="Camera2Axis.h" />
     <ClInclude Include="data_type.h" />
     <ClInclude Include="DlgConfig.h" />
+    <ClInclude Include="DlgFileSaving.h" />
     <ClInclude Include="DockFormView.h" />
     <ClInclude Include="DockProperties.h" />
     <ClInclude Include="DragDropTreeCtrl.h" />
@@ -223,6 +224,7 @@
   <ItemGroup>
     <ClCompile Include="Camera2Axis.cpp" />
     <ClCompile Include="DlgConfig.cpp" />
+    <ClCompile Include="DlgFileSaving.cpp" />
     <ClCompile Include="DockFormView.cpp" />
     <ClCompile Include="DockProperties.cpp" />
     <ClCompile Include="DragDropTreeCtrl.cpp" />
