@@ -66,6 +66,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_EXPLORER_EXPORTDATABASE, &CMainFrame::OnExplorerExportdatabase)
 	ON_COMMAND(ID_FILE_SAVEALL, &CMainFrame::OnFileSaveall)
 	ON_COMMAND(ID_OCR_CUTSEARCH, &CMainFrame::OnOcrCutsearch)
+	ON_COMMAND(ID_EXPLORER_EXPORTDATABASE_HTML, &CMainFrame::OnExplorerExportdatabaseHtml)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -595,10 +596,10 @@ void CMainFrame::InitConfituration()
 
 
 
-	CString strLog = m_strLogPath + "\\logdata";
-	if (PathFileExists(strLog) == 0) {
-		CreateDirectory(strLog, NULL);
-	}
+	//CString strLog = m_strLogPath + "\\logdata";
+	//if (PathFileExists(strLog) == 0) {
+	//	CreateDirectory(strLog, NULL);
+	//}
 
 //	SINGLETON_DataMng::GetInstance()->Test();
 	SINGLETON_DataMng::GetInstance()->SetUserDBFolder(m_strLogPath);
@@ -1086,7 +1087,10 @@ void CMainFrame::OnNcDestroy()
 void CMainFrame::OnExplorerExportdatabase()
 {
 	// TODO: Add your command handler code here
-	SINGLETON_DataMng::GetInstance()->ExportDatabase(m_wndFileView.GetExtractDBFolder());
+//	SINGLETON_DataMng::GetInstance()->ExportDatabase(m_wndFileView.GetExtractDBFolder());
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcExportDB(m_wndFileView.GetExtractDBFolder());
+
 }
 
 
@@ -1102,4 +1106,13 @@ void CMainFrame::OnOcrCutsearch()
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->ProcDoSearchBySelection();
+}
+
+
+void CMainFrame::OnExplorerExportdatabaseHtml()
+{
+	// TODO: Add your command handler code here
+//	SINGLETON_DataMng::GetInstance()->ExportDatabaseToHtml(m_wndFileView.GetExtractDBFolder());
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcExportDB(m_wndFileView.GetExtractDBFolder(), true);
 }

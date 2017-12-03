@@ -2,7 +2,8 @@
 #include "MNDataManager.h"
 #include "MainFrm.h"
 #include "DlgFileSaving.h"
-
+#include "MoonView.h"
+#include "MNView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -53,8 +54,8 @@ CMNDataManager::CMNDataManager()
 CMNDataManager::~CMNDataManager()
 {	
 
-	UpdateImgClassDB();
-	UpdateSDBFiles();
+	//UpdateImgClassDB();
+	//UpdateSDBFiles();
 	
 
 
@@ -76,8 +77,8 @@ CMNDataManager::~CMNDataManager()
 	ClearAllImages();
 
 	for (int i = 0; i < DB_CLASS_NUM; i++) {
-		for (int j = 0; j < m_refImgClass[i].vecStr.size(); j++) {
-			m_refImgClass[i].img[0].release();
+		m_refImgClass[i].img[0].release();
+		for (int j = 0; j < m_refImgClass[i].vecStr.size(); j++) {			
 			delete m_refImgClass[i].vecStr[j];
 		}
 	}	
@@ -86,11 +87,15 @@ CMNDataManager::~CMNDataManager()
 
 void CMNDataManager::Save()
 {
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	pM->AddOutputString(L"Writing Training Data...", false);
+
+
 	CDlgFileSaving dlg;
 	int result  = dlg.DoModal();
 //	dlg.SaveAllFiles();
 
-
+	pM->AddOutputString(L"Writing Training Data...complete", false);
 	
 //	dlg
 	//if (dlg.DoModal() == IDOK) {
@@ -248,53 +253,55 @@ void CMNDataManager::PopImageDataSet(unsigned long _pcode)
 
 CMNPageObject* CMNDataManager::PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode)
 {
-	//CString str = PathFindExtension(_strName);
+	CString str = PathFindExtension(_strName);
 
 	//// Image File Filter ===============//
-	//if ((str == L".pdf") || (str == L".PDF") ||
-	//	(str == L".jpg") || (str == L".JPG") ||
-	//	(str == L".bmp") || (str == L".BMP") ||
-	//	(str == L".png") || (str == L".PNG") ||
-	//	(str == L".tiff") || (str == L".TIFF")) 
-	//{
-
-	std::map<unsigned long, stPageGroup>::iterator iter_gr;
-	std::map<unsigned long, CMNPageObject*>::iterator iter;
+	if ((str == L".pdf") || (str == L".PDF") ||
+		(str == L".jpg") || (str == L".JPG") ||
+		(str == L".bmp") || (str == L".BMP") ||
+		(str == L".png") || (str == L".PNG") ||
+		(str == L".tiff") || (str == L".TIFF") ||
+		(str == L".tif") || (str == L".TIF"))
+	{
 
 
-	CMNPageObject* pimg = new CMNPageObject;
-	pimg->SetName(_strpath, _strPName, _strName, _code, _pcode);
+		std::map<unsigned long, stPageGroup>::iterator iter_gr;
+		std::map<unsigned long, CMNPageObject*>::iterator iter;
 
-	iter = m_mapImageData.find(_code);
-	if (iter == m_mapImageData.end()) {
 
-		// Store Data Information ================================//!!!!
-		m_mapImageData[_code] = pimg;		// for duplication checking
+		CMNPageObject* pimg = new CMNPageObject;
+		pimg->SetName(_strpath, _strPName, _strName, _code, _pcode);
 
-		// push image data sequecily ..
-		m_vecImgData.push_back(pimg);
+		iter = m_mapImageData.find(_code);
+		if (iter == m_mapImageData.end()) {
 
-		// Make Group =========================//
-		iter_gr = m_mapGrupImg.find(_pcode);
-		if (iter_gr == m_mapGrupImg.end()) {		// New Group
-			stVecPageObj vecImg;
-			vecImg.push_back(std::move(pimg));
-			m_mapGrupImg[_pcode].imgVec = vecImg;
-			m_mapGrupImg[_pcode].nSlot = -1;
+			// Store Data Information ================================//!!!!
+			m_mapImageData[_code] = pimg;		// for duplication checking
+
+			// push image data sequecily ..
+			m_vecImgData.push_back(pimg);
+
+			// Make Group =========================//
+			iter_gr = m_mapGrupImg.find(_pcode);
+			if (iter_gr == m_mapGrupImg.end()) {		// New Group
+				stVecPageObj vecImg;
+				vecImg.push_back(std::move(pimg));
+				m_mapGrupImg[_pcode].imgVec = vecImg;
+				m_mapGrupImg[_pcode].nSlot = -1;
+			}
+			else {
+				m_mapGrupImg[_pcode].imgVec.push_back(std::move(pimg));
+			}
+			//======================================//
+
+			return pimg;
 		}
 		else {
-			m_mapGrupImg[_pcode].imgVec.push_back(std::move(pimg));
+			delete pimg;
+			return iter->second;
 		}
-		//======================================//
-
-		return pimg;
-	}
-	else {
-		delete pimg;
-		return iter->second;
-	}
-
-		
+	}		
+	return NULL;
 }
 
 int CMNDataManager::GetEmptySlot()
@@ -539,7 +546,7 @@ void CMNDataManager::SetMatchingResults()
 					matchRes.accuracy = matches[j].accuracy;
 					matchRes.fTh = matches[j].cInfo.th;
 					matchRes.rect = matches[j].rect;
-					matchRes.strCode = "unknown";
+					matchRes.strCode = "";
 
 					// hold cut image data --> should be deleted //
 					cv::Rect nRect = GetNomalizedWordSize(matches[j].rect);
@@ -725,7 +732,10 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 	int classid = GetNomalizedWordSize(ocrres.rect, norRect) - 1;
 	int imgid = m_refImgClass[classid].nCurrImgId;
-	cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+//	cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+	cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
+	resimg.setTo(255);
+	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
 	for (int pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 		int w = (classid + 1) * DB_IMGCHAR_SIZE;
@@ -741,7 +751,8 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 		int clen = m_refImgClass[classid].maxCharLen;
 //		float confi = TemplateMatching(cutimg, imgword)+0.1f;
-		float confi = TemplateMatching(cutimg, imgword);
+		
+		float confi = TemplateMatching(resimg, imgword);
 		if ((ocrres.fConfidence < confi )){  //( confi > 0.80f) && 
 			memset(ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			memcpy(ocrres.strCode, m_refImgClass[classid].vecStr[pos], sizeof(wchar_t)*clen);
@@ -774,12 +785,15 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 			}
 		}
 	}
+
+	result.release();
 	return th;
 }
 
 DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
 {
 	DB_CHK res = SDB_ADD;
+	float addTh = 0.88f;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
@@ -796,7 +810,7 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
 
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
-			if (TemplateMatching(cutimg, imgword) > 0.8f) {				
+			if (TemplateMatching(cutimg, imgword) > addTh) {
 				res = SDB_SKIP;
 				break;
 			}
@@ -806,7 +820,7 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 			}
 		}
 		else {
-			if (TemplateMatching(cutimg, imgword) > 0.8f) {
+			if (TemplateMatching(cutimg, imgword) > addTh) {
 				int clen = m_refImgClass[classid].maxCharLen;
 				memset(m_refImgClass[classid].vecStr[pos], 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 				memcpy(m_refImgClass[classid].vecStr[pos], strcode, sizeof(wchar_t)*clen);
@@ -851,15 +865,62 @@ void CMNDataManager::ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int
 }
 
 
-
-
-void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, CString _strCode)
+void CMNDataManager::ProcDBTrainingFromCutSearch()
 {
-	wchar_t wstrcode [_MAX_WORD_SIZE];
-	memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
-	wsprintf(wstrcode, _strCode.GetBuffer());
+	std::map<unsigned long, stVecMatchResult>::iterator iter = m_mapMatchResults.begin();
+	cv::Rect norRect;
+	for (; iter != m_mapMatchResults.end(); iter++) {
+		for (int i = 0; i < iter->second.size(); i++) {
+			int classid = GetNomalizedWordSize(iter->second[i].rect, norRect) - 1;
+			int imgid = m_refImgClass[classid].nCurrImgId;
+			cv::Mat resimg = iter->second[i].cutImg.clone();
 
+			wchar_t wstrcode [_MAX_WORD_SIZE];
+			memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+			wsprintf(wstrcode, iter->second[i].strCode.GetBuffer());
 
+			DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid);
+
+			if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
+				int wordPosId = m_refImgClass[classid].vecStr.size();
+
+				int w = (classid + 1) * DB_IMGCHAR_SIZE;
+				int h = DB_IMGCHAR_SIZE;
+
+				norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
+				norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
+
+				resimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+
+				int clen = m_refImgClass[classid].maxCharLen;
+				wchar_t* strcode = new wchar_t[clen];
+				memset(strcode, 0x00, sizeof(wchar_t)*clen);
+				memcpy(strcode, wstrcode, sizeof(wchar_t)*clen);
+				m_refImgClass[classid].vecStr.push_back(strcode);
+
+				m_refImgClass[classid].needToUpdate = true;
+				
+				// Update Table =======================//
+				//char char_str[_MAX_WORD_SIZE * 2];
+				//memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+				//int char_str_len = WideCharToMultiByte(CP_ACP, 0, wstrcode, -1, NULL, 0, NULL, NULL);
+				//WideCharToMultiByte(CP_ACP, 0, wstrcode, -1, char_str, char_str_len, 0, 0);
+				unsigned int hcode = getHashCode((const char*)iter->second[i].strCode.GetBuffer());
+				AddSDBTable(hcode, strcode);
+				m_bIsUpdateTable = true;
+			}
+		}
+	}
+}
+
+void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode, unsigned int hcode)
+{
+	//wchar_t wstrcode [_MAX_WORD_SIZE];
+	//memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+	//wsprintf(wstrcode, _strCode.GetBuffer());
+	if (hcode == 5381) 
+		return;
+	
 	cv::Rect imgRect = cv::Rect(0, 0, cutimg.cols, cutimg.rows);
 	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 	int classid = GetNomalizedWordSize(imgRect, norRect) - 1;
@@ -892,8 +953,22 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, CString _strCode)
 
 		m_refImgClass[classid].needToUpdate = true;
 
+		// Update Table =======================//
+		char char_str[_MAX_WORD_SIZE * 2];
+		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+		int char_str_len = WideCharToMultiByte(CP_ACP, 0, wstrcode, -1, NULL, 0, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, wstrcode, -1, char_str, char_str_len, 0, 0);
+		unsigned int hcode = getHashCode(char_str);
+
+		AddSDBTable(hcode, strcode);
+		m_bIsUpdateTable = true;
+
+	//	AddSDBTable(0, strcode);
 	//	UpdateImgClassDB();
 	}	
+
+
+	
 }
 
 
@@ -902,6 +977,11 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 	std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
 	for (int j = 0; j < ocrRes.size(); j++) {
 		if ((ocrRes[j].bNeedToDB) && (ocrRes[j].fConfidence > 0.1f)) {
+
+			if (ocrRes[j].hcode == 5381) 
+				continue;
+
+
 			cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
 			cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 			int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect) - 1;
@@ -935,8 +1015,12 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 				m_refImgClass[classid].vecStr.push_back(strcode);
 
 				m_refImgClass[classid].needToUpdate = true;
+
+				// Update Table //
+				AddSDBTable(ocrRes[j].hcode, strcode);
+				m_bIsUpdateTable = true;
 			}
-			pPage->UpdateOCRResStatus(j, false);
+			pPage->UpdateOCRResStatus(j, false, ocrRes[j].type);
 		}
 	}
 
@@ -1107,6 +1191,7 @@ void CMNDataManager::AddSDBTable(unsigned int hcode, wchar_t* strCode)
 	// Update HashTable //
 	if (m_mapWordTable.find(hcode) == m_mapWordTable.end()) {
 		_stSDBWordTable htable;
+		memset(htable.str, 0x00, sizeof(wchar_t)*(_MAX_WORD_SIZE));
 		memcpy(htable.str, strCode, sizeof(wchar_t)*(_MAX_WORD_SIZE));
 		m_mapWordTable[hcode] = htable;
 		m_bIsUpdateTable = true;
@@ -1134,13 +1219,11 @@ void CMNDataManager::AddSDBTable(unsigned int hcode, wchar_t* strCode)
 void CMNDataManager::LoadSDBFiles()
 {
 	m_mapWordTable.clear();
-
-
+	
 	USES_CONVERSION;
 	CString strFile;
 	char* sz = 0;
-
-
+	
 	// Read InfoFile First //
 	strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
 	sz = T2A(strFile);
@@ -1213,27 +1296,38 @@ void CMNDataManager::UpdateSDBFiles()
 	}
 	//=================================================================
 
-	//strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
-	//sz = T2A(strFile);
 
-	//FILE* fp = 0;
-	//fopen_s(&fp, sz, "wb");
-	//if (fp) {
-	//	int wnum = m_mapSDB.size();
-	//	fwrite(&wnum, sizeof(int), 1, fp);
-	//	std::map<unsigned int, _stSDB>::iterator iter = m_mapSDB.begin();
-	//	for (; iter != m_mapSDB.end(); iter++) {
+	// For debugiing ====================================//
+	if (m_bIsUpdateTable) {
+		strFile.Format(L"%s\\wtable.txt", m_strUserDataFolder);
+		CFile cfile;
+		if (!cfile.Open(strFile, CFile::modeWrite | CFile::modeCreate))
+		{
+			return;
+		}
+		USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+		cfile.Write(&nShort, 2);
 
-	//		int pnum = iter->second.size();
-	//		fwrite(&pnum, sizeof(unsigned int), 1, fp);
-	//		fwrite(&iter->first, sizeof(unsigned int), 1, fp);
+		// Write data //
+		CString strtmp;
+		int wnum = m_mapWordTable.size();
+		strtmp.Format(L"Total character: %d", wnum);
+		int len = wcslen(strtmp.GetBuffer()) * 2;		// word code //
+		cfile.Write(strtmp.GetBuffer(), len);
+		cfile.Write(L"\r\n", 4);
+		std::map<unsigned int, _stSDBWordTable>::iterator iter = m_mapWordTable.begin();
+		for (; iter != m_mapWordTable.end(); iter++) {
+			strtmp.Format(L"%d ", iter->first);
+			int len = wcslen(strtmp.GetBuffer()) * 2;		// word code //
+			cfile.Write(strtmp.GetBuffer(), len);
 
-	//		for (int i=0; i<pnum; i++) {
-	//			fwrite(&iter->second[i], sizeof(_stSDBWord), 1, fp);
-	//		}
-	//	}
-	//	fclose(fp);
-	//}
+			len = wcslen(iter->second.str) * 2;
+			cfile.Write(&iter->second.str, len);
+			cfile.Write(L"\r\n", 4);
+		}		
+		cfile.Close();
+	}
+
 }
 
 void CMNDataManager::DoKeywordSearch(CString strKeyword)
@@ -1297,11 +1391,12 @@ void CMNDataManager::DoKeywordSearch(CString strKeyword)
 						unsigned long pCode = getHashCode(sz);
 
 						CMNPageObject* pPage = PushImageDataSet(strPath, strPName, strName, res.filecode, pCode);
-						pPage->LoadThumbImage(THUMBNAIL_SIZE);
-						pPage->UploadThumbImage();
-						SelectPages(pCode);
-
-						pPage->AddDBSearchResult(res.rect);
+						if (pPage) {
+							pPage->LoadThumbImage(THUMBNAIL_SIZE);
+							pPage->UploadThumbImage();
+							SelectPages(pCode);
+							pPage->AddDBSearchResult(res.rect);
+						}
 					}
 					//================================================================//
 				}
@@ -1508,6 +1603,10 @@ void CMNDataManager::ExportDatabase()
 
 void CMNDataManager::ExportDatabase(CString _strFolder)
 {
+	CMNView* pViewImage = pView->GetImageView();
+
+
+
 	CFileDialog dlg(FALSE, L"*.csv", NULL, OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT, L"CSV Files(*.csv)|*.csv|");
 	if (dlg.DoModal() == IDOK)
 	{
@@ -1526,59 +1625,344 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 
 		//====================================================================//
 		std::map<unsigned int, _stSDB>::iterator iter = m_mapGlobalSDB.begin();
-		unsigned int filecode = 0;
-
+		std::map<unsigned int, CString>::iterator iterFile = m_mapFilePathTable.begin();
 		cv::Mat pageImg;
-		CString filePath, strtmp, strFolder;
+		CString filePath, strtmp, strFolder, strHtml;
+		unsigned int filecode = 0;
+		for (; iterFile != m_mapFilePathTable.end(); iterFile++) {
 
 
-		for (; iter != m_mapGlobalSDB.end(); iter++) {		
 
-			for (int i = 0; i < iter->second.size(); i++) {
-				//	for (int i = 0; i < 1; i++) {
-				_stSDBWord res = iter->second[i];
+			strPath = iterFile->second;
+			filecode = iterFile->first;
 
-				if (filecode != res.filecode) {		// new filecode;
+			//===========================================//
+			int nIndex = strPath.ReverseFind(_T('\\'));
+			if (nIndex > 0) {
+				strFolder = strPath.Left(nIndex);
+			}
+			//============================================//
+			if (strFolder == _strFolder) {
+				// Load Image First //
+				if (pageImg.ptr() != NULL) {
 					pageImg.release();
-					filecode = res.filecode;
 				}
+				filePath = GetEditFilePath(L".jp2", strPath);
+				LoadImageData(filePath, pageImg, true);
 
-				if (m_mapFilePathTable.find(res.filecode) != m_mapFilePathTable.end()) {
 
-					strPath = m_mapFilePathTable[res.filecode];
-					//===========================================//
-					int nIndex = strPath.ReverseFind(_T('\\'));
-					if (nIndex > 0) {
-						strFolder = strPath.Left(nIndex);
-					}
-					//============================================//
-					if (strFolder == _strFolder) {
+				// Export words //
+				for (; iter != m_mapGlobalSDB.end(); iter++) {
+					for (int i = 0; i < iter->second.size(); i++) {
 
-						if (pageImg.ptr() == NULL) {
-							filePath = GetEditFilePath(L".jp2", strPath);
-							LoadImageData(filePath, pageImg, true);
-						}
+						_stSDBWord res = iter->second[i];
 
-						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
-							cv::Mat cutImg = pageImg(res.rect).clone();
+						if (res.filecode != filecode) continue;
+						if (res.strcode == 5381)	continue;
+						if (res.fConfi < 0.8f)	continue;
 
-							int pixelcnt = 0;
-							for (int y = 0; y < cutImg.rows; y++) {
-								for (int x = 0; x < cutImg.cols; x++) {
-									if (cutImg.at<unsigned char>(y, x) == 0) {
-										pixelcnt++;
-									}
+						cv::Rect nRect = GetNomalizedWordSize(res.rect);
+						cv::Mat tmpcut = pageImg(res.rect).clone();
+						//cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
+
+						cv::Mat cutImg = cv::Mat(cvSize(nRect.width, nRect.height), tmpcut.type());
+						cutImg.setTo(255);
+						ResizeCutImageByRatio(cutImg, tmpcut, nRect.width, nRect.height);
+						
+						// veryfi rect //
+						//cv::Mat cutImg = pageImg(res.rect).clone();
+
+						int pixelcnt = 0;
+						for (int y = 0; y < cutImg.rows; y++) {
+							for (int x = 0; x < cutImg.cols; x++) {
+								if (cutImg.at<unsigned char>(y, x) == 0) {
+									pixelcnt++;
 								}
 							}
+						}
 
-							res.fDiff = (float)pixelcnt / (cutImg.rows*cutImg.cols);
+						res.fDiff = (float)pixelcnt / (cutImg.rows*cutImg.cols);
+
+						//CString strBase64 = L"";
+						std::vector<uchar> data_encode;
+						imencode(".bmp", cutImg, data_encode);
+						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
+						data_encode.clear();
+
+						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+							_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+							CString strWord = tmpstr.str;
+							//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
+
+							int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
+							cfile.Write(strWord.GetBuffer(), len);
+							cfile.Write(L" ", 2);
+
+							strtmp.Format(L"%d", res.rect.x);		// position x
+							len = wcslen(strtmp.GetBuffer()) * 2;
+							cfile.Write(strtmp.GetBuffer(), len);
+							cfile.Write(L" ", 2);
+
+							strtmp.Format(L"%d", res.rect.y);		// position y
+							len = wcslen(strtmp.GetBuffer()) * 2;
+							cfile.Write(strtmp.GetBuffer(), len);
+							cfile.Write(L" ", 2);
+
+							strtmp.Format(L"%d", res.rect.width);		// size
+							len = wcslen(strtmp.GetBuffer()) * 2;
+							cfile.Write(strtmp.GetBuffer(), len);
+							cfile.Write(L" ", 2);
+
+							strtmp.Format(L"%3.2f", res.fConfi);		// confidence
+							len = wcslen(strtmp.GetBuffer()) * 2;
+							cfile.Write(strtmp.GetBuffer(), len);
+							cfile.Write(L" ", 2);
+
+							strtmp.Format(L"%3.2f", res.fDiff);		// confidence
+							len = wcslen(strtmp.GetBuffer()) * 2;
+							cfile.Write(strtmp.GetBuffer(), len);
+							cfile.Write(L" ", 2);
 
 
-							//CString strBase64 = L"";
-							std::vector<uchar> data_encode;
-							imencode(".bmp", cutImg, data_encode);
-							CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
-							data_encode.clear();
+							len = wcslen(strBase64.GetBuffer()) * 2;
+							cfile.Write(strBase64.GetBuffer(), len);
+							//cfile.Write(L",", 2);
+
+							cfile.Write(L"\r\n", 4);
+							cutImg.release();
+							tmpcut.release();
+						}
+
+					}
+				}
+				iter = m_mapGlobalSDB.begin();
+			}
+
+
+			pViewImage->IncreseAddImgCnt();
+		}
+
+		pageImg.release();
+		cfile.Close();
+		pViewImage->SetThreadEnd(true);
+		AfxMessageBox(L"A cvs file was exported");
+	}
+
+
+	//CFileDialog dlg(FALSE, L"*.csv", NULL, OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT, L"CSV Files(*.csv)|*.csv|");
+	//if (dlg.DoModal() == IDOK)
+	//{
+	//	CString strPath = dlg.GetPathName();
+	//	CFile cfile;
+	//	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+	//	{
+	//		return;
+	//	}
+	//	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+	//	cfile.Write(&nShort, 2);
+
+	//	CString strRecord = L"CODE POS_X POS_Y SIZE CONFIDENCE DIFFERENCE BASE64\n";
+	//	int len = wcslen(strRecord.GetBuffer()) * 2;		// word code //
+	//	cfile.Write(strRecord.GetBuffer(), len);
+
+	//	//====================================================================//
+	//	std::map<unsigned int, _stSDB>::iterator iter = m_mapGlobalSDB.begin();
+	//	unsigned int filecode = 0;
+
+	//	cv::Mat pageImg;
+	//	CString filePath, strtmp, strFolder;
+
+
+	//	for (; iter != m_mapGlobalSDB.end(); iter++) {		
+
+	//		for (int i = 0; i < iter->second.size(); i++) {
+	//			//	for (int i = 0; i < 1; i++) {
+	//			_stSDBWord res = iter->second[i];
+
+	//			if (filecode != res.filecode) {		// new filecode;
+	//				pageImg.release();
+	//				filecode = res.filecode;
+	//			}
+
+	//			if (m_mapFilePathTable.find(res.filecode) != m_mapFilePathTable.end()) {
+
+	//				strPath = m_mapFilePathTable[res.filecode];
+	//				//===========================================//
+	//				int nIndex = strPath.ReverseFind(_T('\\'));
+	//				if (nIndex > 0) {
+	//					strFolder = strPath.Left(nIndex);
+	//				}
+	//				//============================================//
+	//				if (strFolder == _strFolder) {
+
+	//					if (pageImg.ptr() == NULL) {
+	//						filePath = GetEditFilePath(L".jp2", strPath);
+	//						LoadImageData(filePath, pageImg, true);
+	//					}
+
+	//					if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+	//						cv::Mat cutImg = pageImg(res.rect).clone();
+
+	//						int pixelcnt = 0;
+	//						for (int y = 0; y < cutImg.rows; y++) {
+	//							for (int x = 0; x < cutImg.cols; x++) {
+	//								if (cutImg.at<unsigned char>(y, x) == 0) {
+	//									pixelcnt++;
+	//								}
+	//							}
+	//						}
+
+	//						res.fDiff = (float)pixelcnt / (cutImg.rows*cutImg.cols);
+
+
+	//						//CString strBase64 = L"";
+	//						std::vector<uchar> data_encode;
+	//						imencode(".bmp", cutImg, data_encode);
+	//						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
+	//						data_encode.clear();
+
+	//						_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+	//						CString strWord = tmpstr.str;
+	//						//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
+
+	//						int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
+	//						cfile.Write(strWord.GetBuffer(), len);
+	//						cfile.Write(L" ", 2);
+
+	//						strtmp.Format(L"%d", res.rect.x);		// position x
+	//						len = wcslen(strtmp.GetBuffer()) * 2;
+	//						cfile.Write(strtmp.GetBuffer(), len);
+	//						cfile.Write(L" ", 2);
+
+	//						strtmp.Format(L"%d", res.rect.y);		// position y
+	//						len = wcslen(strtmp.GetBuffer()) * 2;
+	//						cfile.Write(strtmp.GetBuffer(), len);
+	//						cfile.Write(L" ", 2);
+
+	//						strtmp.Format(L"%d", res.rect.width);		// size
+	//						len = wcslen(strtmp.GetBuffer()) * 2;
+	//						cfile.Write(strtmp.GetBuffer(), len);
+	//						cfile.Write(L" ", 2);
+
+	//						strtmp.Format(L"%3.2f", res.fConfi);		// confidence
+	//						len = wcslen(strtmp.GetBuffer()) * 2;
+	//						cfile.Write(strtmp.GetBuffer(), len);
+	//						cfile.Write(L" ", 2);
+
+	//						strtmp.Format(L"%3.2f", res.fDiff);		// confidence
+	//						len = wcslen(strtmp.GetBuffer()) * 2;
+	//						cfile.Write(strtmp.GetBuffer(), len);
+	//						cfile.Write(L" ", 2);
+
+	//						len = wcslen(strBase64.GetBuffer()) * 2;
+	//						cfile.Write(strBase64.GetBuffer(), len);
+	//						//cfile.Write(L",", 2);
+
+	//						cfile.Write(L"\r\n", 4);
+	//						cutImg.release();
+	//					}
+	//				}
+	//				else {
+	//					TRACE(L"Not in selected folder\n");
+	//				}
+	//			}			
+	//		}			
+	//	}
+	//	pageImg.release();
+	//	cfile.Close();
+	//	AfxMessageBox(L"A csv file was exported");
+	//}		
+}
+
+
+
+
+void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
+{
+	CMNView* pViewImage = pView->GetImageView();
+
+
+	CFileDialog dlg(FALSE, L"*.html", NULL, OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT, L"HTML Files(*.html)|*.html|");
+	if (dlg.DoModal() == IDOK)
+	{
+		CString strPath = dlg.GetPathName();
+		CFile cfile;
+		if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+		{
+			return;
+		}
+		USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+		cfile.Write(&nShort, 2);
+
+		CString strRecord = L"<html><br>";
+		int len = wcslen(strRecord.GetBuffer()) * 2;		// word code //
+		cfile.Write(strRecord.GetBuffer(), len);
+
+		//====================================================================//
+		std::map<unsigned int, _stSDB>::iterator iter = m_mapGlobalSDB.begin();
+		std::map<unsigned int, CString>::iterator iterFile = m_mapFilePathTable.begin();
+		cv::Mat pageImg;
+		CString filePath, strtmp, strFolder, strHtml;
+		unsigned int filecode = 0;
+		for (; iterFile != m_mapFilePathTable.end(); iterFile++) {
+			strPath = iterFile->second;
+			filecode = iterFile->first;
+
+			//===========================================//
+			int nIndex = strPath.ReverseFind(_T('\\'));
+			if (nIndex > 0) {
+				strFolder = strPath.Left(nIndex);
+			}
+			//============================================//
+			if (strFolder == _strFolder) {
+				// Load Image First //
+				if (pageImg.ptr() != NULL) {
+					pageImg.release();
+				}
+				filePath = GetEditFilePath(L".jp2", strPath);
+				LoadImageData(filePath, pageImg, true);
+
+
+				// Export words //
+				for (; iter != m_mapGlobalSDB.end(); iter++) {
+					for (int i = 0; i < iter->second.size(); i++) {
+
+						_stSDBWord res = iter->second[i];
+
+						if (res.filecode != filecode) continue;
+						if (res.strcode == 5381) continue;
+						if (res.fConfi < 0.8f)	continue;
+						
+						
+
+						// veryfi rect //
+						//cv::Mat cutImg = pageImg(res.rect).clone();
+						cv::Rect nRect = GetNomalizedWordSize(res.rect);
+						cv::Mat tmpcut = pageImg(res.rect).clone();
+						//cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
+
+						cv::Mat cutImg = cv::Mat(cvSize(nRect.width, nRect.height), tmpcut.type());
+						cutImg.setTo(255);
+						ResizeCutImageByRatio(cutImg, tmpcut, nRect.width, nRect.height);
+
+						int pixelcnt = 0;
+						for (int y = 0; y < cutImg.rows; y++) {
+							for (int x = 0; x < cutImg.cols; x++) {
+								if (cutImg.at<unsigned char>(y, x) == 0) {
+									pixelcnt++;
+								}
+							}
+						}
+
+						res.fDiff = (float)pixelcnt / (cutImg.rows*cutImg.cols);
+
+						//CString strBase64 = L"";
+						std::vector<uchar> data_encode;
+						imencode(".bmp", cutImg, data_encode);
+						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
+						data_encode.clear();
+
+						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
 
 							_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
 							CString strWord = tmpstr.str;
@@ -1613,23 +1997,256 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
+
+							// 
+							strHtml = L"<img src=\" data:image/png; base64, ";
+							len = wcslen(strHtml.GetBuffer()) * 2;
+							cfile.Write(strHtml.GetBuffer(), len);
+
+
 							len = wcslen(strBase64.GetBuffer()) * 2;
 							cfile.Write(strBase64.GetBuffer(), len);
-							//cfile.Write(L",", 2);
+
+
+							strHtml = L"\" / ><br><br>";
+							len = wcslen(strHtml.GetBuffer()) * 2;
+							cfile.Write(strHtml.GetBuffer(), len);
+
 
 							cfile.Write(L"\r\n", 4);
-							cutImg.release();
 						}
+						cutImg.release();
+						tmpcut.release();
+
 					}
-					else {
-						TRACE(L"Not in selected folder\n");
-					}
-				}			
-			}			
+				}
+				iter = m_mapGlobalSDB.begin();
+			}
+			pViewImage->IncreseAddImgCnt();
 		}
+
 		pageImg.release();
+
+		strHtml = L"</html>";
+		len = wcslen(strHtml.GetBuffer()) * 2;
+		cfile.Write(strHtml.GetBuffer(), len);
+
 		cfile.Close();
-		AfxMessageBox(L"A csv file was exported");
+		pViewImage->SetThreadEnd(true);
+		AfxMessageBox(L"A html file was exported");
 	}		
 }
 
+
+
+
+
+void CMNDataManager::FitCutImageRect(cv::Mat &srcImg, cv::Rect& cutRect)
+{
+	cv::Rect oriCut = cutRect;
+
+	cutRect.x += 2;
+	cutRect.y += 2;
+	cutRect.width -= 4;
+	cutRect.height -= 4;
+
+	
+	
+	FindHorizonEage(srcImg, cutRect, 0, 0, oriCut);		// direction 0: left, 1: right
+	FindHorizonEage(srcImg, cutRect, 0, 1, oriCut);		// direction 0: left, 1: right
+	FindVerticalEage(srcImg, cutRect, 0, 0, oriCut);		// direction 0: left, 1: right
+	FindVerticalEage(srcImg, cutRect, 0, 1, oriCut);		// direction 0: left, 1: right
+}
+bool CMNDataManager::FindHorizonEage(cv::Mat &srcImg, cv::Rect& cutRect, int type, int direction, cv::Rect& oriRect)
+{
+	int incre = 1;
+	int sumPixel = 0;
+	for (int y = cutRect.y; y < (cutRect.y + cutRect.height); y++) {
+		if (direction == 0) {
+			if (srcImg.at<uchar>(cv::Point(cutRect.x, y)) < 10)	sumPixel++;
+		}
+		else {
+			if(srcImg.at<uchar>(cv::Point((cutRect.x + cutRect.width), y)) < 10) sumPixel++;
+		}
+	}
+
+	float fMaxExtend = 1.5f;
+	float fMinExtend = 0.75f;
+
+	int pixelth = 1;
+	switch (type) {
+	case 0:		// first
+		if (sumPixel > pixelth) {
+			if (direction == 0) {
+				cutRect.x -= incre;		// case of left edge	
+				cutRect.width += incre;
+			}
+			else {
+				cutRect.width += incre;		// case of right edge		
+			}
+
+			if ((cutRect.width) > oriRect.width*fMaxExtend) {
+				return true;
+			}
+			FindHorizonEage(srcImg, cutRect, 1, direction, oriRect);		// go to the left
+		}
+
+		else {
+			if (direction == 0) {
+				cutRect.x += incre;		// case of left edge	
+				cutRect.width -= incre;
+			}
+			else {
+				cutRect.width -= incre;		// case of right edge	
+			}
+
+			if ((cutRect.width) < oriRect.width*fMinExtend) {
+				return true;
+			}
+			FindHorizonEage(srcImg, cutRect, 2, direction, oriRect);		// go to the left
+		}
+		break;
+	case 1:  // Go to the negative way
+		if (sumPixel > pixelth) {
+			if (direction == 0) {
+				cutRect.x -= incre;		// case of left edge
+				cutRect.width += incre;
+			}
+			else {
+				cutRect.width += incre;		// case of right edge
+			}
+
+			if ((cutRect.width) > oriRect.width*fMaxExtend) {
+				return true;
+			}
+			FindHorizonEage(srcImg, cutRect, 1, direction, oriRect);		// go to the left
+		}
+		else {
+			return true;
+		}
+		break;
+	case 2:	// Go to the positive way
+		if (sumPixel < pixelth) {
+			if (direction == 0) {
+				cutRect.x += incre;		// case of left edge
+				cutRect.width -= incre;
+			}
+			else {
+				cutRect.width -= incre;		// case of right edge
+			}
+
+			if ((cutRect.width) < oriRect.width*fMinExtend) {
+				return true;
+			}
+			FindHorizonEage(srcImg, cutRect, 2, direction, oriRect);		// go to the left
+		}
+		else {
+			return true;
+		}
+		break;
+	}
+}
+bool CMNDataManager::FindVerticalEage(cv::Mat &srcImg, cv::Rect& cutRect, int type, int direction, cv::Rect& oriRect)
+{
+	int incre = 1;
+	int sumPixel = 0;
+	for (int x = cutRect.x; x < (cutRect.x+cutRect.width); x++) {
+		if (direction == 0) {
+			if (srcImg.at<uchar>(cv::Point(x, cutRect.y)) < 10) sumPixel++;
+		}
+		else {
+			if (srcImg.at<uchar>(cv::Point(x, (cutRect.y + cutRect.height))) < 10) sumPixel++;
+		}
+	}
+
+	float fMaxExtend = 1.2f;
+	float fMinExtend = 0.7f;
+	
+	int pixelth = 1;
+	switch (type) {
+	case 0:		// first
+		if (sumPixel > pixelth) {
+			if (direction == 0) {
+				cutRect.y -= 1;		// case of top edge
+				cutRect.height += incre;
+			}
+			else {
+				cutRect.height += incre;		// case of right edge
+			}
+
+			if ((cutRect.height) > oriRect.height*fMaxExtend) {
+				return true;
+			}
+			FindVerticalEage(srcImg, cutRect, 1, direction, oriRect);		// go to the left
+		}
+
+		else {
+			if (direction == 0) {
+				cutRect.y += incre;		// case of left edge
+				cutRect.height -= incre;
+			}
+			else {
+				cutRect.height -= incre;		// case of right edge
+			}
+
+			if ((cutRect.height) < oriRect.height*fMinExtend) {
+				return true;
+			}
+			FindVerticalEage(srcImg, cutRect, 2, direction, oriRect);		// go to the left
+		}
+		break;
+	case 1:  // Go to the negative way
+		if (sumPixel > pixelth) {
+			if (direction == 0) {
+				cutRect.y -= incre;		// case of left edge
+				cutRect.height += incre;
+			}
+			else {
+				cutRect.height += incre;		// case of right edge
+			}
+
+			if ((cutRect.height) > oriRect.height*fMaxExtend) {
+				return true;
+			}
+			FindVerticalEage(srcImg, cutRect, 1, direction, oriRect);		// go to the left
+		}
+		else {
+			return true;
+		}
+		break;
+	case 2:	// Go to the positive way
+		if (sumPixel < pixelth) {
+			if (direction == 0) {
+				cutRect.y += incre;		// case of left edge
+				cutRect.height -= incre;
+			}
+			else {
+				cutRect.height -= incre;		// case of right edge
+			}
+
+			if ((cutRect.height) < oriRect.height*fMinExtend) {
+				return true;
+			}
+			FindVerticalEage(srcImg, cutRect, 2, direction, oriRect);		// go to the left
+		}
+		else {
+			return true;
+		}
+		break;
+	}
+}
+
+bool CMNDataManager::IsSupportFormat(CString strPath)
+{
+	CString str = PathFindExtension(strPath);
+	// Image File Filter ===============//
+	if ((str == L".pdf") || (str == L".PDF") ||
+		(str == L".jpg") || (str == L".JPG") ||
+		(str == L".bmp") || (str == L".BMP") ||
+		(str == L".png") || (str == L".PNG") ||
+		(str == L".tiff") || (str == L".TIFF") || (str == L".TIF") || (str == L".tif"))
+	{
+		return true;
+	}
+	return false;
+}

@@ -143,18 +143,19 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 
 		pCtrl->SetItemImage(_item, 4, 4);
 		strName = pCtrl->GetItemText(_item);
-		strPName = pCtrl->GetItemFullPath(pItem);
-		strPath = pCtrl->GetItemFullPath(_item);
+		if (SINGLETON_DataMng::GetInstance()->IsSupportFormat(strName)) {
+			strPName = pCtrl->GetItemFullPath(pItem);
+			strPath = pCtrl->GetItemFullPath(_item);
 
-		sz = T2A(strPName);
-		pCode = getHashCode(sz);
-		sz = T2A(strPath);
-		cCode = getHashCode(sz);
+			sz = T2A(strPName);
+			pCode = getHashCode(sz);
+			sz = T2A(strPath);
+			cCode = getHashCode(sz);
 
-
-		// Add Image Data //		
-		SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);			
-		cnt++;
+			// Add Image Data //		
+			SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);
+			cnt++;
+		}
 
 	}
 	else {		// Has Child : Folder //
@@ -166,22 +167,21 @@ void CMooNView::AddImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, int& cnt
 		while (hChildItem) {
 			HTREEITEM cItem = pCtrl->GetChildItem(hChildItem);
 
-
 			if (cItem == NULL) { // File //
-
-				pCtrl->SetItemImage(hChildItem, 4, 4);
-				
+				pCtrl->SetItemImage(hChildItem, 4, 4);				
 				strName = pCtrl->GetItemText(hChildItem);
 				strPath = pCtrl->GetItemFullPath(hChildItem);
+			
 				//==================================//
-				char* sz = T2A(strPath);
-				cCode = getHashCode(sz);
-				sz = T2A(strName);
-				nameCode = getHashCode(sz);
-				// Add Image Data //
-				SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);
-				
-				cnt++;
+				if (SINGLETON_DataMng::GetInstance()->IsSupportFormat(strName)) {
+					char* sz = T2A(strPath);
+					cCode = getHashCode(sz);
+					sz = T2A(strName);
+					nameCode = getHashCode(sz);
+					// Add Image Data //
+					SINGLETON_DataMng::GetInstance()->PushImageDataSet(strPath, strPName, strName, cCode, pCode);
+					cnt++;
+				}
 			}
 
 			else {
@@ -364,17 +364,37 @@ void CMooNView::DoOCR()
 
 void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 {
+	//SINGLETON_DataMng::GetInstance()->ProcDBTrainingFromCutSearch();
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	pM->AddOutputString(L"Training Cut & Search Results...", false);
+
 	CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(pageid);
 	if (pPage) {
-		cv::Rect rect;
-		if (pPage->GetRectByMatchID(matchid, rect)) {
+		_stOCRResult ocrRes;
+		ocrRes.type = _CNS;  
 
-			cv::Mat cutImg = pPage->GetSrcPageGrayImg()(rect).clone();
-			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, strCode);
+		if (pPage->GetRectByMatchID(matchid, ocrRes.rect, ocrRes.fConfidence)) {
+
+			// Need to add cut&Search result to OCR results !!!! //
+			memset(&ocrRes.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+			wsprintf(ocrRes.strCode, strCode.GetBuffer());
+						
+			char char_str[_MAX_WORD_SIZE * 2];
+			memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+			int char_str_len = WideCharToMultiByte(CP_ACP, 0, ocrRes.strCode, -1, NULL, 0, NULL, NULL);
+			WideCharToMultiByte(CP_ACP, 0, ocrRes.strCode, -1, char_str, char_str_len, 0, 0);
+			ocrRes.hcode = getHashCode(char_str);
+			ocrRes.bNeedToDB = true;	
+			
+			//pPage->AddOCRResult(ocrRes);  // hcode here!!
+
+			cv::Mat cutImg = pPage->GetSrcPageGrayImg()(ocrRes.rect).clone();
+			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, ocrRes.hcode);
 			cutImg.release();		
-
 		}
 	}
+
+	pM->AddOutputString(L"Training Cut & Search Results...complete", false);
 }
 
 

@@ -159,6 +159,7 @@ void CFormProperties::OnInitialUpdate()
 	m_comboLanguage.AddString(L"Chinese");
 	m_comboLanguage.AddString(L"Korean");
 	m_comboLanguage.AddString(L"DB");
+	m_comboLanguage.AddString(L"Cut&Search");
 	m_comboLanguage.SetCurSel(0);
 
 

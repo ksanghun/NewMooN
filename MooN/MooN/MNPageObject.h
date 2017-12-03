@@ -29,17 +29,13 @@ struct stParapgraphInfo
 	float deSkewAngle;
 	bool IsDeskewed;
 	bool IsVerti;
-//	unsigned short alignType;
-//	_ALIGHN_TYPE alignType;
-//	POINT3D color;
 
 	void init() {
 		rect = cv::Rect(0, 0, 0, 0);
 		deSkewAngle = 0.0f;
 		IsDeskewed = false;
 		IsVerti = false;
-	};
-
+	};	
 };
 
 struct stDBSearchRes
@@ -58,7 +54,7 @@ struct stDBSearchRes
 
 
 
-
+class CExtractor;
 class CMNPageObject
 {
 public:
@@ -72,6 +68,8 @@ public:
 	void SetCandidate(bool isCan) { m_bCandidate = isCan; m_pos.z = 0.0f; };
 	void SetIsNear(bool isnear) { m_bIsNear = isnear; }
 	void SetIsSearched(bool _IsSearch) { m_bIsSearching = _IsSearch; }
+	void SetFitCurArea();
+
 	void SetSelMatchItem(int _selid);// { m_selMatchItemId = _selid; }
 	void DeSkewImg(int pid, float fAngle);
 	void RemoveNoise(cv::Rect rect);
@@ -86,7 +84,7 @@ public:
 	POINT3D GetPos() { return m_pos; };
 	unsigned short GetImgWidth() { return m_nImgWidth; };
 	unsigned short GetImgHeight() { return m_nImgHeight; };
-	unsigned long GetCode() { return nCode; }
+	unsigned long GetCode() { return m_nCode; }
 	unsigned long GetPCode() { return parentCode; }
 
 	float GetfXScale() { return m_fXScale; }
@@ -95,7 +93,7 @@ public:
 	CString GetName() { return m_strName; };
 	std::vector<stMatchInfo>& GetMatchResult() { return m_matched_pos; };
 	bool GetPosByMatchID(int mid, POINT3D& pos);
-	bool GetRectByMatchID(int mid, cv::Rect& rect);
+	bool GetRectByMatchID(int mid, cv::Rect& rect, float& fConf);
 	void ClearMatchResult();
 //	cv::Mat& GetSrcPageImg() { return m_thumbImg; }
 	cv::Mat& GetSrcPageGrayImg() { return m_srcGrayImg; }
@@ -125,7 +123,7 @@ public:
 	float SetSelectionPosition(int nSlot, float xOffset, float yOffset, bool IsAni);
 	void SetSelection(bool _isSel);
 	bool AddMatchedPoint(stMatchInfo info, int search_size);
-	void AddParagraph(cv::Rect rect, bool IsVerti, float deskew);
+	void AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic);
 	bool IsDuplicate(stMatchInfo& info, int search_size);
 
 //	float GetDeskewParam(int pid);
@@ -135,11 +133,12 @@ public:
 	// Edit Paragraph box //
 	void DeleteSelPara(int selid);
 	void DeleteOCRResByRect(cv::Rect rect);
+	void CleanUpOCRres();
 	cv::Rect GetSelParaRect(int selid);
 	bool DeleteSelOCRRes(int selid);
 	void ConfirmOCRRes(int selid);
 	void UpdateOCRCode(CString _strCode, int selid);
-	void UpdateOCRResStatus(int selid, bool IsUpdate);
+	void UpdateOCRResStatus(int selid, bool IsUpdate, int _type);
 
 	// OCR //
 	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }
@@ -171,7 +170,7 @@ private:
 	CString m_strPName;
 	CString m_strName;
 	unsigned long parentCode;
-	unsigned long nCode;
+	unsigned long m_nCode;
 
 	GLuint m_thumbnailTexId;
 	GLuint m_texId;

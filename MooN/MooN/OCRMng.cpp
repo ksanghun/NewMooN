@@ -66,14 +66,13 @@ void COCRMng::SetOCRDetectModeKor(tesseract::PageSegMode mode)
 	m_tessKor.SetPageSegMode(mode);
 }
 
-float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
+float COCRMng::extractWithOCR(cv::Mat& image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
 {	
 	// Preprocessing before OCR ====//
 //	fScale = 1.0f;
-
 	//cv::threshold(image, image, 200, 255, cv::THRESH_OTSU);
-	cv::Mat resizeImg;
-	cv::resize(image, resizeImg, cv::Size(image.cols * fScale, image.rows * fScale));
+	//cv::Mat resizeImg;
+	//cv::resize(image, resizeImg, cv::Size(32, 32));
 	//cv::imshow("resize1", resizeImg);
 	//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
 	//	cv::Size(3, 3),
@@ -83,8 +82,10 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 
 	//======================//
 
-	tess.SetImage((uchar*)resizeImg.data, resizeImg.size().width, resizeImg.size().height, resizeImg.channels(), resizeImg.step1());
+//	tess.SetImage((uchar*)resizeImg.data, resizeImg.size().width, resizeImg.size().height, resizeImg.channels(), resizeImg.step1());
 //	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
+	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), image.step1());
+//	tess.SetRectangle(0, 0, image.cols, image.rows);
 	tess.Recognize(0);
 
 	//	const char* out = tess.GetUTF8Text();
@@ -113,10 +114,10 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 
 				int x1, y1, x2, y2, w, h;
 				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
-				x1 /= fScale;
-				x2 /= fScale;
-				y1 /= fScale;
-				y2 /= fScale;
+				//x1 /= fScale;
+				//x2 /= fScale;
+				//y1 /= fScale;
+				//y2 /= fScale;
 
 				w = x2 - x1;
 				h = y2 - y1;
@@ -155,7 +156,113 @@ float COCRMng::extractWithOCR(cv::Mat image, std::vector<_stOCRResult>& boundRec
 
 
 	tess.Clear();
-	resizeImg.release();
+//	resizeImg.release();
+
+	if (cnt > 0)
+		averConf /= cnt;
+	return averConf*0.01f;
+
+	// Need to return the lowest value //
+}
+
+
+float COCRMng::extractWithOCRSingle(cv::Mat& image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
+{
+	//cv::Mat resizeImg = cv::Mat(cvSize(image.cols+20, image.rows+20), image.type());
+	//resizeImg.setTo(255);
+	//image.copyTo(resizeImg(cv::Rect(10, 10, image.cols, image.rows)));
+
+	// Preprocessing before OCR ====//
+	//	fScale = 1.0f;
+	//cv::threshold(image, image, 200, 255, cv::THRESH_OTSU);
+	//cv::Mat resizeImg;
+	//cv::resize(image, resizeImg, cv::Size(32, 32));
+	//cv::imshow("resize1", resizeImg);
+	//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
+	//	cv::Size(3, 3),
+	//	cv::Point(-1, -1));
+	//cv::dilate(image, image, element);
+	//cv::imshow("resize2", resizeImg);
+
+	//======================//
+
+	//tess.SetImage((uchar*)resizeImg.data, resizeImg.cols, resizeImg.rows, resizeImg.channels(), resizeImg.step1());
+	//	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
+	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), image.step1());
+	tess.SetRectangle(0, 0, image.cols, image.rows);
+	tess.Recognize(0);
+
+	//	const char* out = tess.GetUTF8Text();
+	//tesseract::PageIteratorLevel level;
+	//level = tesseract::RIL_SYMBOL;
+
+	float averConf = 0.0f;
+	int cnt = 0;
+
+	tesseract::ResultIterator* ri = tess.GetIterator();
+	if (ri != 0) {
+		do {
+			char* word = ri->GetUTF8Text(level);
+			float conf = ri->Confidence(level);
+			//	if (conf > 94.99f) continue;
+
+			//	if (word != 0) {
+
+			//tesseract::ChoiceIterator ci(*ri);
+			//do{
+			//	const char* choice = ci.GetUTF8Text();
+			//	float ciConf = ci.Confidence();
+			//	TRACE("Confidence: %s - %3.2f\n", choice, ciConf);
+			//} while (ci.Next());
+
+
+			//int x1, y1, x2, y2, w, h;
+			//ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+			////x1 /= fScale;
+			////x2 /= fScale;
+			////y1 /= fScale;
+			////y2 /= fScale;
+			//w = x2 - x1;
+			//h = y2 - y1;
+
+			_stOCRResult res;
+
+			res.init();
+			res.type = langType;
+		//	res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
+			res.rect = cv::Rect(0, 0, image.cols, image.rows);
+
+
+			res.fConfidence = conf*0.01f;
+
+			if ((word)) {
+				Utf8ToUnicode(word, res.strCode);
+
+				boundRect.push_back(res);
+				TRACE(L"Confidence: %s - %3.2f\n", res.strCode, res.fConfidence);
+				averConf += conf;
+				cnt++;
+
+				delete[] word;
+			}
+
+			//res.strCode = tword;						
+			//SINGLETON_DataMng::GetInstance()->MultiToUniCode(word, res.strCode);
+			//boundRect.push_back(res);
+			//TRACE(L"Confidence: %s - %3.2f\n", res.strCode, res.fConfidence);
+			//averConf += conf;
+			//cnt++;
+
+			//	}
+
+		} while (ri->Next(level));
+
+		delete ri;
+	}
+
+
+	tess.Clear();
+	//	resizeImg.release();
 
 	if (cnt > 0)
 		averConf /= cnt;

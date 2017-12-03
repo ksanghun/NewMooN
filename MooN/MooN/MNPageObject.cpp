@@ -2,9 +2,7 @@
 
 #include "MNPageObject.h"
 #include "MNDataManager.h"
-
-
-
+#include "Extractor.h"
 
 
 CMNPageObject::CMNPageObject()
@@ -75,7 +73,7 @@ void CMNPageObject::SetName(CString _strpath, CString _strpname, CString _strnam
 	m_strPName = _strpname;
 	m_strName = _strname;
 	parentCode = _pcode;
-	nCode = _code;
+	m_nCode = _code;
 
 
 	//	mtSetPoint3D(&m_pos, 0.0f, 0.0f, 0.0f);
@@ -805,6 +803,16 @@ bool CMNPageObject::IsDuplicate(stMatchInfo& info, int search_size)
 	return IsDup;
 }
 
+void CMNPageObject::SetFitCurArea()
+{
+	for (int i = 0; i < m_matched_pos.size(); i++) {
+		cv::Rect rect = m_matched_pos[i].rect;
+		SINGLETON_DataMng::GetInstance()->FitCutImageRect(m_srcGrayImg, rect);
+		m_matched_pos[i].rect = rect;
+	}
+
+}
+
 bool CMNPageObject::AddMatchedPoint(stMatchInfo info, int search_size)
 {
 	if (search_size > 0) {
@@ -818,11 +826,12 @@ bool CMNPageObject::AddMatchedPoint(stMatchInfo info, int search_size)
 	return true;
 }
 
-bool CMNPageObject::GetRectByMatchID(int mid, cv::Rect& rect)
+bool CMNPageObject::GetRectByMatchID(int mid, cv::Rect& rect, float& fConf)
 {
 	rect = cv::Rect();
 	if ((mid >= 0) && (mid < (int)m_matched_pos.size())) {
 		rect = m_matched_pos[mid].rect;
+		fConf = m_matched_pos[mid].accuracy;
 		return true;
 	}
 	return false;
@@ -869,7 +878,7 @@ void CMNPageObject::ClearOCRResult()
 		m_ocrResult[i].fConfidence = 0.0f;
 //		m_ocrResult[i].strCode 
 		memset(&m_ocrResult[i].strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
-		wsprintf(m_ocrResult[i].strCode, L"Unknown");
+		wsprintf(m_ocrResult[i].strCode, L"");
 	}
 }
 
@@ -880,7 +889,7 @@ bool CMNPageObject::IsNeedToExtract()
 	}
 	return false;
 }
-void CMNPageObject::AddParagraph(cv::Rect rect, bool IsVerti, float deskew)
+void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic)
 {
 	m_IsNeedToSave = true;
 	stParapgraphInfo para;
@@ -888,18 +897,22 @@ void CMNPageObject::AddParagraph(cv::Rect rect, bool IsVerti, float deskew)
 	para.rect = rect;
 	para.IsVerti = IsVerti;
 	para.IsDeskewed = false;
-
-	//if (type == _UNKNOWN_ALIGN) {
-	//	mtSetPoint3D(&para.color, 0.5f, 0.5f, 0.5f);
-	//}
-	//else if (type == _HORIZON_ALIGN) {
-	//	mtSetPoint3D(&para.color, 1.0f, 0.0f, 0.0f);
-	//}
-	//else {
-	//	mtSetPoint3D(&para.color, 0.0f, 0.0f, 1.0f);
-	//}
-
 	m_paragraph.push_back(para);
+
+	// Extract text boundary //
+	std::vector<_extractBox> vecBox;
+	extractor.Extraction(paraImg, 8, 0, vecBox);
+
+	for (auto i = 0; i < vecBox.size(); i++) {
+		_stOCRResult res;
+		res.init();
+		res.rect = vecBox[i].textbox;
+		res.rect.x += rect.x;
+		res.rect.y += rect.y;
+		AddOCRResult(res);
+	}
+
+	//===========================//
 }
 
 void CMNPageObject::RemoveNoise(cv::Rect rect)
@@ -1038,6 +1051,19 @@ void CMNPageObject::DeleteOCRResByRect(cv::Rect rect)
 	}
 }
 
+void CMNPageObject::CleanUpOCRres()
+{
+	std::vector<_stOCRResult>::iterator iter = m_ocrResult.begin();
+	for (; iter != m_ocrResult.end();) {
+		if (iter->type == 100) {
+			iter = m_ocrResult.erase(iter);
+		}
+		else {
+			++iter;
+		}
+	}
+}
+
 
 bool CMNPageObject::DeleteSelOCRRes(int selid)
 {
@@ -1058,11 +1084,12 @@ void CMNPageObject::ConfirmOCRRes(int selid)
 	}
 }
 
-void CMNPageObject::UpdateOCRResStatus(int selid, bool IsUpdate)
+void CMNPageObject::UpdateOCRResStatus(int selid, bool IsUpdate, int _type)
 {
 	m_IsNeedToSave = true;
 	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
 		m_ocrResult[selid].bNeedToDB = IsUpdate;
+		m_ocrResult[selid].type = _type;
 	}
 }
 
@@ -1073,6 +1100,12 @@ void CMNPageObject::UpdateOCRCode(CString _strCode, int selid)
 		m_ocrResult[selid].fConfidence = 0.9f;
 		m_ocrResult[selid].bNeedToDB = true;
 		wsprintf(m_ocrResult[selid].strCode, _strCode);
+
+		char char_str[_MAX_WORD_SIZE * 2];
+		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[selid].strCode, -1, NULL, 0, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[selid].strCode, -1, char_str, char_str_len, 0, 0);
+		m_ocrResult[selid].hcode = getHashCode(char_str);
 
 	//	m_ocrResult[selid].strCode = _strCode;
 	}
@@ -1099,6 +1132,7 @@ void CMNPageObject::AddDBSearchResult(cv::Rect _rect)
 
 void CMNPageObject::AddOCRResult(_stOCRResult res)
 {
+	// !!!!!need to dup check //
 	m_IsNeedToSave = true;
 
 	char char_str[_MAX_WORD_SIZE * 2];
@@ -1181,21 +1215,24 @@ void CMNPageObject::WriteSearchDBFile()
 	std::map<unsigned int, _stSDB> m_mapSDB;
 
 	int wnum = m_ocrResult.size();
-	char char_str[_MAX_WORD_SIZE * 2];
+//	char char_str[_MAX_WORD_SIZE * 2];
 	for (int i = 0; i < wnum; i++) {
-		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
-		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
-		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
+		//memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+		//int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
+		//WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
 
 		_stSDBWord sdword;
-		sdword.strcode = getHashCode(char_str);
-		sdword.filecode = nCode;
+		sdword.strcode = m_ocrResult[i].hcode;
+		//if (sdword.strcode == 5381) 
+		//	continue;
+
+		sdword.filecode = m_nCode;
 		sdword.rect = m_ocrResult[i].rect;
 		sdword.fConfi = m_ocrResult[i].fConfidence;
 		sdword.fDiff = 0.0f;
 
 		m_mapSDB[sdword.strcode].push_back(sdword);		
-		SINGLETON_DataMng::GetInstance()->AddSDBTable(sdword.strcode, m_ocrResult[i].strCode);
+	//	SINGLETON_DataMng::GetInstance()->AddSDBTable(sdword.strcode, m_ocrResult[i].strCode);
 	}
 
 	USES_CONVERSION;

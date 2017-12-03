@@ -110,9 +110,10 @@ public:
 	void SortMatchingResults();
 	CString base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
 	void ExportDatabase(CString _strFolder);
+	void ExportDatabaseToHtml(CString _strFolder);
 	void ExportDatabase();
 	CString GetEditFilePath(CString strExtension, CString strOrigin);
-
+	int		GetFileTableSize() { return (int)m_mapFilePathTable.size(); };
 
 	void ResetResult();
 	void ResetMatchingResult();
@@ -120,7 +121,8 @@ public:
 	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
 //	void DBTraining(CMNPageObject* pPage);
 	void DBTrainingForPage(CMNPageObject* pPage);
-	void DBTrainingFromCutSearch(cv::Mat& cutimg, CString _strCode);
+	void DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode, unsigned int hcode);
+	void ProcDBTrainingFromCutSearch();
 	void ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight);
 	DB_CHK IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
@@ -142,6 +144,14 @@ public:
 	void DoKeywordSearch(CString strKeyword);
 
 	void InitSDB(CString strPath, CString strName);
+
+
+	// Fit Cut image/
+	void FitCutImageRect(cv::Mat &srcImg, cv::Rect& cutRect);
+	bool FindHorizonEage(cv::Mat &srcImg, cv::Rect& cutRect, int type, int direction, cv::Rect& oriRect);
+	bool FindVerticalEage(cv::Mat &srcImg, cv::Rect& cutRect, int type, int direction, cv::Rect& oriRect);
+
+	bool IsSupportFormat(CString strPath);
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -180,6 +190,7 @@ private:
 	void DeSkew(cv::Mat& img);
 	//=====================//
 
+	
 
 	std::vector<cv::Point> points;
 

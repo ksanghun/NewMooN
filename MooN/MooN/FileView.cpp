@@ -302,7 +302,6 @@ HTREEITEM CFileView::ExtractFolder(CString strFolder, CString strName, _strlist&
 bool CFileView::IsSupportFormat(CString strPath)
 {
 	CString str = PathFindExtension(strPath);
-
 	// Image File Filter ===============//
 	if ((str == L".pdf") || (str == L".PDF") ||
 		(str == L".jpg") || (str == L".JPG") ||

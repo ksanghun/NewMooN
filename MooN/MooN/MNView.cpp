@@ -5,7 +5,7 @@
 #include "resource.h"
 #include "MooN.h"
 
-enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION, _DO_OCR};
+enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION, _DO_OCR, _DO_EXPORT_DB};
 
 
 #define DEFAULT_X_OFFSET -5800;
@@ -306,6 +306,11 @@ void CMNView::OnSize(UINT nType, int cx, int cy)
 }
 
 
+void CMNView::SetThreadEnd(bool IsEnd) 
+{
+	m_bIsThreadEnd = IsEnd; 
+}
+
 void CMNView::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: Add your message handler code here and/or call default
@@ -407,9 +412,27 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			str.Format(_T("Text Recognition.....done"));
 			pM->AddOutputString(str, true);
 		}
-
 	//	DrawOCRRes();
+	}
 
+	else if (nIDEvent == _DO_EXPORT_DB) {
+		float complete = (float)m_addImgCnt / (float)m_loadedImgCnt;
+		CString str;
+		str.Format(_T("Exporting Database.....%d"), int(complete * 100));
+		str += _T("%");
+		str += _T(" completed.");
+
+		pM->AddOutputString(str, true);
+
+		// End of thread //
+		//if (m_addImgCnt == m_loadedImgCnt) {
+		if (m_bIsThreadEnd) {
+			m_addImgCnt = 0;
+			KillTimer(_DO_EXPORT_DB);
+
+			str.Format(_T("Exporting Database.....done"));
+			pM->AddOutputString(str, true);
+		}
 	}
 
 	else if (nIDEvent == _MOVECAMANI) {
@@ -839,9 +862,15 @@ bool CMNView::DoSearch()
 			}
 		}		
 		m_addImgCnt++;
+		imgVec[i]->SetFitCurArea();
 	}
 
+
+	//for (i = 0; i < imgVec.size(); i++) {
+	//	imgVec[i]->SetIsSearched(false);
+	//}
 	imgVec[i - 1]->SetIsSearched(false);
+	
 	m_cnsSearchId++;
 	return true;
 }
@@ -916,7 +945,11 @@ void CMNView::DoExtractBoundary()
 				
 				float deskew = m_Extractor.DeSkewImg(para);
 				TRACE(L"Deskew Angle: %3.2f\n", deskew);
-				vecImg[i]->AddParagraph(vecBox[j].textbox, m_extractionSetting.IsVerti, deskew);
+
+				bool IsAlphabetic = false;
+				if (m_extractionSetting.isEng)	IsAlphabetic = true;
+				vecImg[i]->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+				para.release();
 			
 
 				// Rotate Image //
@@ -992,7 +1025,7 @@ void CMNView::ProcTrainingOCRResbyConfidence(float fConfi)
 				//mtSetPoint3D(&tColor, 0.0f, 1.0f, 0.0f);
 				if (ocrRes[j].fConfidence > m_dispConfi) {
 				//	ocrRes[j].bNeedToDB = true;
-					m_pSelectPageForCNS->UpdateOCRResStatus(j, true);
+					m_pSelectPageForCNS->UpdateOCRResStatus(j, true, ocrRes[j].type);
 				}
 			}
 		}
@@ -1070,7 +1103,9 @@ void CMNView::ProcDoSearch()
 		CString strpath = m_pSelectPageForCNS->GetPath();
 		cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();;
 		if (srcImg.ptr()) {
-			m_pCut = srcImg(cv::Rect(rect.x1, rect.y1, rect.width, rect.height));
+			cv::Rect r = cv::Rect(rect.x1, rect.y1, (rect.x2 - rect.x1), (rect.y2 - rect.y1));
+			SINGLETON_DataMng::GetInstance()->FitCutImageRect(srcImg, r);
+			m_pCut = srcImg(r).clone();
 		}
 
 		
@@ -1257,7 +1292,7 @@ void CMNView::AddOCRRes()
 			ocrres.rect.width = rect.width;
 			ocrres.rect.height = rect.height;
 			memset(&ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
-			wsprintf(ocrres.strCode, L"Unknown");
+			wsprintf(ocrres.strCode, L"");
 			m_pSelectPageForCNS->AddOCRResult(ocrres);
 		}
 	}
@@ -1282,7 +1317,10 @@ void CMNView::AddParagraph()
 
 				cv::Mat para = srcImg(r);
 				float deskew = m_Extractor.DeSkewImg(para);
-				m_pSelectPageForCNS->AddParagraph(r, m_extractionSetting.IsVerti, deskew);
+
+				bool IsAlphabetic = false;
+				if (m_extractionSetting.isEng)	IsAlphabetic = true;
+				m_pSelectPageForCNS->AddParagraph(m_Extractor, para, r, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
 
 			//	cv::Mat resizeImg;
 			//	cv::resize(para, resizeImg, cv::Size(para.cols*2, para.rows*2));
@@ -1359,8 +1397,8 @@ void CMNView::ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool Is
 		}
 
 		if (IsVerti) {
-			x_ext = -1;
-			y_ext = fsize*2;
+			x_ext = -2;
+			y_ext = fsize * 2;
 		}
 		else {
 			x_ext = fsize * 2;
@@ -1410,7 +1448,10 @@ void CMNView::ReExtractParagraph()
 
 					vecLines[j].textbox.x += r.x;
 					vecLines[j].textbox.y += r.y;
-					m_pSelectPageForCNS->AddParagraph(vecLines[j].textbox, m_extractionSetting.IsVerti, deskew);
+
+					bool IsAlphabetic = false;
+					if (m_extractionSetting.isEng)	IsAlphabetic = true;
+					m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecLines[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
 				}
 				para.release();
 			}
@@ -2215,15 +2256,17 @@ void CMNView::DoOCRForPage(CMNPageObject* pPage)
 			for (int j = 0; j < ocrRes.size(); j++) {  // except previous results //
 
 				// recognized by rect --> dont chanage rect size here!!! //
-
-
-
-				if (ocrRes[j].fConfidence > 0.5f) {
+				if (ocrRes[j].fConfidence > 0.8f) {
 					gray(ocrRes[j].rect).setTo(cv::Scalar(255));
 				}
+				else {
+					pPage->UpdateOCRResStatus(j, false, 100);
+				}
 			}
-		}
 
+			pPage->CleanUpOCRres();
+		}
+		
 			
 		std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
 		if (para.size() == 0)
@@ -2309,7 +2352,10 @@ void CMNView::DoExtractBoundaryForSelected()
 					//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
 
 					float deskew = m_Extractor.DeSkewImg(para);
-					m_pSelectPageForCNS->AddParagraph(vecBox[j].textbox, m_extractionSetting.IsVerti, deskew);
+
+					bool IsAlphabetic = false;
+					if (m_extractionSetting.isEng)	IsAlphabetic = true;
+					m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
 				}
 				vecBox.clear();
 				srcImg.release();
@@ -2420,7 +2466,7 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 		//r.height += 2;
 
 		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
-		//		cv::imshow("cword", imgword);
+		cv::imshow("cword", imgword);
 
 		std::vector<_stOCRResult> ocrTmp;
 		float fScale = 1.0f;
@@ -2444,8 +2490,10 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 			}
 			break;
 		case __KOR:
+			fScale = (float)m_extractionSetting.chiSize / 32.0f;
 			if (searchType == 0) {
 				m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
+				m_OCRMng.extractWithOCRSingle(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
 			}
 			else {
 				if (m_extractionSetting.IsVerti) {
@@ -2454,9 +2502,8 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 				else {
 					m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
 				}
-			}
-			fScale = (float)m_extractionSetting.chiSize / 32.0f;
-			m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+				m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+			}		
 			for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __KOR;
 			break;
 		case __ENG:
@@ -2575,9 +2622,45 @@ void CMNView::ProcDoSearchBySelection()
 
 
 
+void CMNView::ProcExportDB(CString strFolder, bool IsHtml)
+{
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	CString str;
+	str.Format(_T("Export DB.....start"));
+	pM->AddOutputString(str, false);
+
+	m_strExportDBFoler = strFolder;
+
+	CWinThread* pl;
+	m_bIsThreadEnd = false;
+
+	if (IsHtml) {
+		pl = AfxBeginThread(ThreadDoExportDBHtml, this);
+	}
+	else {
+		pl = AfxBeginThread(ThreadDoExportDB, this);
+	}
+	
 
 
+	SetTimer(_DO_EXPORT_DB, 100, NULL);
+}
 
+void CMNView::DoExportDB()
+{
+	m_addImgCnt = 0;
+	m_bIsThreadEnd = false;
+	m_loadedImgCnt = SINGLETON_DataMng::GetInstance()->GetFileTableSize();
+	SINGLETON_DataMng::GetInstance()->ExportDatabase(m_strExportDBFoler);
+}
+
+void CMNView::DoExportDBHtml()
+{
+	m_addImgCnt = 0;
+	m_bIsThreadEnd = false;
+	m_loadedImgCnt = SINGLETON_DataMng::GetInstance()->GetFileTableSize();
+	SINGLETON_DataMng::GetInstance()->ExportDatabaseToHtml(m_strExportDBFoler);
+}
 
 
 
@@ -2606,6 +2689,20 @@ void CMNView::ProcDoSearchBySelection()
 
 
 // Thread============//
+
+static UINT ThreadDoExportDB(LPVOID lpParam)
+{
+	CMNView* pClass = (CMNView*)lpParam;
+	pClass->DoExportDB();
+	return 0L;
+}
+static UINT ThreadDoExportDBHtml(LPVOID lpParam)
+{
+	CMNView* pClass = (CMNView*)lpParam;
+	pClass->DoExportDBHtml();
+	return 0L;
+}
+
 UINT ThreadGenThumbnailImg(LPVOID lpParam)
 {
 	CMNView* pClass = (CMNView*)lpParam;

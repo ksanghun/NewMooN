@@ -12,6 +12,8 @@ static UINT ThreadGenThumbnailImg(LPVOID lpParam);
 static UINT ThreadDoSearch(LPVOID lpParam);
 static UINT ThreadDoExtraction(LPVOID lpParam);
 static UINT ThreadDoOCR(LPVOID lpParam);
+static UINT ThreadDoExportDB(LPVOID lpParam);
+static UINT ThreadDoExportDBHtml(LPVOID lpParam);
 
 static bool  m_bIsThreadEnd;
 
@@ -27,6 +29,7 @@ public:
 	void ProcDoSearch();
 	void ProcDoSearchBySelection();
 
+	void ProcExportDB(CString strFolder, bool IsHtml = false);
 	void ProcDoSearchSelection();
 	void ProcExtractBoundary();
 	void ProcOCR(bool IsAll);
@@ -37,6 +40,8 @@ public:
 	void DoOCR();
 	void DoOCRForPage(CMNPageObject* pPage);
 	void DoOCRFromMooN();
+	void DoExportDB();
+	void DoExportDBHtml();
 
 	// OCR POP-UP Menu //
 	//void OcrEnglishword();
@@ -114,6 +119,10 @@ public:
 	void EnableShowLine(bool Isshow) {		m_bIsShowParagraph = Isshow;	}
 	void SetDispConfidence(long nConfi) { m_dispConfi = (float)nConfi*0.01f; }
 	void SetDBTreshold(long nDbth) { m_dbTreshold = (float)nDbth*0.01f; }
+
+	void IncreseAddImgCnt() { m_addImgCnt++; };
+	void SetThreadEnd(bool IsEnd);// { m_bIsThreadEnd = IsEnd; }
+
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -170,6 +179,9 @@ private:
 	float m_dbTreshold;
 
 	GLuint m_glListIdForDrawOCRRes;
+
+	// Export DB //
+	CString m_strExportDBFoler;
 
 public:
 	DECLARE_MESSAGE_MAP()
