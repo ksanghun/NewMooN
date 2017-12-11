@@ -56,7 +56,7 @@ CMNView::CMNView()
 	m_cnsSearchId = 1;
 	m_selParaId = -1;
 	m_selOCRId = -1;
-	m_selOCRIdforMouseHover - 1;
+	m_selOCRIdforMouseHover = - 1;
 
 	m_bIsAllOCR = false;
 	m_bIsShowParagraph = true;
@@ -1397,14 +1397,18 @@ void CMNView::ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool Is
 		}
 
 		if (IsVerti) {
-			x_ext = -2;
-			y_ext = fsize * 2;
+			m_Extractor.Extraction(img, -2, fsize * 2, vecBox);
+			for (auto i = 0; i < vecBox.size(); i++) {
+				if (vecBox[i].textbox.width > 4) {
+					vecBox[i].textbox.x += 2;
+					vecBox[i].textbox.width -= 4;
+				}
+			}
 		}
 		else {
-			x_ext = fsize * 2;
-			y_ext = -1;
+			m_Extractor.Extraction(img, fsize * 2, -1, vecBox);
 		}
-		m_Extractor.Extraction(img, x_ext, y_ext, vecBox);
+		
 	}
 }
 

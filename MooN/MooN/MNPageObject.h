@@ -123,7 +123,7 @@ public:
 	float SetSelectionPosition(int nSlot, float xOffset, float yOffset, bool IsAni);
 	void SetSelection(bool _isSel);
 	bool AddMatchedPoint(stMatchInfo info, int search_size);
-	void AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic);
+	void AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic);	
 	bool IsDuplicate(stMatchInfo& info, int search_size);
 
 //	float GetDeskewParam(int pid);

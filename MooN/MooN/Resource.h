@@ -149,6 +149,7 @@
 #define IDC_SLIDER_DBTH                 1041
 #define IDC_EDIT_DBTH                   1042
 #define IDC_BN_MATCH_FROM_DB            1043
+#define IDC_BUTTON2                     1044
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -226,7 +227,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        319
 #define _APS_NEXT_COMMAND_VALUE         32840
-#define _APS_NEXT_CONTROL_VALUE         1044
+#define _APS_NEXT_CONTROL_VALUE         1045
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

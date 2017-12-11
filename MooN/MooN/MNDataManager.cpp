@@ -84,7 +84,6 @@ CMNDataManager::~CMNDataManager()
 	}	
 }
 
-
 void CMNDataManager::Save()
 {
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
@@ -103,7 +102,6 @@ void CMNDataManager::Save()
 	//	//UpdateSDBFiles();
 	//}	
 }
-
 
 
 POINT3D CMNDataManager::GetColor(float fvalue)

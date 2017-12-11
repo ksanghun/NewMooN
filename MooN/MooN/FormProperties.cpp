@@ -602,6 +602,9 @@ void CFormProperties::DoKeywordSearch()
 void CFormProperties::OnBnClickedBnDeskewAll()
 {
 	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CMNView* pImgView = pView->GetImageView();
+	pImgView->DeskewParagraph(m_fDeskew);
 }
 
 

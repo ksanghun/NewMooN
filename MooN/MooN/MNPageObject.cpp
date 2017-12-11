@@ -901,7 +901,20 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 
 	// Extract text boundary //
 	std::vector<_extractBox> vecBox;
-	extractor.Extraction(paraImg, 8, 0, vecBox);
+
+	if (IsVerti) {
+		extractor.ExtractionText(paraImg, 4, -4, vecBox);
+		//extractor.ExtractionText(paraImg, 8, 0, vecBox);
+		//// Sort //
+		////extractor.SortBoundaryBox(vecBox);
+		//extractor.ExtractionText(paraImg, 0, 4, vecBox);
+
+	}
+	else {
+		extractor.ExtractionText(paraImg, 2, 8, vecBox);
+	}
+
+	
 
 	for (auto i = 0; i < vecBox.size(); i++) {
 		_stOCRResult res;
@@ -914,6 +927,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 
 	//===========================//
 }
+
 
 void CMNPageObject::RemoveNoise(cv::Rect rect)
 {
@@ -1206,6 +1220,11 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 		IsLoad = true;
 		fclose(fp);
 	}
+	
+	// Build word table //
+	//for (auto i = 0; i < m_ocrResult.size(); i++) {
+	//	SINGLETON_DataMng::GetInstance()->AddSDBTable(m_ocrResult[i].hcode, m_ocrResult[i].strCode);
+	//}
 	
 	return IsLoad;
 }

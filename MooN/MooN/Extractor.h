@@ -52,8 +52,15 @@ public:
 
 	// Extraction //
 	void Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox);
-	bool MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth);
+	void ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox);
 
+	bool MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth);
+	bool MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth);
+	//bool MeargingtBoundaryBoxTextHori(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth);
+	bool MeargingtBoundaryBoxText(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth);
+
+	void SortBoundaryBox(std::vector<_extractBox>& vecBox);
+	int MinDist(cv::Rect r1, cv::Rect r2);
 
 	void TestFunc();
 

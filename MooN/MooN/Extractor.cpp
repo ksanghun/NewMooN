@@ -131,11 +131,11 @@ void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::v
 		textBox.textbox = cv::boundingRect(cv::Mat(contours_poly[i]));
 		textBox.setExtendBox(xMargin, yMargin);			
 		//// check aspect ratio //
-		//float arw = (float)textBox.textbox.width / (float)textBox.textbox.height;
-		//float arh = (float)textBox.textbox.height / (float)textBox.textbox.width;
-		//if ((arw < 0.2f) || (arh < 0.2f)) {
-		//	continue;
-		//}		
+		float arw = (float)textBox.textbox.width / (float)textBox.textbox.height;
+		float arh = (float)textBox.textbox.height / (float)textBox.textbox.width;
+		if ((arw < 0.1f) || (arh < 0.1f)) {
+			continue;
+		}		
 		vecBox.push_back(textBox);
 	}
 
@@ -519,3 +519,284 @@ cv::Mat CExtractor::GetLinesbyHistogram(cv::Mat& img, std::vector<_extractBox>& 
 	return histo;
 
 }
+
+void CExtractor::SortBoundaryBox(std::vector<_extractBox>& vecBox)
+{
+	// TEST  : Sort by Size min to max ============/
+	_extractBox tmp;
+	for (int i = 0; i < vecBox.size(); i++){
+		for (int j = 0; j < vecBox.size(); j++){
+			if (i != j){
+				if (vecBox[j].textbox.y < vecBox[i].textbox.y){
+					tmp = vecBox[i];
+					vecBox[i] = vecBox[j];
+					vecBox[j] = tmp;
+				}
+			}
+		}
+	}
+	//==================================//
+}
+
+void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox)
+{
+	contours_poly.clear();
+	contours.clear();
+	hierarchy.clear();
+	/// Find contours
+	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
+	/// Approximate contours to polygons + get bounding rects and circles
+
+	contours_poly.resize(contours.size());
+	for (int i = 0; i < contours.size(); i++) {
+		cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 1, true);
+		_extractBox textBox;
+		textBox.init();
+		textBox.textbox = cv::boundingRect(cv::Mat(contours_poly[i]));
+		//textBox.setExtendBox(xMargin, yMargin);
+		//// check aspect ratio //
+		//float arw = (float)textBox.textbox.width / (float)textBox.textbox.height;
+		//float arh = (float)textBox.textbox.height / (float)textBox.textbox.width;
+		//if ((arw < 0.2f) || (arh < 0.2f)) {
+		//	continue;
+		//}		
+		vecBox.push_back(textBox);
+	}
+
+	int depth = 0;
+	MeargingtBoundaryBoxText((int)binaryImg.cols, -1, (int)binaryImg.cols, vecBox, depth);		// Merge horizontal
+	depth = 0;
+//	SortBoundaryBox(vecBox);
+
+	for (int i = 0; i < 5; i++) {
+		MeargingtBoundaryBoxTextVerti(0, i, (int)binaryImg.cols, vecBox, depth);		// Merge Vertical
+	}
+}
+
+
+int CExtractor::MinDist(cv::Rect r1, cv::Rect r2)
+{
+	int dist = 10000;
+	int d[4];
+
+	d[0] = r1.y - r2.y;
+	if (d[0] < 0) d[0] *= -1;
+
+	d[1] = (r1.y+r1.height) - (r2.y+r2.height);
+	if (d[1] < 0) d[1] *= -1;
+
+	d[2] = (r1.y + r1.height) - (r2.y);
+	if (d[2] < 0) d[2] *= -1;
+
+	d[3] = (r1.y) - (r2.y+r2.height);
+	if (d[3] < 0) d[3] *= -1;
+
+	for (int i = 0; i < 4; i++) {
+		if (d[i] < dist) {
+			dist = d[i]; 
+		}
+	}
+	return dist;
+}
+
+bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth)
+{
+	std::vector<_extractBox> tmp = vecBox;
+	vecBox = std::vector<_extractBox>();
+
+	int nWidth = 0, nHeight = 0;
+	bool IsMerged = false;
+	_extractBox resBox;
+	for (int i = 0; i < tmp.size(); i++) {
+		//	for (int i = tmp.size()-1; i >=0; i--){
+		tmp[i].setExtendBox(xMargin, yMargin);
+		if (tmp[i].IsMerged) continue;
+
+		int boxDist1 = 0, boxDist2=0;
+		for (int j = i + 1; j < tmp.size(); j++) {
+			tmp[j].setExtendBox(xMargin, yMargin);
+			if (tmp[j].IsMerged) continue;
+
+			cv::Rect andRect_overlap = (tmp[i].textboxForCheck & tmp[j].textboxForCheck);
+
+			if (andRect_overlap.area() > 1) {		// intersected
+
+				//if (j < tmp.size()-1) {
+				//	boxDist1 = MinDist(tmp[i].textbox, tmp[j].textbox);
+				//	boxDist2 = MinDist(tmp[j].textbox, tmp[j+1].textbox);
+
+				//	if (boxDist1 < boxDist2) {
+				//		// Add //
+				//		cv::Rect checkBox = (tmp[i].textboxForCheck | tmp[j].textboxForCheck);
+				//		cv::Rect mergeBox = (tmp[i].textbox | tmp[j].textbox);
+				//		if (mergeBox.height < _maxLength*1.1f) {
+				//			tmp[i].textbox = mergeBox;
+				//			tmp[i].textboxForCheck = checkBox;
+				//			tmp[j].IsMerged = true;
+				//			IsMerged = true;
+				//		}
+				//		break;
+				//	}
+				//}
+				//else {
+					cv::Rect checkBox = (tmp[i].textboxForCheck | tmp[j].textboxForCheck);
+					cv::Rect mergeBox = (tmp[i].textbox | tmp[j].textbox);
+					if (mergeBox.height < _maxLength*1.1f) {
+						tmp[i].textbox = mergeBox;
+						tmp[i].textboxForCheck = checkBox;
+						tmp[j].IsMerged = true;
+						IsMerged = true;
+					}
+					break;
+				//}
+			}
+		}
+	}
+
+//==================================================================//		
+//	int maxLength = 0;
+	for (int i = 0; i < tmp.size(); i++) {
+		// Add merged box //
+		if (tmp[i].IsMerged == false) {
+			vecBox.push_back(tmp[i]);
+		//	maxLength += tmp[i].textbox.width;
+		}
+		//}			
+	}
+
+//	maxLength /= (int)tmp.size();
+	tmp.clear();
+
+	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
+		depth++;
+		MeargingtBoundaryBoxTextVerti(xMargin, yMargin, _maxLength, vecBox, depth);
+		TRACE("Recursive: %d\n", depth);
+	}
+	return true;
+}
+
+/*
+bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth)
+{
+	std::vector<_extractBox> tmp = vecBox;
+	vecBox = std::vector<_extractBox>();
+
+	int nWidth = 0, nHeight = 0;
+	bool IsMerged = false;
+	_extractBox resBox;
+	for (int i = 0; i < tmp.size(); i++) {
+		//	for (int i = tmp.size()-1; i >=0; i--){
+		tmp[i].setExtendBox(xMargin, yMargin);
+		if (tmp[i].IsMerged) continue;
+
+		for (int j = i + 1; j < tmp.size(); j++) {
+			tmp[j].setExtendBox(xMargin, yMargin);
+			if (tmp[j].IsMerged) continue;
+
+			cv::Rect andRect_overlap = (tmp[i].textboxForCheck & tmp[j].textboxForCheck);
+
+			if (andRect_overlap.area() > 1) {		// intersected
+				cv::Rect checkBox = (tmp[i].textboxForCheck | tmp[j].textboxForCheck);
+				cv::Rect mergeBox = (tmp[i].textbox | tmp[j].textbox);
+
+				//int maxLength = tmp[i].textbox.width > tmp[j].textbox.width ? tmp[i].textbox.width : tmp[j].textbox.width;
+				if (mergeBox.height < _maxLength*1.1f) {
+					tmp[i].textbox = mergeBox;
+					tmp[i].textboxForCheck = checkBox;
+
+					tmp[j].IsMerged = true;
+			//		tmp[j].textboxForCheck = cv::Rect(0, 0, 0, 0);
+					IsMerged = true;
+			//		break;
+				}
+			}
+		}
+	}
+
+
+	int maxLength = 0;
+	for (int i = 0; i < tmp.size(); i++) {
+		// Add merged box //
+		//int minSize = 4;
+		//float arw = (float)tmp[i].textbox.width / (float)tmp[i].textbox.height;
+		//float arh = (float)tmp[i].textbox.height / (float)tmp[i].textbox.width;
+		//if ((tmp[i].textbox.width < minSize) || (tmp[i].textbox.height < minSize)) {
+		//	if ((arw<0.2f) || (arh<0.2f)) {
+		//		continue;
+		//	}
+		//}
+		//if (tmp[i].textbox.area() > 16) {
+			if (tmp[i].IsMerged == false) {
+				vecBox.push_back(tmp[i]);
+				maxLength += tmp[i].textbox.width;
+			}
+		//}			
+	}
+
+	maxLength /= (int)tmp.size();
+	tmp.clear();
+
+	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
+		depth++;
+		MeargingtBoundaryBoxTextVerti(xMargin, yMargin, maxLength, vecBox, depth);
+		TRACE("Recursive: %d\n", depth);
+	}
+	return true;
+}
+*/
+bool CExtractor::MeargingtBoundaryBoxText(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth)
+{
+	std::vector<_extractBox> tmp = vecBox;
+	vecBox = std::vector<_extractBox>();
+
+	int nWidth = 0, nHeight = 0;
+	bool IsMerged = false;
+	_extractBox resBox;
+	for (int i = 0; i < tmp.size(); i++) {
+		//	for (int i = tmp.size()-1; i >=0; i--){
+		tmp[i].setExtendBox(xMargin, yMargin);
+		if (tmp[i].IsMerged) continue;
+
+		for (int j = i + 1; j < tmp.size(); j++) {
+			tmp[j].setExtendBox(xMargin, yMargin);
+			if (tmp[j].IsMerged) continue;
+
+			cv::Rect andRect_overlap = (tmp[i].textboxForCheck & tmp[j].textboxForCheck);
+
+			if (andRect_overlap.area() > 1) {		// intersected
+				cv::Rect checkBox = (tmp[i].textboxForCheck | tmp[j].textboxForCheck);
+				cv::Rect mergeBox = (tmp[i].textbox | tmp[j].textbox);
+
+				//int maxLength = tmp[i].textbox.width > tmp[j].textbox.width ? tmp[i].textbox.width : tmp[j].textbox.width;
+				if (mergeBox.height < _maxLength*1.1f) {
+					tmp[i].textbox = mergeBox;
+					tmp[i].textboxForCheck = checkBox;
+					tmp[j].IsMerged = true;
+					IsMerged = true;
+					//break;
+				}
+			}
+		}
+	}
+
+
+	int maxLength = 0;
+	for (int i = 0; i < tmp.size(); i++) {
+		if (tmp[i].IsMerged == false) {
+			vecBox.push_back(tmp[i]);
+			maxLength += tmp[i].textbox.width;
+		}
+		//}			
+	}
+
+	maxLength /= (int)tmp.size();
+	tmp.clear();
+
+	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
+		depth++;
+		MeargingtBoundaryBoxText(xMargin, yMargin, _maxLength, vecBox, depth);
+		TRACE("Recursive: %d\n", depth);
+	}
+	return true;
+}
+

@@ -386,7 +386,7 @@ void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 			ocrRes.hcode = getHashCode(char_str);
 			ocrRes.bNeedToDB = true;	
 			
-			//pPage->AddOCRResult(ocrRes);  // hcode here!!
+			pPage->AddOCRResult(ocrRes);  // hcode here!!
 
 			cv::Mat cutImg = pPage->GetSrcPageGrayImg()(ocrRes.rect).clone();
 			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, ocrRes.hcode);
