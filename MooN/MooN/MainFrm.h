@@ -125,6 +125,7 @@ public:
 	afx_msg void OnFileSaveall();
 	afx_msg void OnOcrCutsearch();
 	afx_msg void OnExplorerExportdatabaseHtml();
+	afx_msg void OnOcrCutandsearchall();
 };
 
 

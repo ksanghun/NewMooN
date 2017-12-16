@@ -67,6 +67,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_FILE_SAVEALL, &CMainFrame::OnFileSaveall)
 	ON_COMMAND(ID_OCR_CUTSEARCH, &CMainFrame::OnOcrCutsearch)
 	ON_COMMAND(ID_EXPLORER_EXPORTDATABASE_HTML, &CMainFrame::OnExplorerExportdatabaseHtml)
+	ON_COMMAND(ID_OCR_CUTANDSEARCHALL, &CMainFrame::OnOcrCutandsearchall)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -1115,4 +1116,12 @@ void CMainFrame::OnExplorerExportdatabaseHtml()
 //	SINGLETON_DataMng::GetInstance()->ExportDatabaseToHtml(m_wndFileView.GetExtractDBFolder());
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->ProcExportDB(m_wndFileView.GetExtractDBFolder(), true);
+}
+
+
+void CMainFrame::OnOcrCutandsearchall()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcDoSearchBySelectionAll();
 }

@@ -10,6 +10,7 @@ enum _PICKMODE { _PICK_SELECT = 0 };
 
 static UINT ThreadGenThumbnailImg(LPVOID lpParam);
 static UINT ThreadDoSearch(LPVOID lpParam);
+static UINT ThreadDoSearchSegment(LPVOID lpParam);
 static UINT ThreadDoExtraction(LPVOID lpParam);
 static UINT ThreadDoOCR(LPVOID lpParam);
 static UINT ThreadDoExportDB(LPVOID lpParam);
@@ -28,6 +29,7 @@ public:
 	void ProcGenerateThumbnail();
 	void ProcDoSearch();
 	void ProcDoSearchBySelection();
+	void ProcDoSearchBySelectionAll();
 
 	void ProcExportDB(CString strFolder, bool IsHtml = false);
 	void ProcDoSearchSelection();
@@ -36,7 +38,8 @@ public:
 	void ProcTrainingOCRResbyConfidence(float fConfi);
 	void GenerateThumbnail();
 	bool DoSearch();
-	void DoExtractBoundary();
+	bool DoSearchSegment();
+	void DoExtractBoundaryAuto();
 	void DoOCR();
 	void DoOCRForPage(CMNPageObject* pPage);
 	void DoOCRFromMooN();
@@ -170,6 +173,7 @@ private:
 	int m_selOCRIdforMouseHover;
 
 	CMNPageObject* m_pSelectPageForCNS;
+	CMNPageObject* m_pSelectPageForCNSAll;
 	COCRMng m_OCRMng;
 	bool m_bIsAllOCR;
 	CExtractor m_Extractor;

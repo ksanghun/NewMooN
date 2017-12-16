@@ -80,7 +80,7 @@ public:
 
 	// Getter //
 	GLuint GetTexId() { return m_texId; };
-	GLuint GetThumbnailTex() { return m_thumbnailTexId; };
+//	GLuint GetThumbnailTex() { return m_thumbnailTexId; };
 	POINT3D GetPos() { return m_pos; };
 	unsigned short GetImgWidth() { return m_nImgWidth; };
 	unsigned short GetImgHeight() { return m_nImgHeight; };
@@ -172,7 +172,7 @@ private:
 	unsigned long parentCode;
 	unsigned long m_nCode;
 
-	GLuint m_thumbnailTexId;
+//	GLuint m_thumbnailTexId;
 	GLuint m_texId;
 //	GLuint m_texIdforExtract;
 
@@ -214,7 +214,7 @@ private:
 	
 
 	cv::Mat m_fullImg;
-	cv::Mat m_thumbImg;
+//	cv::Mat m_thumbImg;
 	cv::Mat m_srcGrayImg;
 	int m_selMatchItemId;
 	bool m_IsTbimg;

@@ -100,6 +100,12 @@ void CMNView::InitGLview(int _nWidth, int _nHeight)
 
 	m_glListIdForDrawOCRRes = glGenLists(1);
 
+
+	// !! image to unique code value TEST ========================================//
+	//wchar_t newword = (unsigned short)(std::stoi("0100010101000101", nullptr, 2));
+	//CString str(newword);
+	//int a = 0;
+	//============================================================================//
 }
 
 void CMNView::InitCamera(bool movexy)
@@ -341,6 +347,8 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			//	MoveCameraPos(m_pSelectPageForCNS->GetPos(), (DEFAULT_PAGE_SIZE + 200));
 			InitCamera();
 
+			// new thread for extract boundary //
+			ProcExtractBoundary();
 		}
 	}
 	else if (nIDEvent == _DO_SEARCH) {
@@ -454,9 +462,9 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			IDragMap(m_stratPnt.x, m_stratPnt.y, 2);
 		}
 	}
-	else if (nIDEvent == _UPDATE_PAGE) {
-		SINGLETON_DataMng::GetInstance()->UpdatePageStatus(m_cameraPri.GetEye());
-	}
+	//else if (nIDEvent == _UPDATE_PAGE) {
+	//	SINGLETON_DataMng::GetInstance()->UpdatePageStatus(m_cameraPri.GetEye());
+	//}
 
 	COGLWnd::OnTimer(nIDEvent);
 }
@@ -581,7 +589,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	if (m_bIsShowParagraph) {
 		DrawParagrphForPicking();
 	}
-	DrawMatchItemForPicking();
+//	DrawMatchItemForPicking();
 	DrawOCRForPicking();
 	
 	//}
@@ -596,6 +604,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 				m_pSelectPageForCNS = SINGLETON_DataMng::GetInstance()->GetPageByOrderID(selid);
 				if (m_pSelectPageForCNS) {
 					m_pSelectPageForCNS->SetSelection(true);
+					m_pSelectPageForCNS->SetIsNear(true);
 				//	DrawOCRRes();
 					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(0);
 					if (lineInfo.rect.width > 0) {
@@ -620,9 +629,9 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 					pM->SetOCRResInfo(ocrRes.strCode, ocrRes.fConfidence, ocrRes.type);
 				}
 			}
-			else if (selid >= _PICK_MATCH) {
-				selid = selid - _PICK_MATCH;
-			}
+			//else if (selid >= _PICK_MATCH) {
+			//	selid = selid - _PICK_MATCH;
+			//}
 		}
 	}
 	//	if (m_IsSearchMatchItems) {
@@ -858,9 +867,9 @@ bool CMNView::DoSearch()
 
 			imgVec[i]->SetIsSearched(true);
 			if (i > 0) {
-				imgVec[i-1]->SetIsSearched(false);
+				imgVec[i - 1]->SetIsSearched(false);
 			}
-		}		
+		}
 		m_addImgCnt++;
 		imgVec[i]->SetFitCurArea();
 	}
@@ -870,8 +879,107 @@ bool CMNView::DoSearch()
 	//	imgVec[i]->SetIsSearched(false);
 	//}
 	imgVec[i - 1]->SetIsSearched(false);
-	
+
 	m_cnsSearchId++;
+	return true;
+}
+
+
+bool CMNView::DoSearchSegment()
+{
+	std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNSAll->GetVecOCRResult();
+	m_addImgCnt = 0;
+	m_loadedImgCnt = ocrRes.size();
+
+	for (auto j = 0; j < ocrRes.size(); j++) {
+		_stOCRResult ocrres = ocrRes[j];
+		// Prepare Cut&Search ==========================================//
+		RECT2D rect;
+		rect.set(ocrres.rect.x, ocrres.rect.x + ocrres.rect.width, ocrres.rect.y, ocrres.rect.y + ocrres.rect.height);
+
+		if ((rect.width > 16) && (rect.height > 16)) {
+
+			// Update Font Size ==//
+			m_Extractor.SetFontSize(rect.width, rect.height);
+
+			if (m_pCut.ptr() != NULL) {
+				m_pCut.release();
+			}
+			CString strpath = m_pSelectPageForCNSAll->GetPath();
+			cv::Mat srcImg = m_pSelectPageForCNSAll->GetSrcPageGrayImg();
+			if (srcImg.ptr()) {
+				m_pCut = srcImg(cv::Rect(rect.x1, rect.y1, rect.width, rect.height));
+			}
+
+
+			m_cutInfo.fileid = getHashCode((CStringA)m_pSelectPageForCNSAll->GetPath());
+			m_cutInfo.posid = (int)rect.x1 * 10000 + (int)rect.y1;
+			CString strId;
+			strId.Format(L"%u%u", m_cutInfo.fileid, m_cutInfo.posid);
+			m_cutInfo.id = getHashCode((CStringA)strId);
+			m_cutInfo.th = m_fThreshold;
+
+			//==============================================================//
+
+
+			if (m_pCut.ptr() == NULL)
+				return false;
+			int search_size = (m_pCut.cols > m_pCut.rows) ? m_pCut.cols : m_pCut.rows;
+			std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+
+			auto i = 0;
+			for (i = 0; i < imgVec.size(); i++) {
+				imgVec[i]->SetIsSearched(false);
+			}
+
+			for (i = 0; i < imgVec.size(); i++) {
+				cv::Mat grayImg = imgVec[i]->GetSrcPageGrayImg();
+				//if (SINGLETON_DataMng::GetInstance()->LoadImageData(imgVec[i]->GetPath(), grayImg, true)) {
+				if (grayImg.ptr()) {
+					int result_cols = grayImg.cols - m_pCut.cols + 1;
+					int result_rows = grayImg.rows - m_pCut.rows + 1;
+					cv::Mat result(result_rows, result_cols, CV_32FC1);
+
+					cv::matchTemplate(grayImg, m_pCut, result, CV_TM_CCOEFF_NORMED);
+					//cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+					for (int y = 0; y < result.rows; y++) {
+						for (int x = 0; x < result.cols; x++) {
+							float fD = result.at<float>(y, x);
+							if (fD > m_fThreshold) {
+								stMatchInfo mInfo;
+								mtSetPoint3D(&mInfo.pos, x + m_pCut.cols*0.5f, y + m_pCut.rows*0.5f, 0.0f);
+								mInfo.accuracy = fD * 100;
+								mInfo.strAccracy.Format(L"%d", (int)(fD));
+								mInfo.rect = cv::Rect(x, y, m_pCut.cols, m_pCut.rows);
+								mInfo.searchId = m_cnsSearchId;
+								mInfo.cInfo = m_cutInfo;
+								mInfo.strCode = "-";
+
+								m_resColor.a = ((fD)*m_colorAccScale)*0.5f;
+								mInfo.color = m_resColor;
+								mInfo.IsAdded = false;
+								imgVec[i]->AddMatchedPoint(std::move(mInfo), search_size);
+							}
+						}
+					}
+					//grayImg.release();
+					result.release();
+
+					imgVec[i]->SetIsSearched(true);
+					if (i > 0) {
+						imgVec[i - 1]->SetIsSearched(false);
+					}
+				}
+
+				imgVec[i]->SetFitCurArea();
+			}
+
+			imgVec[i - 1]->SetIsSearched(false);
+			m_cnsSearchId++;
+		}
+		m_addImgCnt++;
+	}
 	return true;
 }
 
@@ -889,47 +997,71 @@ void CMNView::ProcGenerateThumbnail()
 	pl = AfxBeginThread(ThreadGenThumbnailImg, this);
 
 	SetTimer(_GEN_THUMBNAIL, 100, NULL);
-
 }
 
 
-void CMNView::DoExtractBoundary()
+void CMNView::DoExtractBoundaryAuto()
 {
 	//cv::Mat hHisto;
 	//cv::Mat vHisto;
-
 	std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	m_addImgCnt = 0;
 	m_loadedImgCnt = vecImg.size();
 	int i;
+
+
 	for (i = 0; i < (int)vecImg.size(); i++) {
-		if (vecImg[i]->GetVecParagraph().size()>0){
+
+		if (vecImg[i]->GetVecParagraph().size()>0){			
+			vecImg[i]->SetIsSearched(true);
+			if (i > 0) {
+				vecImg[i - 1]->SetIsSearched(false);
+			}
+			m_addImgCnt++;
 			continue;
 		}
 
 		CString strpath = vecImg[i]->GetPath();
 		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg().clone();
 		if (srcImg.ptr()) {
+			// Clear previous results (line, text segmentations)
+			//vecImg[i]->ClearParagraph();		
+			
 
 		//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
-			cv::threshold(srcImg, srcImg, 128, 255, cv::THRESH_OTSU);
+		//	cv::threshold(srcImg, srcImg, 128, 255, cv::THRESH_OTSU);
 		////	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
-			cv::bitwise_not(srcImg, srcImg);
-			int fsize = (int)m_extractionSetting.engSize;
+			cv::bitwise_not(srcImg, srcImg);			
+			_ALIGHN_TYPE align = m_Extractor.CheckHoughLines(srcImg);
+
+		//	int fsize = (int)m_extractionSetting.engSize;
 
 			// Detect text block //
 			std::vector<_extractBox> vecBox;
-			if (m_extractionSetting.isEng) {
-				ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __ENG);		// Start with English //
+			bool IsVerti = false;
+			if (align == _VERTICAL_ALIGN) {
+				IsVerti = true;
 			}
-			else {
-				if (m_extractionSetting.isChi) {
-					ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __CHI);
-				}
-				else if (m_extractionSetting.isKor) {
-					ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __KOR);
-				}
-			}
+
+			ExtractBox(srcImg, vecBox, IsVerti, __ENG);
+			//if (IsVerti) {
+			//	m_Extractor.Extraction(srcImg, -1, fsize * 2, vecBox);
+			//}
+			//else {
+			//	m_Extractor.Extraction(srcImg, fsize * 2, -1, vecBox);
+			//}
+
+			//if (m_extractionSetting.isEng) {
+			//	ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __ENG);		// Start with English //
+			//}
+			//else {
+			//	if (m_extractionSetting.isChi) {
+			//		ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __CHI);
+			//	}
+			//	else if (m_extractionSetting.isKor) {
+			//		ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __KOR);
+			//	}
+			//}
 			//if (m_extractionSetting.IsHori) {
 			//	m_Extractor.Extraction(srcImg, fsize*2, -1, vecBox);
 			//}
@@ -948,56 +1080,8 @@ void CMNView::DoExtractBoundary()
 
 				bool IsAlphabetic = false;
 				if (m_extractionSetting.isEng)	IsAlphabetic = true;
-				vecImg[i]->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+				vecImg[i]->AddParagraph(m_Extractor, para, vecBox[j].textbox, IsVerti, deskew, IsAlphabetic);
 				para.release();
-			
-
-				// Rotate Image //
-
-			//	if (deskew < -3.0f) deskew = -3.0f;
-			//	if (deskew > 3.0f) deskew = 3.0f;
-			//	cv::Mat rotMat, rotatedFrame, invRot;
-			//	rotMat = getRotationMatrix2D(cv::Point2f(0, 0), deskew, 1);
-			////	invRot = getRotationMatrix2D(cv::Point2f(0, 0), -deskew, 1);
-			//	cv::warpAffine(para, rotatedFrame, rotMat, para.size(), cv::INTER_CUBIC);
-
-				//CString strTitle;
-				//strTitle.Format(L"desket %d", j);
-				//USES_CONVERSION;
-				//char* sz = T2A(strTitle);
-				//cv::imshow(sz, rotatedFrame);
-
-				// Line Detection //
-				//std::vector<_extractBox> vecLines;
-
-				//if (align == _HORIZON_ALIGN) {
-				//	m_Extractor.Extraction(rotatedFrame, 16, -1, vecLines, _ALPHABETIC, align);
-				//}
-				//else {
-				//	m_Extractor.Extraction(rotatedFrame, 0, 16, vecLines, _NONALPHABETIC, align);
-				//}
-
-				//
-				//for (size_t k = 0; k < vecLines.size(); k++) {
-				//	cv::Rect r = vecLines[k].textbox;
-				//	cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(r.x, r.y), cv::Size2f(r.width, r.height), deskew);
-				//	cv::Point2f vertices[4];
-				//	rRect.points(vertices);
-
-				//	r.x += vecBox[j].textbox.x;
-				//	r.y += vecBox[j].textbox.y;
-
-				//	vecImg[i]->AddParagraph(r, align, deskew);
-				//}
-
-
-				//cv::Mat hHisto = m_Extractor.GetLinesbyHistogram(rotatedFrame, vecLines,0);
-				//cv::Mat vHisto = m_Extractor.GetLinesbyHistogram(rotatedFrame, vecLines, 1);
-				//cv::imshow("origin", rotatedFrame);
-				//cv::imshow("hh", hHisto);
-				//cv::imshow("vv", vHisto);
-
-
 			}
 			vecBox.clear();
 			srcImg.release();
@@ -1007,12 +1091,10 @@ void CMNView::DoExtractBoundary()
 		if (i > 0) {
 			vecImg[i - 1]->SetIsSearched(false);
 		}
-
 		m_addImgCnt++;
 	}
 	
 	vecImg[i - 1]->SetIsSearched(false);
-
 	m_bIsThreadEnd = true;
 }
 
@@ -1029,7 +1111,6 @@ void CMNView::ProcTrainingOCRResbyConfidence(float fConfi)
 				}
 			}
 		}
-
 		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
@@ -1042,10 +1123,8 @@ void CMNView::ProcOCR(bool IsAll)
 	pM->AddOutputString(str, false);
 
 	m_bIsAllOCR = IsAll;
-
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
-
-
+	
 //	InitCamera(false);
 	CWinThread* pl;
 	m_bIsThreadEnd = false;
@@ -1070,12 +1149,17 @@ void CMNView::ProcExtractBoundary()
 	pM->AddOutputString(str, false);
 
 
+	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+	for (size_t i = 0; i < imgVec.size(); i++) {
+		imgVec[i]->SetIsSearched(false);
+	}
+
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
-//	InitCamera(false);
+
 	CWinThread* pl;
 	m_bIsThreadEnd = false;
 	pl = AfxBeginThread(ThreadDoExtraction, this);
-
+//	DoExtractBoundary();
 
 	//std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	//for (size_t i = 0; i < imgVec.size(); i++) {
@@ -1107,7 +1191,6 @@ void CMNView::ProcDoSearch()
 			SINGLETON_DataMng::GetInstance()->FitCutImageRect(srcImg, r);
 			m_pCut = srcImg(r).clone();
 		}
-
 		
 		m_cutInfo.fileid = getHashCode((CStringA)m_pSelectPageForCNS->GetPath());
 		m_cutInfo.posid = (int)rect.x1 * 10000 + (int)rect.y1;
@@ -1116,23 +1199,12 @@ void CMNView::ProcDoSearch()
 		m_cutInfo.id = getHashCode((CStringA)strId);
 		m_cutInfo.th = m_fThreshold;
 
-		srcImg.release();
+		//srcImg.release();
 		//==============================================================//
-
-
 		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 		// Load Full image //
 		for (size_t i = 0; i < imgVec.size(); i++) {
-			imgVec[i]->LoadFullImage();
-		}
-
-
-		CWinThread* pl;
-		m_bIsThreadEnd = false;
-		pl = AfxBeginThread(ThreadDoSearch, this);
-
-	//	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
-		for (size_t i = 0; i < imgVec.size(); i++) {
+		//	imgVec[i]->LoadFullImage();
 			imgVec[i]->SetIsSearched(false);
 		}
 
@@ -1143,21 +1215,11 @@ void CMNView::ProcDoSearch()
 		m_resColor.g = (float)GetGValue(resColor)*0.00392f;
 		m_resColor.b = (float)GetBValue(resColor)*0.00392f;
 
+		CWinThread* pl;
+		m_bIsThreadEnd = false;
+		pl = AfxBeginThread(ThreadDoSearch, this);
 		SetTimer(_DO_SEARCH, 100, NULL);
 	}
-	
-	//RECT2D rect = GetSelectedAreaForCNS();
-	//if (rect.width > 0) {
-	//	m_pMatchingProcessor.PrepareCutNSearch(m_pViewImage->GetSelectedPageForCNS(), m_pViewImage->GetSelectedAreaForCNS());
-
-	//	m_searchCnt = 0;
-	//	SetTimer(_TIMER_SEARCH_PAGE, 10, NULL);
-	//	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
-	//	pM->AddOutputString(_T("Start Search Process...."), true);
-	//}
-	//else {
-	//	AfxMessageBox(L"Select area for Searching");
-	//}
 }
 
 void CMNView::MovePrePage()
@@ -2321,7 +2383,7 @@ void CMNView::DoExtractBoundaryForSelected()
 			if (srcImg.ptr()) {
 
 				//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
-				cv::threshold(srcImg, srcImg, 128, 255, cv::THRESH_OTSU);
+				//cv::threshold(srcImg, srcImg, 128, 255, cv::THRESH_OTSU);
 				////	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
 				cv::bitwise_not(srcImg, srcImg);
 				int fsize = (int)m_extractionSetting.engSize;
@@ -2366,7 +2428,6 @@ void CMNView::DoExtractBoundaryForSelected()
 			}
 		}
 	}
-
 	m_addImgCnt = 1;
 }
 
@@ -2567,12 +2628,18 @@ void CMNView::ProcDoSearchBySelection()
 	InitCamera(false);
 	if ((m_pSelectPageForCNS) && (m_selOCRId >=0)){
 
+		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+		// Load Full image //
+		//for (size_t i = 0; i < imgVec.size(); i++) {
+		//	imgVec[i]->LoadFullImage();
+		//	imgVec[i]->SetIsSearched(false);
+		//}
+
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
 		// Prepare Cut&Search ==========================================//
 		RECT2D rect;
 		rect.set(ocrres.rect.x, ocrres.rect.x + ocrres.rect.width, ocrres.rect.y, ocrres.rect.y + ocrres.rect.height);
-
-
+		
 		// Update Font Size ==//
 		m_Extractor.SetFontSize(rect.width, rect.height);
 
@@ -2592,26 +2659,8 @@ void CMNView::ProcDoSearchBySelection()
 		strId.Format(L"%u%u", m_cutInfo.fileid, m_cutInfo.posid);
 		m_cutInfo.id = getHashCode((CStringA)strId);
 		m_cutInfo.th = m_fThreshold;
-
-		srcImg.release();
 		//==============================================================//
 
-
-		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
-		// Load Full image //
-		for (size_t i = 0; i < imgVec.size(); i++) {
-			imgVec[i]->LoadFullImage();
-		}
-
-
-		CWinThread* pl;
-		m_bIsThreadEnd = false;
-		pl = AfxBeginThread(ThreadDoSearch, this);
-
-		//	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
-		for (size_t i = 0; i < imgVec.size(); i++) {
-			imgVec[i]->SetIsSearched(false);
-		}
 
 		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 		m_fThreshold = pM->GetThreshold()*0.01f;
@@ -2620,11 +2669,40 @@ void CMNView::ProcDoSearchBySelection()
 		m_resColor.g = (float)GetGValue(resColor)*0.00392f;
 		m_resColor.b = (float)GetBValue(resColor)*0.00392f;
 
+		
+		CWinThread* pl;
+		m_bIsThreadEnd = false;
+		pl = AfxBeginThread(ThreadDoSearch, this);
 		SetTimer(_DO_SEARCH, 100, NULL);
 	}
 }
 
+void CMNView::ProcDoSearchBySelectionAll()
+{
+	InitCamera(false);
+	if ((m_pSelectPageForCNS)) {
 
+		m_pSelectPageForCNSAll = m_pSelectPageForCNS;
+		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+		// Load Full image //
+		//for (size_t i = 0; i < imgVec.size(); i++) {
+		//	imgVec[i]->LoadFullImage();
+		//}
+
+		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+		m_fThreshold = pM->GetThreshold()*0.01f;
+		COLORREF resColor = pM->GetMatchingColor();
+		m_resColor.r = (float)GetRValue(resColor)*0.00392f;
+		m_resColor.g = (float)GetGValue(resColor)*0.00392f;
+		m_resColor.b = (float)GetBValue(resColor)*0.00392f;
+
+
+		CWinThread* pl;
+		m_bIsThreadEnd = false;
+		pl = AfxBeginThread(ThreadDoSearchSegment, this);
+		SetTimer(_DO_SEARCH, 100, NULL);
+	}
+}
 
 void CMNView::ProcExportDB(CString strFolder, bool IsHtml)
 {
@@ -2721,11 +2799,18 @@ static UINT ThreadDoSearch(LPVOID lpParam)
 	return 0L;
 }
 
+static UINT ThreadDoSearchSegment(LPVOID lpParam)
+{
+	CMNView* pClass = (CMNView*)lpParam;
+	pClass->DoSearchSegment();
+	return 0L;
+}
+
 static UINT ThreadDoExtraction(LPVOID lpParam)
 {
 	CMNView* pClass = (CMNView*)lpParam;
 	//	pClass->DoExtractBoundaryForSelected();
-	pClass->DoExtractBoundary();
+	pClass->DoExtractBoundaryAuto();
 	return 0L;
 }
 
@@ -2735,3 +2820,5 @@ static UINT ThreadDoOCR(LPVOID lpParam)
 	pClass->DoOCR();
 	return 0L;
 }
+
+

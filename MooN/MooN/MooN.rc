@@ -377,6 +377,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "Cut and Search",              ID_OCR_CUTSEARCH
+        MENUITEM "Cut and Search All",          ID_OCR_CUTANDSEARCHALL
         MENUITEM SEPARATOR
         MENUITEM "Add line",                    ID_OCR_ADD_LINEBOX
         MENUITEM "Delete Line",                 ID_OCR_DELETEL_INEBOX

@@ -58,8 +58,13 @@ float CExtractor::DeSkewImg(cv::Mat& img)
 	//imshow("img_rot", rotatedFrame);
 }
 
-_ALIGHN_TYPE CExtractor::AllHoriVertLines(cv::Mat& binaryImg)
+_ALIGHN_TYPE CExtractor::CheckHoughLines(cv::Mat& binaryImg)
 {
+	cv::Mat dst, cdst;
+	
+//	cvtColor(dst, cdst, CV_GRAY2BGR);
+
+
 //	cv::medianBlur(tmp, tmp, 5);
 //	int erosion_size = 2;
 //	cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
@@ -68,22 +73,27 @@ _ALIGHN_TYPE CExtractor::AllHoriVertLines(cv::Mat& binaryImg)
 //	cv::erode(tmp, tmp, element);
 ////	cv::dilate(tmp, tmp, element);
 
-	cv::Mat resizeImg;
-	float fscale = 256.0f / (float)binaryImg.rows;
-	cv::resize(binaryImg, resizeImg, cv::Size(256,256));
+	//cv::Mat resizeImg;
+//	float fscale = 256.0f / (float)binaryImg.rows;
+	cv::Size size = binaryImg.size();
+	cv::resize(binaryImg, dst, cv::Size(size.width/2,size.height/2));
+//	cv::Canny(dst, dst, 50, 200, 3);
+	cv::GaussianBlur(dst, dst, cv::Size(9, 9), 2, 2);
 
 	total_lines.clear();
 
-//	cv::imshow("img", resizeImg);
+//	cv::imshow("img", dst);
 
-	cv::Size size = resizeImg.size();
-	cv::HoughLinesP(resizeImg, total_lines, 1, CV_PI / 180, 100, size.width / 2.f, 20);
+	size = dst.size();
+	cv::HoughLinesP(dst, total_lines, 1, CV_PI / 180, 150, 50,30);
 
 //	cv::Mat disp_lines(size, CV_8UC3, cv::Scalar(0, 0, 0));
 
 	POINT3D vecAlign, vecBase;
 	mtSetPoint3D(&vecAlign, 0, 0, 0);
 	mtSetPoint3D(&vecBase, 1, 0, 0);
+
+
 	 for (unsigned i = 0; i < total_lines.size(); ++i)
 	 {
 		 POINT3D v;
@@ -92,6 +102,7 @@ _ALIGHN_TYPE CExtractor::AllHoriVertLines(cv::Mat& binaryImg)
 		 v.z = 0;
 
 		 vecAlign = vecAlign+v;
+
 	     //cv::line(disp_lines, 
 	     //         cv::Point(total_lines[i][0], total_lines[i][1]),
 	     //         cv::Point(total_lines[i][2], total_lines[i][3]), 
@@ -538,7 +549,7 @@ void CExtractor::SortBoundaryBox(std::vector<_extractBox>& vecBox)
 	//==================================//
 }
 
-void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox)
+void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, bool IsVerti)
 {
 	contours_poly.clear();
 	contours.clear();
@@ -564,12 +575,16 @@ void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, st
 	}
 
 	int depth = 0;
-	MeargingtBoundaryBoxText((int)binaryImg.cols, -1, (int)binaryImg.cols, vecBox, depth);		// Merge horizontal
-	depth = 0;
-//	SortBoundaryBox(vecBox);
-
-	for (int i = 0; i < 5; i++) {
-		MeargingtBoundaryBoxTextVerti(0, i, (int)binaryImg.cols, vecBox, depth);		// Merge Vertical
+	if (IsVerti) {
+		MeargingtBoundaryBoxText((int)binaryImg.cols, -1, (int)binaryImg.cols, vecBox, depth);		// Merge horizontal
+		depth = 0;
+		//	SortBoundaryBox(vecBox);
+		for (int i = 0; i < 5; i++) {
+			MeargingtBoundaryBoxTextVerti(0, i, (int)binaryImg.cols, vecBox, depth);		// Merge Vertical
+		}
+	}
+	else {
+		MeargingtBoundaryBoxText(4, -1, (int)binaryImg.rows, vecBox, depth);
 	}
 }
 

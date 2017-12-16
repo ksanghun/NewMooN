@@ -7,7 +7,7 @@
 
 CMNPageObject::CMNPageObject()
 {
-	m_thumbnailTexId = 0;
+//	m_thumbnailTexId = 0;
 	m_texId = 0;
 
 	mtSetPoint3D(&m_vBgColor, 0.3f, 0.7f, 0.9f);
@@ -51,7 +51,7 @@ CMNPageObject::~CMNPageObject()
 	ClearMatchResult();
 
 	m_fullImg.release();
-	m_thumbImg.release();
+//	m_thumbImg.release();
 	m_srcGrayImg.release();
 }
 
@@ -173,7 +173,6 @@ GLuint CMNPageObject::LoadFullImage()
 
 	}
 
-
 	cv::Mat pimg;
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false)) {
 
@@ -205,82 +204,80 @@ GLuint CMNPageObject::LoadFullImage()
 }
 bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 {
-	//if (m_thumbnailTexId != 0) {
-	//	return false;
-	//}
-
-	if (m_thumbImg.ptr() != NULL) {
+	if (m_fullImg.ptr() != NULL) {
 		return false;
 	}
 
 	//==============================================
 	CString strPath = m_strPath;
 	CString str = PathFindExtension(m_strPath);
-//	if ((str == L".pdf") || (str == L".PDF")) {
 
-	CString tmpStr = GetPInfoPath(L"_tb.jp2");
+	CString tmpStr = GetPInfoPath(L".jp2");
 	if (PathFileExists(tmpStr)) {
 		strPath = tmpStr;
 		m_IsTbimg = true;
 	}
-//	}
+
 	// If .jp2 exist, load .jp2 file instead of .pdf file //
-	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
+	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false))
 	{
+		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 170, 255, cv::THRESH_OTSU);
+
 		unsigned short width = 0, height = 0;
 		if (LoadPageInfo(width, height)) {
 			SetSize(width, height, DEFAULT_PAGE_SIZE);
 		}
 		else {
-			SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
-			cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
+			SetSize(m_fullImg.cols, m_fullImg.rows, DEFAULT_PAGE_SIZE);
+		//	cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
 		}
-		
-		//cv::cvtColor(m_thumbImg, m_srcGrayImg, CV_BGR2GRAY);
-		//cv::threshold(m_srcGrayImg, m_srcGrayImg, 200, 255, cv::THRESH_OTSU);
-		//cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
-		//	cv::Size(3, 3),
-		//	cv::Point(-1, -1));
-		//cv::dilate(m_srcGrayImg, m_srcGrayImg, element);
-
-		
-
-
-		//cv::threshold(m_binaryImg, m_binaryImg, 125, 255, cv::THRESH_OTSU);
-		//cv::bitwise_not(m_binaryImg, m_binaryImg);
-		//// resizeing //
-		//cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
-
-		// glupload Image - Thumnail image=======================================================//
-		//glGenTextures(1, &m_thumbnailTexId);
-		//glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
-
-		//gluBuild2DMipmaps(GL_TEXTURE_2D, 3, resolution, resolution, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
-
-//		cv::imshow("LoadThumbImage", src);
-//		src.release();
 	}
 	return false;
+
+
+	//if (m_thumbImg.ptr() != NULL) {
+	//	return false;
+	//}
+
+	////==============================================
+	//CString strPath = m_strPath;
+	//CString str = PathFindExtension(m_strPath);
+
+	//CString tmpStr = GetPInfoPath(L"_tb.jp2");
+	//if (PathFileExists(tmpStr)) {
+	//	strPath = tmpStr;
+	//	m_IsTbimg = true;
+	//}
+
+	//// If .jp2 exist, load .jp2 file instead of .pdf file //
+	//if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_thumbImg, false))
+	//{
+	//	unsigned short width = 0, height = 0;
+	//	if (LoadPageInfo(width, height)) {
+	//		SetSize(width, height, DEFAULT_PAGE_SIZE);
+	//	}
+	//	else {
+	//		SetSize(m_thumbImg.cols, m_thumbImg.rows, DEFAULT_PAGE_SIZE);
+	//		cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
+	//	}		
+	//}
+	//return false;
 }
 
 void CMNPageObject::UploadThumbImage()
 {
-	if (m_thumbImg.ptr()) {
-		glGenTextures(1, &m_thumbnailTexId);
-		glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	//if (m_thumbImg.ptr()) {
+	//	glGenTextures(1, &m_thumbnailTexId);
+	//	glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
+	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
 
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
-	}
+	//	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.data);
+	//}
 //	m_thumbImg.release();
 
 
@@ -289,30 +286,32 @@ void CMNPageObject::UploadThumbImage()
 
 //	cv::imshow("binary", m_srcGrayImg);
 
-	//if (m_texId != 0) {
-	//	return;
-	//}
-	//if (m_thumbImg.ptr()) {
-	//	// Save original size //
-	//	m_nImgHeight = m_thumbImg.rows;
-	//	m_nImgWidth = m_thumbImg.cols;
-	//	// resize for texture //
-	//	int w = ConvertGLTexSize(m_thumbImg.cols);
-	//	int h = ConvertGLTexSize(m_thumbImg.rows);
-	//	cv::resize(m_thumbImg, m_thumbImg, cvSize(w, h));
+	if (m_texId != 0) {
+		return;
+	}
+	if (m_fullImg.ptr()) {
+		// Save original size //
+		m_nImgHeight = m_fullImg.rows;
+		m_nImgWidth = m_fullImg.cols;
+		// resize for texture //
+		int w = ConvertGLTexSize(m_fullImg.cols);
+		int h = ConvertGLTexSize(m_fullImg.rows);
 
-	//	glGenTextures(1, &m_texId);
-	//	glBindTexture(GL_TEXTURE_2D, m_texId);
-	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		cv::Mat pimg;
+		cv::resize(m_fullImg, pimg, cvSize(w, h));
 
-	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
-	//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
+		glGenTextures(1, &m_texId);
+		glBindTexture(GL_TEXTURE_2D, m_texId);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	//	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_thumbImg.cols, m_thumbImg.rows, GL_RGB, GL_UNSIGNED_BYTE, m_thumbImg.ptr());
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812F);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 0x812F);
 
-	//	cv::resize(m_thumbImg, m_thumbImg, cvSize(m_nImgWidth, m_nImgHeight));
-	//}
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, pimg.cols, pimg.rows, GL_RGB, GL_UNSIGNED_BYTE, pimg.ptr());
+
+		pimg.release();
+	}
 
 }
 
@@ -344,7 +343,7 @@ void CMNPageObject::AnimatePos(bool IsZvalue)
 
 void CMNPageObject::DrawThumbNail(float fAlpha)
 {
-	if (m_thumbnailTexId == 0) {
+	if (m_texId == 0) {
 		return;
 	}
 	if (m_bCandidate) {
@@ -373,12 +372,12 @@ void CMNPageObject::DrawThumbNail(float fAlpha)
 
 
 	glEnable(GL_TEXTURE_2D);
-	if (m_texId == 0) {		
-		glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
-	}
-	else {
+	//if (m_texId == 0) {		
+	////	glBindTexture(GL_TEXTURE_2D, m_thumbnailTexId);
+	//}
+	//else {
 		glBindTexture(GL_TEXTURE_2D, m_texId);
-	}
+	//}
 
 
 	glColor4f(1.0f, 1.0f, 1.0f, fAlpha);
@@ -903,7 +902,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 	std::vector<_extractBox> vecBox;
 
 	if (IsVerti) {
-		extractor.ExtractionText(paraImg, 4, -4, vecBox);
+		extractor.ExtractionText(paraImg, 4, -4, vecBox, IsVerti);
 		//extractor.ExtractionText(paraImg, 8, 0, vecBox);
 		//// Sort //
 		////extractor.SortBoundaryBox(vecBox);
@@ -911,7 +910,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 
 	}
 	else {
-		extractor.ExtractionText(paraImg, 2, 8, vecBox);
+		extractor.ExtractionText(paraImg, 0, 2, vecBox, IsVerti);
 	}
 
 	
@@ -1378,11 +1377,11 @@ void CMNPageObject::WritePageInfo()
 		fclose(fp);
 	}
 
-	if (m_IsTbimg == false) {		// thumbnail image shoudl followed to info file //
-		CString imgpath = GetPInfoPath(L"_tb.jp2");
-		char* szimg = T2A(imgpath);
-		cv::imwrite(szimg, m_thumbImg);
-	}
+	//if (m_IsTbimg == false) {		// thumbnail image shoudl followed to info file //
+	//	CString imgpath = GetPInfoPath(L"_tb.jp2");
+	//	char* szimg = T2A(imgpath);
+	//	cv::imwrite(szimg, m_thumbImg);
+	//}
 }
 
 

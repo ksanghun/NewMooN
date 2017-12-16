@@ -36,7 +36,7 @@ public:
 
 
 	float DeSkewImg(cv::Mat& img);
-	_ALIGHN_TYPE AllHoriVertLines(cv::Mat& img);
+	_ALIGHN_TYPE CheckHoughLines(cv::Mat& img);
 
 	// Extract Paragraph //
 	
@@ -52,7 +52,7 @@ public:
 
 	// Extraction //
 	void Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox);
-	void ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox);
+	void ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, bool IsVerti);
 
 	bool MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth);
 	bool MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth);

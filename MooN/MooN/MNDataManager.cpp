@@ -118,11 +118,11 @@ POINT3D CMNDataManager::GetColor(float fvalue)
 void CMNDataManager::ClearAllImages()
 {
 	for (size_t i = 0; i < m_vecImgData.size(); i++) {
-		GLuint tex = m_vecImgData[i]->GetThumbnailTex();
+//		GLuint tex = m_vecImgData[i]->GetThumbnailTex();
 		GLuint texfull = m_vecImgData[i]->GetTexId();
-		if (tex > 0) {
-			glDeleteTextures(1, &tex);
-		}
+		//if (tex > 0) {
+		//	glDeleteTextures(1, &tex);
+		//}
 		if (texfull > 0) {
 			glDeleteTextures(1, &texfull);
 		}
@@ -232,11 +232,11 @@ void CMNDataManager::PopImageDataSet(unsigned long _pcode)
 	std::vector<CMNPageObject*>::iterator iter_vec = m_vecImgData.begin();
 	for (; iter_vec != m_vecImgData.end();) {
 		if ((*iter_vec)->GetPCode() == _pcode) {
-			GLuint texth = (*iter_vec)->GetThumbnailTex();
+//			GLuint texth = (*iter_vec)->GetThumbnailTex();
 			GLuint texfull = (*iter_vec)->GetTexId();
-			if (texth > 0) {
-				glDeleteTextures(1, &texth);
-			}
+			//if (texth > 0) {
+			//	glDeleteTextures(1, &texth);
+			//}
 			if (texfull > 0) {
 				glDeleteTextures(1, &texfull);
 			}
@@ -393,7 +393,7 @@ void CMNDataManager::UpdatePageStatus(POINT3D camPos)
 		if (m_vecImgData[i]->IsCandidate()) {
 			float fDist = mtDistance(camPos, m_vecImgData[i]->GetPos());
 			if (fDist < DEFAULT_PAGE_SIZE*2.0f) {
-				m_vecImgData[i]->LoadFullImage();
+			//	m_vecImgData[i]->LoadFullImage();
 				m_vecImgData[i]->SetIsNear(true);
 			}
 			else {
