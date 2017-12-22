@@ -15,6 +15,7 @@ static UINT ThreadDoExtraction(LPVOID lpParam);
 static UINT ThreadDoOCR(LPVOID lpParam);
 static UINT ThreadDoExportDB(LPVOID lpParam);
 static UINT ThreadDoExportDBHtml(LPVOID lpParam);
+static UINT ThreadCNSSegments(LPVOID lpParam);
 
 static bool  m_bIsThreadEnd;
 
@@ -36,6 +37,9 @@ public:
 	void ProcExtractBoundary();
 	void ProcOCR(bool IsAll);
 	void ProcTrainingOCRResbyConfidence(float fConfi);
+	void ProcCNSSegments();
+
+
 	void GenerateThumbnail();
 	bool DoSearch();
 	bool DoSearchSegment();
@@ -45,6 +49,7 @@ public:
 	void DoOCRFromMooN();
 	void DoExportDB();
 	void DoExportDBHtml();
+	bool DoCNSSegments();
 
 	// OCR POP-UP Menu //
 	//void OcrEnglishword();

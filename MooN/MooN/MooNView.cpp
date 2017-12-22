@@ -383,13 +383,14 @@ void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 			memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
 			int char_str_len = WideCharToMultiByte(CP_ACP, 0, ocrRes.strCode, -1, NULL, 0, NULL, NULL);
 			WideCharToMultiByte(CP_ACP, 0, ocrRes.strCode, -1, char_str, char_str_len, 0, 0);
-			ocrRes.hcode = getHashCode(char_str);
+//			ocrRes.hcode = getHashCode(char_str);
 			ocrRes.bNeedToDB = true;	
 			
 			pPage->AddOCRResult(ocrRes);  // hcode here!!
 
 			cv::Mat cutImg = pPage->GetSrcPageGrayImg()(ocrRes.rect).clone();
-			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, ocrRes.hcode);
+//			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, ocrRes.hcode);
+			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, 0);
 			cutImg.release();		
 		}
 	}

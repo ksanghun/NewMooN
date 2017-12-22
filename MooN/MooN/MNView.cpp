@@ -1,11 +1,11 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "MNView.h"
 #include "MNDataManager.h"
 #include "MainFrm.h"
 #include "resource.h"
 #include "MooN.h"
 
-enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION, _DO_OCR, _DO_EXPORT_DB};
+enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION, _DO_OCR, _DO_EXPORT_DB, _DO_CNS_SEGMENTS};
 
 
 #define DEFAULT_X_OFFSET -5800;
@@ -105,7 +105,12 @@ void CMNView::InitGLview(int _nWidth, int _nHeight)
 	//wchar_t newword = (unsigned short)(std::stoi("0100010101000101", nullptr, 2));
 	//CString str(newword);
 	//int a = 0;
+
 	//============================================================================//
+
+	//CString str(L"㿈(HHĈȈЈࠈဈ");
+	//unsigned int h = getHashCode((CStringA)str);
+
 }
 
 void CMNView::InitCamera(bool movexy)
@@ -460,6 +465,26 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			KillTimer(_MOVECAMANI);
 			m_mouseMode = 0;
 			IDragMap(m_stratPnt.x, m_stratPnt.y, 2);
+		}
+	}
+
+	else if (nIDEvent == _DO_CNS_SEGMENTS) {
+		float complete = (float)m_addImgCnt / (float)m_loadedImgCnt;
+		CString str;
+		str.Format(_T("Cut & Search All.....%d"), int(complete * 100));
+		str += _T("%");
+		str += _T(" completed.");
+
+		pM->AddOutputString(str, true);
+
+		// End of thread //
+		//if (m_addImgCnt == m_loadedImgCnt) {
+		if (m_bIsThreadEnd) {
+			m_addImgCnt = 0;
+			KillTimer(_DO_CNS_SEGMENTS);
+
+			str.Format(_T("Cut & Search All.....done"));
+			pM->AddOutputString(str, true);
 		}
 	}
 	//else if (nIDEvent == _UPDATE_PAGE) {
@@ -1072,16 +1097,20 @@ void CMNView::DoExtractBoundaryAuto()
 			for (size_t j = 0; j < vecBox.size(); j++) {
 				// Calculate Deskew //
 				//m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
-				cv::Mat para = srcImg(vecBox[j].textbox);
-				//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
-				
-				float deskew = m_Extractor.DeSkewImg(para);
-				TRACE(L"Deskew Angle: %3.2f\n", deskew);
 
-				bool IsAlphabetic = false;
-				if (m_extractionSetting.isEng)	IsAlphabetic = true;
-				vecImg[i]->AddParagraph(m_Extractor, para, vecBox[j].textbox, IsVerti, deskew, IsAlphabetic);
-				para.release();
+				if (vecBox[j].textbox.area() > 25) {  // remove noise
+
+					cv::Mat para = srcImg(vecBox[j].textbox);
+					//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
+
+					float deskew = m_Extractor.DeSkewImg(para);
+					TRACE(L"Deskew Angle: %3.2f\n", deskew);
+
+					bool IsAlphabetic = false;
+					if (m_extractionSetting.isEng)	IsAlphabetic = true;
+					vecImg[i]->AddParagraph(m_Extractor, para, vecBox[j].textbox, IsVerti, deskew, IsAlphabetic);
+					para.release();
+				}
 			}
 			vecBox.clear();
 			srcImg.release();
@@ -1317,7 +1346,7 @@ void CMNView::ConfirmOCRRes()
 void CMNView::UpdateOCRCode(CString _strCode)
 {
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->UpdateOCRCode(_strCode, m_selOCRId);
+		m_pSelectPageForCNS->UpdateOCRCode(_strCode, 1.0f, m_selOCRId);
 		m_selOCRId = -1;
 		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
@@ -2683,7 +2712,7 @@ void CMNView::ProcDoSearchBySelectionAll()
 	if ((m_pSelectPageForCNS)) {
 
 		m_pSelectPageForCNSAll = m_pSelectPageForCNS;
-		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+		//std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 		// Load Full image //
 		//for (size_t i = 0; i < imgVec.size(); i++) {
 		//	imgVec[i]->LoadFullImage();
@@ -2745,8 +2774,217 @@ void CMNView::DoExportDBHtml()
 }
 
 
+void CMNView::ProcCNSSegments()
+{
+	InitCamera(false);
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	m_fThreshold = pM->GetThreshold()*0.01f;
+	
+	DoCNSSegments();
+
+	//CWinThread* pl;
+	//pl = AfxBeginThread(ThreadCNSSegments, this);
+	//SetTimer(_DO_CNS_SEGMENTS, 100, NULL);
+}
+
+bool CMNView::DoCNSSegments()
+{
+	// generate temporary index that start from 65536 ! , except for unicode scope //
 
 
+	m_bIsThreadEnd = false;
+	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+	m_addImgCnt = 0;
+	m_loadedImgCnt = imgVec.size();
+
+	auto i = 0;
+	for (i = 0; i < imgVec.size(); i++) {
+		std::vector<_stOCRResult> ocrRes = imgVec[i]->GetVecOCRResult();
+		imgVec[i]->SetSelection(true);
+		if (i > 0)	imgVec[i - 1]->SetSelection(false);
+
+		m_resColor.r = (float)(rand() % 255)*0.00392f;
+		m_resColor.g = (float)(rand() % 255)*0.00392f;
+		m_resColor.b = (float)(rand() % 255)*0.00392f;
+
+
+		for (auto j = 0; j < ocrRes.size(); j++) {
+			m_addImgCnt = 0;
+
+			cv::Mat srcImg = imgVec[i]->GetSrcPageGrayImg();
+			cv::Mat cutSrc, cutDst;
+			cv::Rect nRect;
+			if (srcImg.ptr()) {
+				cutSrc.release();
+				// Normalize //
+				nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
+				cutSrc = srcImg(ocrRes[j].rect).clone();
+				cv::resize(cutSrc, cutSrc, cv::Size(nRect.width, nRect.height));
+
+				// 1. Generate Unique Index //
+
+
+				auto k = 0;
+				for (k = 0; k < imgVec.size(); k++) {
+					std::vector<_stOCRResult> ocrResDst = imgVec[k]->GetVecOCRResult();
+					for (auto l = 0; l < ocrResDst.size(); l++) {
+
+					//	if ((i == k) && (j == l)) continue;			// skip same character!!
+
+						cv::Mat dstImg = imgVec[k]->GetSrcPageGrayImg();
+						if (dstImg.ptr()) {
+							cutDst.release();
+							nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrResDst[l].rect);
+							cutDst = dstImg(ocrResDst[l].rect).clone();
+							cv::resize(cutDst, cutDst, cv::Size(nRect.width, nRect.height));
+
+							// Match cutSrc with cutDst
+							// Add to matching group //
+							if (cutSrc.cols == cutDst.cols) {
+								cv::Mat result(1, 1, CV_32FC1);
+								cv::matchTemplate(cutSrc, cutDst, result, CV_TM_CCOEFF_NORMED);
+								float fD1 = result.at<float>(0, 0);
+								//cv::matchTemplate(cutDst, cutSrc, result, CV_TM_CCOEFF_NORMED);
+								//float fD2 = result.at<float>(0, 0);
+								if (fD1  > ocrResDst[l].fConfidence) {
+									imgVec[k]->UpdateOCRCode(L"T", fD1, l);
+								}								
+							}
+							//cv::imshow("cutSrc", cutSrc);
+							//cv::imshow("cutDst", cutDst);
+
+
+
+						}// End of if srcimg is ture !!
+					}
+
+
+
+					imgVec[k]->SetIsSearched(true);
+					if (k > 0)	imgVec[k - 1]->SetIsSearched(false);
+					m_addImgCnt++;
+				}
+				imgVec[k - 1]->SetIsSearched(false);
+			}  // End of if srcimg is ture !!
+
+
+			cutSrc.release();
+			cutDst.release();
+
+
+
+
+		}	
+	}
+	imgVec[i-1]->SetSelection(false);	
+	m_bIsThreadEnd = true;
+//==============================//
+
+
+
+
+
+	//std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNSAll->GetVecOCRResult();
+	//m_addImgCnt = 0;
+	//m_loadedImgCnt = ocrRes.size();
+
+	//for (auto j = 0; j < ocrRes.size(); j++) {
+	//	_stOCRResult ocrres = ocrRes[j];
+	//	// Prepare Cut&Search ==========================================//
+	//	RECT2D rect;
+	//	rect.set(ocrres.rect.x, ocrres.rect.x + ocrres.rect.width, ocrres.rect.y, ocrres.rect.y + ocrres.rect.height);
+
+	//	if ((rect.width > 16) && (rect.height > 16)) {
+
+	//		// Update Font Size ==//
+	//		m_Extractor.SetFontSize(rect.width, rect.height);
+
+	//		if (m_pCut.ptr() != NULL) {
+	//			m_pCut.release();
+	//		}
+	//		CString strpath = m_pSelectPageForCNSAll->GetPath();
+	//		cv::Mat srcImg = m_pSelectPageForCNSAll->GetSrcPageGrayImg();
+	//		if (srcImg.ptr()) {
+	//			m_pCut = srcImg(cv::Rect(rect.x1, rect.y1, rect.width, rect.height));
+	//		}
+
+
+	//		m_cutInfo.fileid = getHashCode((CStringA)m_pSelectPageForCNSAll->GetPath());
+	//		m_cutInfo.posid = (int)rect.x1 * 10000 + (int)rect.y1;
+	//		CString strId;
+	//		strId.Format(L"%u%u", m_cutInfo.fileid, m_cutInfo.posid);
+	//		m_cutInfo.id = getHashCode((CStringA)strId);
+	//		m_cutInfo.th = m_fThreshold;
+
+	//		//==============================================================//
+
+
+	//		if (m_pCut.ptr() == NULL)
+	//			return false;
+	//		int search_size = (m_pCut.cols > m_pCut.rows) ? m_pCut.cols : m_pCut.rows;
+	//		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+
+	//		auto i = 0;
+	//		for (i = 0; i < imgVec.size(); i++) {
+	//			imgVec[i]->SetIsSearched(false);
+	//		}
+
+	//		for (i = 0; i < imgVec.size(); i++) {
+	//			cv::Mat grayImg = imgVec[i]->GetSrcPageGrayImg();
+	//			//if (SINGLETON_DataMng::GetInstance()->LoadImageData(imgVec[i]->GetPath(), grayImg, true)) {
+	//			if (grayImg.ptr()) {
+	//				int result_cols = grayImg.cols - m_pCut.cols + 1;
+	//				int result_rows = grayImg.rows - m_pCut.rows + 1;
+	//				cv::Mat result(result_rows, result_cols, CV_32FC1);
+
+	//				cv::matchTemplate(grayImg, m_pCut, result, CV_TM_CCOEFF_NORMED);
+	//				//cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+	//				for (int y = 0; y < result.rows; y++) {
+	//					for (int x = 0; x < result.cols; x++) {
+	//						float fD = result.at<float>(y, x);
+	//						if (fD > m_fThreshold) {
+	//							stMatchInfo mInfo;
+	//							mtSetPoint3D(&mInfo.pos, x + m_pCut.cols*0.5f, y + m_pCut.rows*0.5f, 0.0f);
+	//							mInfo.accuracy = fD * 100;
+	//							mInfo.strAccracy.Format(L"%d", (int)(fD));
+	//							mInfo.rect = cv::Rect(x, y, m_pCut.cols, m_pCut.rows);
+	//							mInfo.searchId = m_cnsSearchId;
+	//							mInfo.cInfo = m_cutInfo;
+	//							mInfo.strCode = "-";
+
+	//							m_resColor.a = ((fD)*m_colorAccScale)*0.5f;
+	//							mInfo.color = m_resColor;
+	//							mInfo.IsAdded = false;
+	//							imgVec[i]->AddMatchedPoint(std::move(mInfo), search_size);
+	//						}
+	//					}
+	//				}
+	//				//grayImg.release();
+	//				result.release();
+
+	//				imgVec[i]->SetIsSearched(true);
+	//				if (i > 0) {
+	//					imgVec[i - 1]->SetIsSearched(false);
+	//				}
+	//			}
+
+	//			imgVec[i]->SetFitCurArea();
+	//		}
+
+	//		imgVec[i - 1]->SetIsSearched(false);
+	//		m_cnsSearchId++;
+	//	}
+	//	m_addImgCnt++;
+	//}
+	//return true;
+
+
+
+
+	//m_bIsThreadEnd = false;
+	return true;
+}
 
 
 
@@ -2803,6 +3041,13 @@ static UINT ThreadDoSearchSegment(LPVOID lpParam)
 {
 	CMNView* pClass = (CMNView*)lpParam;
 	pClass->DoSearchSegment();
+	return 0L;
+}
+
+static UINT ThreadCNSSegments(LPVOID lpParam)
+{
+	CMNView* pClass = (CMNView*)lpParam;
+	pClass->DoCNSSegments();
 	return 0L;
 }
 

@@ -763,11 +763,12 @@ void CMainFrame::OnToolsClearresult()
 }
 
 
-void CMainFrame::OnAnalyzeExtracttextboundary()
+void CMainFrame::OnAnalyzeExtracttextboundary()  // DO Cut&Search from segments!!!!
 {
 	// TODO: Add your command handler code here
 	m_wndProperties.GetCurrSetting();
-	pView->DoExtractBoundary();
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcCNSSegments();
 	//pView->DoOCR();
 }
 

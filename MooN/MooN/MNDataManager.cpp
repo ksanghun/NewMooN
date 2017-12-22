@@ -807,18 +807,22 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
 
+		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
-			if (TemplateMatching(cutimg, imgword) > addTh) {
+		//	if (TemplateMatching(cutimg, imgword) > addTh) {
+			if(fAccuracy > addTh){
 				res = SDB_SKIP;
-				break;
+				addTh = fAccuracy;			
+			//	break;
 			}
 			else {
 				res = SDB_ADD;
-				break;
+			//	break;
 			}
 		}
 		else {
-			if (TemplateMatching(cutimg, imgword) > addTh) {
+//			if (TemplateMatching(cutimg, imgword) > addTh) {
+			if(fAccuracy > 0.99f){	// Same cut //
 				int clen = m_refImgClass[classid].maxCharLen;
 				memset(m_refImgClass[classid].vecStr[pos], 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 				memcpy(m_refImgClass[classid].vecStr[pos], strcode, sizeof(wchar_t)*clen);
@@ -916,7 +920,12 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 	//wchar_t wstrcode [_MAX_WORD_SIZE];
 	//memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 	//wsprintf(wstrcode, _strCode.GetBuffer());
-	if (hcode == 5381) 
+
+
+	//if (hcode == 5381) 
+	//	return;
+
+	if (wstrcode[0] == '\0')
 		return;
 	
 	cv::Rect imgRect = cv::Rect(0, 0, cutimg.cols, cutimg.rows);
@@ -976,7 +985,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 	for (int j = 0; j < ocrRes.size(); j++) {
 		if ((ocrRes[j].bNeedToDB) && (ocrRes[j].fConfidence > 0.1f)) {
 
-			if (ocrRes[j].hcode == 5381) 
+			if (ocrRes[j].strCode == '\0') 
 				continue;
 
 
@@ -1015,7 +1024,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 				m_refImgClass[classid].needToUpdate = true;
 
 				// Update Table //
-				AddSDBTable(ocrRes[j].hcode, strcode);
+//				AddSDBTable(ocrRes[j].hcode, strcode);
 				m_bIsUpdateTable = true;
 			}
 			pPage->UpdateOCRResStatus(j, false, ocrRes[j].type);

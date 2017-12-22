@@ -916,12 +916,14 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 	
 
 	for (auto i = 0; i < vecBox.size(); i++) {
-		_stOCRResult res;
-		res.init();
-		res.rect = vecBox[i].textbox;
-		res.rect.x += rect.x;
-		res.rect.y += rect.y;
-		AddOCRResult(res);
+		if (vecBox[i].textbox.area() > 4) {
+			_stOCRResult res;
+			res.init();
+			res.rect = vecBox[i].textbox;
+			res.rect.x += rect.x;
+			res.rect.y += rect.y;
+			AddOCRResult(res);
+		}
 	}
 
 	//===========================//
@@ -1106,11 +1108,11 @@ void CMNPageObject::UpdateOCRResStatus(int selid, bool IsUpdate, int _type)
 	}
 }
 
-void CMNPageObject::UpdateOCRCode(CString _strCode, int selid)
+void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int selid)
 {
 	m_IsNeedToSave = true;
 	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
-		m_ocrResult[selid].fConfidence = 0.9f;
+		m_ocrResult[selid].fConfidence = _fConfi;
 		m_ocrResult[selid].bNeedToDB = true;
 		wsprintf(m_ocrResult[selid].strCode, _strCode);
 
@@ -1118,7 +1120,7 @@ void CMNPageObject::UpdateOCRCode(CString _strCode, int selid)
 		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
 		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[selid].strCode, -1, NULL, 0, NULL, NULL);
 		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[selid].strCode, -1, char_str, char_str_len, 0, 0);
-		m_ocrResult[selid].hcode = getHashCode(char_str);
+//		m_ocrResult[selid].hcode = getHashCode(char_str);
 
 	//	m_ocrResult[selid].strCode = _strCode;
 	}
@@ -1152,7 +1154,7 @@ void CMNPageObject::AddOCRResult(_stOCRResult res)
 	memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
 	int char_str_len = WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, NULL, 0, NULL, NULL);
 	WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, char_str, char_str_len, 0, 0);
-	res.hcode = getHashCode(char_str);
+//	res.hcode = getHashCode(char_str);
 
 	m_ocrResult.push_back(res);
 }
@@ -1233,14 +1235,17 @@ void CMNPageObject::WriteSearchDBFile()
 	std::map<unsigned int, _stSDB> m_mapSDB;
 
 	int wnum = m_ocrResult.size();
-//	char char_str[_MAX_WORD_SIZE * 2];
+	char char_str[_MAX_WORD_SIZE * 2];
 	for (int i = 0; i < wnum; i++) {
-		//memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
-		//int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
-		//WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
+		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
 
 		_stSDBWord sdword;
-		sdword.strcode = m_ocrResult[i].hcode;
+	//	sdword.strcode = m_ocrResult[i].hcode;
+
+		sdword.strcode= getHashCode(char_str);
+
 		//if (sdword.strcode == 5381) 
 		//	continue;
 

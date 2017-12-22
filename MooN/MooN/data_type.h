@@ -480,7 +480,7 @@ struct _stOCRResult {
 	cv::Rect rect;
 	float fConfidence;
 	wchar_t strCode[_MAX_WORD_SIZE];
-	unsigned int hcode;
+	unsigned int hcode_s;
 	int type;  // 0 Eng, 1: chi, 2: Kor   + line information without changing format
 	bool bNeedToDB;
 
@@ -490,7 +490,7 @@ struct _stOCRResult {
 		type = 0;
 		memset(strCode, 0x00, sizeof(strCode));
 		bNeedToDB = false;
-		hcode = 5381;
+		hcode_s = 5381;
 	};
 };
 

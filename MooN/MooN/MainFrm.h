@@ -95,7 +95,7 @@ public:
 	afx_msg void OnToolsSearch();
 	afx_msg void OnToolsKeywordsearch();
 	afx_msg void OnToolsClearresult();
-	afx_msg void OnAnalyzeExtracttextboundary();
+	afx_msg void OnAnalyzeExtracttextboundary(); // DO Cut&Search from segments!!!!
 	afx_msg void OnFileOpen();
 	virtual BOOL OnShowPanes(BOOL bShow);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
