@@ -157,7 +157,7 @@ bool CMainFrame::checkMacAddr()
 
 bool CMainFrame::checkCurrTime()
 {
-	WORD eYear = 2017;
+	WORD eYear = 2018;
 	WORD eMonth = 12;
 	WORD eDay = 30;
 
@@ -649,7 +649,10 @@ void CMainFrame::AddMatchResult()
 	m_wndFormListView.AddMatchResult();
 }
 
-
+void CMainFrame::AddMatchResultCNS()
+{
+	m_wndFormListView.AddMatchResultCNS();
+}
 
 void CMainFrame::OnViewInitialize()
 {

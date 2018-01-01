@@ -144,7 +144,7 @@ private:
 
 	// thumbnail image thread //
 	unsigned int m_addImgCnt;
-	size_t		 m_loadedImgCnt;
+	unsigned int m_loadedImgCnt;
 	//==================================//
 
 	// Camera Animation //

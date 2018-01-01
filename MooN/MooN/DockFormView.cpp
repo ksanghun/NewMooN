@@ -63,6 +63,13 @@ void CDockFormView::AddMatchResult()
 
 }
 
+void CDockFormView::AddMatchResultCNS()
+{
+	if (m_pMyFormView)
+		m_pMyFormView->AddRecord_CNSAll();
+
+}
+
 void CDockFormView::ResizeListColSize(int _maxwidth)
 {
 	if (m_pMyFormView)

@@ -27,6 +27,7 @@ public:
 public:
 	void AddOutputString(CString str, bool IsReplace);
 	void AddMatchResult();
+	void AddMatchResultCNS();
 	void ResizeListColSize(int _maxwidth) { m_wndFormListView.ResizeListColSize(_maxwidth); }
 
 	float GetThreshold() { return m_wndProperties.GetThreshold(); }

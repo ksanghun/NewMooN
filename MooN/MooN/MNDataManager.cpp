@@ -2257,3 +2257,98 @@ bool CMNDataManager::IsSupportFormat(CString strPath)
 	}
 	return false;
 }
+
+void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt)
+{
+	// Prepare Cut&Search matching //	
+	for (auto k = 0; k < m_vecCnSResults.size(); k++) {
+		m_vecCnSResults[k].cutimg.release();
+	}
+	m_vecCnSResults.clear();
+	m_mapCnSResult.clear();
+	//============================================//
+
+
+
+
+	// !!!! ADd vecCnsResult to match_pos into each page  /// Maintail same process with cut & search process !!!!!
+	// !!!!!!!!!!
+
+
+
+	// Initialize Cut & Search Vector==============//
+	for (auto i = 0; i < m_vecImgData.size(); i++) {
+		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+
+		cv::Mat srcImg = m_vecImgData[i]->GetSrcPageGrayImg();
+		if (srcImg.ptr()) {
+			for (auto j = 0; j < ocrRes.size(); j++) {
+				_stCNSResult cns;
+				cns.uuid = 0;
+				cns.pKey = nullptr;
+				cns.pageid = i;
+				cns.objid = j;
+				cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
+				cns.cutimg = srcImg(ocrRes[j].rect).clone();
+				cv::resize(cns.cutimg, cns.cutimg, cv::Size(nRect.width, nRect.height));
+
+				m_vecCnSResults.push_back(std::move(cns));
+			}
+		}
+	}
+	addCnt = 0;
+	totalCnt = m_vecCnSResults.size();
+	//====================================================//
+
+
+	float fTh = 0.75f;
+	for (auto k = 0; k < m_vecCnSResults.size(); k++) {
+		if (m_vecCnSResults[k].pKey == nullptr) {  // Do Cut & Search //
+			m_vecCnSResults[k].fConfi = 1.0f;
+
+			for (auto l = 0; l < m_vecCnSResults.size(); l++) {
+				if (l != k) {
+					// Cut and Search matching //
+					cv::Mat result(1, 1, CV_32FC1);
+					cv::matchTemplate(m_vecCnSResults[k].cutimg, m_vecCnSResults[l].cutimg, result, CV_TM_CCOEFF_NORMED);
+					float fD1 = result.at<float>(0, 0);
+
+					if (fD1 > fTh) {
+						if (m_vecCnSResults[l].pKey == nullptr) {
+							m_vecCnSResults[l].pKey = m_vecCnSResults[k].pKey == nullptr ? &m_vecCnSResults[k] : m_vecCnSResults[k].pKey;
+							m_vecCnSResults[l].fConfi = fD1;
+						}
+						else {  // Change Key Item //
+							if (fD1 > m_vecCnSResults[l].fConfi) {
+								m_vecCnSResults[l].pKey = m_vecCnSResults[k].pKey == nullptr ? &m_vecCnSResults[k] : m_vecCnSResults[k].pKey;
+								m_vecCnSResults[l].fConfi = fD1;
+							}
+						}
+					}
+					//End of CNS ====================================//
+
+				}
+			}
+		}
+		addCnt++;
+	}
+
+
+	// Sorting //
+	unsigned int uid = 65536;
+	for (auto i = 0; i < m_vecCnSResults.size(); i++) {
+		if (m_vecCnSResults[i].pKey == nullptr) {
+			m_mapCnSResult[uid].push_back(std::move(m_vecCnSResults[i]));
+
+			for (auto j = 0; j < m_vecCnSResults.size(); j++) {
+				if (i != j) {
+					if (m_vecCnSResults[j].pKey == &m_vecCnSResults[i]) {
+						m_mapCnSResult[uid].push_back(std::move(m_vecCnSResults[j]));
+					}
+				}
+			}
+
+			uid++;
+		}
+	}
+}

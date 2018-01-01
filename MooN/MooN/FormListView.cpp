@@ -250,3 +250,84 @@ void CFormListView::OnBnClickedCheckAutofill()
 	}
 	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
 }
+
+
+void CFormListView::AddRecord_CNSAll()
+{
+	ResetLogList();
+	CString strItem;
+	std::map<unsigned int, std::vector<_stCNSResult>> mapCns = SINGLETON_DataMng::GetInstance()->GetCNSMatchingResults();
+
+	std::map<unsigned int, std::vector<_stCNSResult>>::iterator iter = mapCns.begin();
+	for (; iter != mapCns.end(); iter++) {
+		unsigned int uuid = iter->first;
+		for (int i = 0; i < iter->second.size(); i++) {
+
+
+			cv::Rect nRect(0, 0, iter->second[i].cutimg.cols, iter->second[i].cutimg.rows);
+			cv::Mat cutImg = cv::Mat(cvSize(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H), iter->second[i].cutimg.type());
+			cutImg.setTo(255);
+			iter->second[i].cutimg.copyTo(cutImg(nRect));
+			
+			CBitmap* pbmp = SINGLETON_DataMng::GetInstance()->GetLogCBitmap(cutImg);
+			cutImg.release();
+
+
+			if (pbmp != NULL) {
+				BITMAP bmpObj;
+				pbmp->GetBitmap(&bmpObj);
+				m_imgList.Add(pbmp, RGB(255, 0, 0));
+				delete pbmp;
+
+				// Add resutl information //
+				m_ctrlList.InsertItem(m_nRecordNum, L"", m_imgListId);
+
+				m_ctrlList.SetItem(m_nRecordNum, 1, LVIF_TEXT, L"", m_imgListId, 0, 0, NULL);	// CODE //
+
+				strItem.Format(L"%3.2f", iter->second[i].fConfi);
+				m_ctrlList.SetItem(m_nRecordNum, 2, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%u", uuid);
+				m_ctrlList.SetItem(m_nRecordNum, 3, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%u", 0);
+				m_ctrlList.SetItem(m_nRecordNum, 4, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%u", 0);
+				m_ctrlList.SetItem(m_nRecordNum, 5, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%u", 0);
+				m_ctrlList.SetItem(m_nRecordNum, 6, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%d%u", (int)(iter->second[i].fConfi), iter->second[i].uuid);
+				m_ctrlList.SetItem(m_nRecordNum, 7, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%u", 0);
+				m_ctrlList.SetItem(m_nRecordNum, 8, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%u", 0);
+				m_ctrlList.SetItem(m_nRecordNum, 9, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%3.2f", 0.75f);
+				m_ctrlList.SetItem(m_nRecordNum, 10, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				m_ctrlList.SetItem(m_nRecordNum, 11, LVIF_TEXT, L"", m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%d", i);
+				m_ctrlList.SetItem(m_nRecordNum, 12, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				//=====For Interaction=====================================================//
+				strItem.Format(L"%d", iter->second[i].pageid);
+				m_ctrlList.SetItem(m_nRecordNum, 13, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+				strItem.Format(L"%d", iter->second[i].objid);
+				m_ctrlList.SetItem(m_nRecordNum, 14, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+				//=========================================================================//
+
+				m_nRecordNum++;
+				m_imgListId++;
+			}
+		}
+
+	}
+}

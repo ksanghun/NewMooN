@@ -485,6 +485,8 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 
 			str.Format(_T("Cut & Search All.....done"));
 			pM->AddOutputString(str, true);
+
+			pM->AddMatchResultCNS();
 		}
 	}
 	//else if (nIDEvent == _UPDATE_PAGE) {
@@ -2780,104 +2782,122 @@ void CMNView::ProcCNSSegments()
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	m_fThreshold = pM->GetThreshold()*0.01f;
 	
-	DoCNSSegments();
+	//DoCNSSegments();
 
-	//CWinThread* pl;
-	//pl = AfxBeginThread(ThreadCNSSegments, this);
-	//SetTimer(_DO_CNS_SEGMENTS, 100, NULL);
+	CWinThread* pl;
+	pl = AfxBeginThread(ThreadCNSSegments, this);
+	SetTimer(_DO_CNS_SEGMENTS, 100, NULL);
 }
 
 bool CMNView::DoCNSSegments()
 {
 	// generate temporary index that start from 65536 ! , except for unicode scope //
-
-
 	m_bIsThreadEnd = false;
 	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	m_addImgCnt = 0;
-	m_loadedImgCnt = imgVec.size();
+	m_loadedImgCnt = 1;
 
-	auto i = 0;
-	for (i = 0; i < imgVec.size(); i++) {
-		std::vector<_stOCRResult> ocrRes = imgVec[i]->GetVecOCRResult();
-		imgVec[i]->SetSelection(true);
-		if (i > 0)	imgVec[i - 1]->SetSelection(false);
-
-		m_resColor.r = (float)(rand() % 255)*0.00392f;
-		m_resColor.g = (float)(rand() % 255)*0.00392f;
-		m_resColor.b = (float)(rand() % 255)*0.00392f;
-
-
-		for (auto j = 0; j < ocrRes.size(); j++) {
-			m_addImgCnt = 0;
-
-			cv::Mat srcImg = imgVec[i]->GetSrcPageGrayImg();
-			cv::Mat cutSrc, cutDst;
-			cv::Rect nRect;
-			if (srcImg.ptr()) {
-				cutSrc.release();
-				// Normalize //
-				nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
-				cutSrc = srcImg(ocrRes[j].rect).clone();
-				cv::resize(cutSrc, cutSrc, cv::Size(nRect.width, nRect.height));
-
-				// 1. Generate Unique Index //
-
-
-				auto k = 0;
-				for (k = 0; k < imgVec.size(); k++) {
-					std::vector<_stOCRResult> ocrResDst = imgVec[k]->GetVecOCRResult();
-					for (auto l = 0; l < ocrResDst.size(); l++) {
-
-					//	if ((i == k) && (j == l)) continue;			// skip same character!!
-
-						cv::Mat dstImg = imgVec[k]->GetSrcPageGrayImg();
-						if (dstImg.ptr()) {
-							cutDst.release();
-							nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrResDst[l].rect);
-							cutDst = dstImg(ocrResDst[l].rect).clone();
-							cv::resize(cutDst, cutDst, cv::Size(nRect.width, nRect.height));
-
-							// Match cutSrc with cutDst
-							// Add to matching group //
-							if (cutSrc.cols == cutDst.cols) {
-								cv::Mat result(1, 1, CV_32FC1);
-								cv::matchTemplate(cutSrc, cutDst, result, CV_TM_CCOEFF_NORMED);
-								float fD1 = result.at<float>(0, 0);
-								//cv::matchTemplate(cutDst, cutSrc, result, CV_TM_CCOEFF_NORMED);
-								//float fD2 = result.at<float>(0, 0);
-								if (fD1  > ocrResDst[l].fConfidence) {
-									imgVec[k]->UpdateOCRCode(L"T", fD1, l);
-								}								
-							}
-							//cv::imshow("cutSrc", cutSrc);
-							//cv::imshow("cutDst", cutDst);
-
-
-
-						}// End of if srcimg is ture !!
-					}
-
-
-
-					imgVec[k]->SetIsSearched(true);
-					if (k > 0)	imgVec[k - 1]->SetIsSearched(false);
-					m_addImgCnt++;
-				}
-				imgVec[k - 1]->SetIsSearched(false);
-			}  // End of if srcimg is ture !!
-
-
-			cutSrc.release();
-			cutDst.release();
-
-
-
-
-		}	
-	}
-	imgVec[i-1]->SetSelection(false);	
+	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt);
 	m_bIsThreadEnd = true;
+
+	//auto i = 0;
+	//// Prepare Cut&Search matching //
+	//std::vector<_stCNSResult> vecCns;
+	//for (i = 0; i < imgVec.size(); i++) {
+	//	std::vector<_stOCRResult> ocrRes = imgVec[i]->GetVecOCRResult();
+	//	for (auto j = 0; j < ocrRes.size(); j++) {
+
+	//		_stCNSResult cns;
+	//		cns.uuid = 0;
+	//		cns.pKey = nullptr;
+	//		cns.pageid = i;
+	//		cns.objid = j;
+	//	}		
+	//}
+
+	//for (i = 0; i < imgVec.size(); i++) {
+	//	std::vector<_stOCRResult> ocrRes = imgVec[i]->GetVecOCRResult();
+	//	imgVec[i]->SetSelection(true);
+	//	if (i > 0)	imgVec[i - 1]->SetSelection(false);
+
+	//	m_resColor.r = (float)(rand() % 255)*0.00392f;
+	//	m_resColor.g = (float)(rand() % 255)*0.00392f;
+	//	m_resColor.b = (float)(rand() % 255)*0.00392f;
+
+
+	//	for (auto j = 0; j < ocrRes.size(); j++) {
+	//		m_addImgCnt = 0;
+
+	//		cv::Mat srcImg = imgVec[i]->GetSrcPageGrayImg();
+	//		cv::Mat cutSrc, cutDst;
+	//		cv::Rect nRect;
+	//		if (srcImg.ptr()) {
+	//			cutSrc.release();
+	//			// Normalize //
+	//			nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
+	//			cutSrc = srcImg(ocrRes[j].rect).clone();
+	//			cv::resize(cutSrc, cutSrc, cv::Size(nRect.width, nRect.height));
+
+	//			// 1. Generate Unique Index //
+
+	//
+
+
+	//			auto k = 0;
+	//			for (k = 0; k < imgVec.size(); k++) {
+	//				std::vector<_stOCRResult> ocrResDst = imgVec[k]->GetVecOCRResult();
+	//				for (auto l = 0; l < ocrResDst.size(); l++) {
+
+	//				//	if ((i == k) && (j == l)) continue;			// skip same character!!
+
+	//					cv::Mat dstImg = imgVec[k]->GetSrcPageGrayImg();
+	//					if (dstImg.ptr()) {
+	//						cutDst.release();
+	//						nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrResDst[l].rect);
+	//						cutDst = dstImg(ocrResDst[l].rect).clone();
+	//						cv::resize(cutDst, cutDst, cv::Size(nRect.width, nRect.height));
+
+	//						// Match cutSrc with cutDst
+	//						// Add to matching group //
+	//						if (cutSrc.cols == cutDst.cols) {
+	//							cv::Mat result(1, 1, CV_32FC1);
+	//							cv::matchTemplate(cutSrc, cutDst, result, CV_TM_CCOEFF_NORMED);
+	//							float fD1 = result.at<float>(0, 0);
+	//							//cv::matchTemplate(cutDst, cutSrc, result, CV_TM_CCOEFF_NORMED);
+	//							//float fD2 = result.at<float>(0, 0);
+	//							//if (fD1  > ocrResDst[l].fConfidence) {
+	//							if (fD1  > 0.85f) {
+	//								imgVec[k]->UpdateOCRCode(L"T", fD1, l);
+	//							}								
+	//						}
+	//						//cv::imshow("cutSrc", cutSrc);
+	//						//cv::imshow("cutDst", cutDst);
+
+
+
+	//					}// End of if srcimg is ture !!
+	//				}
+
+
+
+	//				imgVec[k]->SetIsSearched(true);
+	//				if (k > 0)	imgVec[k - 1]->SetIsSearched(false);
+	//				m_addImgCnt++;
+	//			}
+	//			imgVec[k - 1]->SetIsSearched(false);
+	//		}  // End of if srcimg is ture !!
+
+
+	//		cutSrc.release();
+	//		cutDst.release();
+
+
+
+
+	//	}	
+	//}
+	//imgVec[i-1]->SetSelection(false);	
+	//m_bIsThreadEnd = true;
 //==============================//
 
 

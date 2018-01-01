@@ -14,6 +14,7 @@ public:
 	virtual ~CDockFormView();
 
 	void AddMatchResult();
+	void AddMatchResultCNS();
 	void ResizeListColSize(int _maxwidth);
 	void ResetLogList();
 protected:

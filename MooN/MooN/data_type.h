@@ -484,6 +484,10 @@ struct _stOCRResult {
 	int type;  // 0 Eng, 1: chi, 2: Kor   + line information without changing format
 	bool bNeedToDB;
 
+
+	bool IsMatched;
+	unsigned short lineid;
+
 	void init() {
 		fConfidence = 0.0f;
 		rect = cv::Rect(0, 0, 0, 0);
@@ -491,6 +495,33 @@ struct _stOCRResult {
 		memset(strCode, 0x00, sizeof(strCode));
 		bNeedToDB = false;
 		hcode_s = 5381;
+	};
+
+	void set(cv::Rect _r, float _fConfi, wchar_t* _code, unsigned short _line){
+		rect = _r;
+		fConfidence = _fConfi;
+		memcpy(strCode, _code, sizeof(wchar_t)*_MAX_WORD_SIZE);
+		type = 0;
+		bNeedToDB = false;
+		hcode_s = 5381;
+		lineid = _line;
+	};
+};
+
+struct _stOCRResultDB {
+	cv::Rect rect;
+	float fConfidence;
+	wchar_t strCode[_MAX_WORD_SIZE];
+	unsigned short lineId;
+	
+	// Reserve Code //
+	char reserve[64];
+	void set(cv::Rect _r, float _fConfi, wchar_t* _code, unsigned short _line) {
+		rect = _r;
+		fConfidence = _fConfi;
+		memcpy(strCode, _code, sizeof(wchar_t)*_MAX_WORD_SIZE);
+		lineId = _line;
+		memset(reserve, 0x00, 64);
 	};
 };
 
@@ -500,6 +531,16 @@ struct _stSDBWord {
 	cv::Rect rect;
 	float fConfi;
 	float fDiff;
+};
+
+struct _stCNSResult {
+	unsigned int uuid;
+	unsigned int pageid;
+	unsigned int objid;
+	_stCNSResult* pKey;
+	cv::Mat cutimg;
+
+	float fConfi;
 };
 
 typedef std::vector<_stSDBWord> _stSDB;

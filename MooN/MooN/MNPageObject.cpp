@@ -1126,6 +1126,8 @@ void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int selid)
 	}
 }
 
+
+
 cv::Rect CMNPageObject::GetSelParaRect(int selid)
 {
 	if ((selid < m_paragraph.size()) && (selid >= 0)) {
@@ -1194,18 +1196,23 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 
 
 		for (int i = 0; i < wnum; i++) {
-			_stOCRResult res;
-			res.init();
-			fread(&res, sizeof(_stOCRResult), 1, fp);
-			m_ocrResult.push_back(res);
+			_stOCRResult ocrRes;
+			//res.init();
+			//fread(&res, sizeof(_stOCRResult), 1, fp);
+			//m_ocrResult.push_back(res);
 			// Generate SDB MAP //
 		//	if()
+
+			_stOCRResultDB res;
+			fread(&res, sizeof(_stOCRResultDB), 1, fp);
+			ocrRes.set(res.rect, res.fConfidence, res.strCode, res.lineId);
+			m_ocrResult.push_back(std::move(ocrRes));
 		}
 
 		for (int i = 0; i < pnum; i++) {
 			stParapgraphInfo data;
 			fread(&data, sizeof(stParapgraphInfo), 1, fp);	
-			m_paragraph.push_back(data);			
+			m_paragraph.push_back(std::move(data));			
 		}
 		
 		//char char_str[_MAX_WORD_SIZE] = { 0, };
@@ -1371,9 +1378,13 @@ void CMNPageObject::WritePageInfo()
 		fwrite(&wnum, sizeof(int), 1, fp);
 		fwrite(&pnum, sizeof(int), 1, fp);
 
+
+		_stOCRResultDB writeItem;
 		for (int i = 0; i < wnum; i++) {
 			m_ocrResult[i].bNeedToDB = false;  // should be mandatory //
-			fwrite(&m_ocrResult[i], sizeof(_stOCRResult), 1, fp);
+			
+			writeItem.set(m_ocrResult[i].rect, m_ocrResult[i].fConfidence, m_ocrResult[i].strCode, m_ocrResult[i].lineid);
+			fwrite(&writeItem, sizeof(_stOCRResultDB), 1, fp);
 		}
 
 		for (int i = 0; i < pnum; i++) {
