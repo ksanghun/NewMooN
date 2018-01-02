@@ -21,6 +21,8 @@ CZListCtrlLog::CZListCtrlLog()
 	m_selItem = -1;
 	m_selItem = -1;
 	m_strSearchId = L"";
+
+	m_currDrawId = -1;
 }
 
 CZListCtrlLog::~CZListCtrlLog()
@@ -222,7 +224,7 @@ void CZListCtrlLog::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 		// We'll cycle the colors through red, green, and light blue.
 
 		int itemid = (int)(pNMCD->nmcd).dwItemSpec; //this is item id
-		int sid = _wtoi(GetItemText(itemid, 2));
+		int sid = _wtoi(GetItemText(itemid, 3));
 		int confi = _wtoi(GetItemText(itemid, 2));
 
 		if (confi > 75)
@@ -236,6 +238,19 @@ void CZListCtrlLog::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 
 		else 
 			pNMCD->clrText = RGB(255, 0, 0);
+
+
+
+		// change background //
+		if (sid % 2 == 0) {
+			pNMCD->clrText = RGB(0, 0, 0);
+			pNMCD->clrTextBk = RGB(210, 210, 250);
+		}
+		else {
+			pNMCD->clrText = RGB(0, 0, 0);
+			pNMCD->clrTextBk = RGB(210, 250, 210);
+		}
+
 
 		// Tell Windows to paint the control itself.
 		*pResult = CDRF_DODEFAULT;

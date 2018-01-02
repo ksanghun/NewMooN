@@ -263,14 +263,33 @@ void CFormListView::AddRecord_CNSAll()
 		unsigned int uuid = iter->first;
 		for (int i = 0; i < iter->second.size(); i++) {
 
+			if (iter->second[i].cutimg.ptr() == nullptr)
+				continue;
 
 			cv::Rect nRect(0, 0, iter->second[i].cutimg.cols, iter->second[i].cutimg.rows);
-			cv::Mat cutImg = cv::Mat(cvSize(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H), iter->second[i].cutimg.type());
-			cutImg.setTo(255);
-			iter->second[i].cutimg.copyTo(cutImg(nRect));
-			
-			CBitmap* pbmp = SINGLETON_DataMng::GetInstance()->GetLogCBitmap(cutImg);
-			cutImg.release();
+
+			CBitmap* pbmp = 0;
+			if (nRect.width > _NORMALIZE_SIZE_W) {
+				nRect.width = _NORMALIZE_SIZE_W;
+				cv::Mat tmpimg = iter->second[i].cutimg.clone();
+				cv::resize(tmpimg, tmpimg, cv::Size(nRect.width, nRect.height));
+
+				cv::Mat cutImg = cv::Mat(cvSize(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H), iter->second[i].cutimg.type());
+				cutImg.setTo(255);
+				tmpimg.copyTo(cutImg(nRect));
+
+				pbmp = SINGLETON_DataMng::GetInstance()->GetLogCBitmap(cutImg);
+				cutImg.release();
+				tmpimg.release();
+			}
+			else {
+				cv::Mat cutImg = cv::Mat(cvSize(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H), iter->second[i].cutimg.type());
+				cutImg.setTo(255);
+				iter->second[i].cutimg.copyTo(cutImg(nRect));
+
+				pbmp = SINGLETON_DataMng::GetInstance()->GetLogCBitmap(cutImg);
+				cutImg.release();
+			}
 
 
 			if (pbmp != NULL) {
@@ -299,7 +318,7 @@ void CFormListView::AddRecord_CNSAll()
 				strItem.Format(L"%u", 0);
 				m_ctrlList.SetItem(m_nRecordNum, 6, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
 
-				strItem.Format(L"%d%u", (int)(iter->second[i].fConfi), iter->second[i].uuid);
+				strItem.Format(L"%d%u", (int)(iter->second[i].fConfi), iter->second[i].searchid);
 				m_ctrlList.SetItem(m_nRecordNum, 7, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
 
 				strItem.Format(L"%u", 0);

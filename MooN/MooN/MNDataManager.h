@@ -11,6 +11,7 @@
 
 #define _NORMALIZE_SIZE_H 32
 #define _NORMALIZE_SIZE_W 32*5
+//#define _NORMALIZE_SIZE_W 32*8
 #define ANI_FRAME_CNT 10
 
 #define DB_CLASS_NUM 8
@@ -105,7 +106,8 @@ public:
 	CMNPageObject* PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode);
 	void PopImageDataSet(unsigned long _pcode);
 	CBitmap* GetLogCBitmap(cv::Mat& pimg);
-	cv::Rect GetNomalizedWordSize(cv::Rect rect);
+	cv::Rect GetNomalizedSize(cv::Rect rect);
+	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect, int basepixel);
 	// Setter //
 	void SetMatchingResults();
 	void SortMatchingResults();
@@ -135,7 +137,7 @@ public:
 	_stExtractionSetting GetExtractionSetting();// { return m_extractonInfo; }
 
 	void SetUserDBFolder(CString str);// { m_strUserDataFolder = str; }
-	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect);
+	
 
 	void AddSDBTable(unsigned int hcode, wchar_t* strCode);
 	void UpdateSDBFiles();
@@ -174,7 +176,7 @@ private:
 
 
 	// For Cut&Search Matching //
-	std::vector<_stCNSResult> m_vecCnSResults;
+	std::vector<_stCNSResult> vecCnSResults;
 	std::map<unsigned int, std::vector<_stCNSResult>> m_mapCnSResult;
 	//=================================//
 

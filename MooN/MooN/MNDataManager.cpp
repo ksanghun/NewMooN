@@ -475,7 +475,7 @@ CBitmap* CMNDataManager::GetLogCBitmap(cv::Mat& pimg)
 }
 
 
-cv::Rect CMNDataManager::GetNomalizedWordSize(cv::Rect rect)
+cv::Rect CMNDataManager::GetNomalizedSize(cv::Rect rect)
 {
 	cv::Rect norRect;
 	norRect.x = 0;
@@ -547,7 +547,7 @@ void CMNDataManager::SetMatchingResults()
 					matchRes.strCode = "";
 
 					// hold cut image data --> should be deleted //
-					cv::Rect nRect = GetNomalizedWordSize(matches[j].rect);
+					cv::Rect nRect = GetNomalizedSize(matches[j].rect);
 					cv::Mat tmpcut = srcImg(matches[j].rect).clone();
 					cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
 
@@ -700,16 +700,25 @@ _stExtractionSetting CMNDataManager::GetExtractionSetting()
 	return m_extractonInfo; 
 }
 
-int CMNDataManager::GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect)
+int CMNDataManager::GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect, int basepixel)
 {
 	outRect.x = 0;
 	outRect.y = 0;
 
+	basepixel /= 1.5f;
+
 	float fScale = (float)_NORMALIZE_SIZE_H / (float)inrect.height;
+
+	if ((inrect.width < basepixel) || (inrect.height < basepixel)) {
+		outRect.width = _NORMALIZE_SIZE_H;
+		outRect.height = _NORMALIZE_SIZE_H;
+		return 0;		// class 1 !!
+	}
+
 	outRect.width = inrect.width*fScale;
 	outRect.height = inrect.height*fScale;
 
-	int wcnt = ((float)outRect.width / (float)_NORMALIZE_SIZE_H)+0.5f;
+	int wcnt = ((float)outRect.width / (float)_NORMALIZE_SIZE_H);
 	if (wcnt < 1) {		wcnt = 1;	}
 	if (wcnt > 8) {		wcnt = 8;	}
 
@@ -728,7 +737,7 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 	//cv::imshow("after", cutimg);
 
 	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
-	int classid = GetNomalizedWordSize(ocrres.rect, norRect) - 1;
+	int classid = GetNomalizedWordSize(ocrres.rect, norRect, 32) - 1;
 	int imgid = m_refImgClass[classid].nCurrImgId;
 //	cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
 	cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
@@ -743,8 +752,7 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		rect.y = (pos / m_refImgClass[classid].wNum)*h;
 		rect.width = w;
 		rect.height = h;
-
-
+		
 		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 		int clen = m_refImgClass[classid].maxCharLen;
@@ -837,28 +845,28 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 
 void CMNDataManager::ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight)
 {
-	int basePixel = 8;	
+	int basePixel = 16;	
 	cv::Rect copyRect = cv::Rect(0,0,norWidth, norHeight);
 
 	if ((cutimg.cols < basePixel) && (cutimg.rows < basePixel)) {// in case of small character: , .  smaller than 8 pixel;
-		copyRect.x = 12;
-		copyRect.y = 12;
+		copyRect.x = 8;
+		copyRect.y = 8;
 		copyRect.width = basePixel;
 		copyRect.height = basePixel;
 	}
 	else {		// Check aspect ratio //
 		float aRatio = (float)cutimg.cols / (float)cutimg.rows;
-		//if (aRatio > 2.67f) {  // horizontal
-		//	copyRect.x = 0;
-		//	copyRect.y = 10;
-		//	copyRect.width = norWidth;
-		//	copyRect.height = 12;
-		//}
-		//else 
-		if (aRatio < 0.375f) {  // vertical //
-			copyRect.x = 10;
+		if ((aRatio > 2.67f) && (cutimg.rows < basePixel)){  // horizontal
+			copyRect.x = 0;
+			copyRect.y = 8;
+			copyRect.width = norWidth;
+			copyRect.height = norHeight-8*2;
+		}
+
+		if ((aRatio < 0.375f) && (cutimg.cols < basePixel)){  // vertical //
+			copyRect.x = 8;
 			copyRect.y = 0;
-			copyRect.width = 12;
+			copyRect.width = norWidth-8*2;
 			copyRect.height = norHeight;
 		}
 	}	
@@ -873,7 +881,7 @@ void CMNDataManager::ProcDBTrainingFromCutSearch()
 	cv::Rect norRect;
 	for (; iter != m_mapMatchResults.end(); iter++) {
 		for (int i = 0; i < iter->second.size(); i++) {
-			int classid = GetNomalizedWordSize(iter->second[i].rect, norRect) - 1;
+			int classid = GetNomalizedWordSize(iter->second[i].rect, norRect, 32) - 1;
 			int imgid = m_refImgClass[classid].nCurrImgId;
 			cv::Mat resimg = iter->second[i].cutImg.clone();
 
@@ -930,7 +938,7 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 	
 	cv::Rect imgRect = cv::Rect(0, 0, cutimg.cols, cutimg.rows);
 	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
-	int classid = GetNomalizedWordSize(imgRect, norRect) - 1;
+	int classid = GetNomalizedWordSize(imgRect, norRect, 32) - 1;
 	int imgid = m_refImgClass[classid].nCurrImgId;
 
 	cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
@@ -989,9 +997,9 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 				continue;
 
 
-			cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect).clone();
+			cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect);
 			cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
-			int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect) - 1;
+			int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect, 32) - 1;
 			int imgid = m_refImgClass[classid].nCurrImgId;
 
 			cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
@@ -1668,7 +1676,7 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 						if (res.strcode == 5381)	continue;
 						if (res.fConfi < 0.8f)	continue;
 
-						cv::Rect nRect = GetNomalizedWordSize(res.rect);
+						cv::Rect nRect = GetNomalizedSize(res.rect);
 						cv::Mat tmpcut = pageImg(res.rect).clone();
 						//cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
 
@@ -1944,8 +1952,8 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 
 						// veryfi rect //
 						//cv::Mat cutImg = pageImg(res.rect).clone();
-						cv::Rect nRect = GetNomalizedWordSize(res.rect);
-						cv::Mat tmpcut = pageImg(res.rect).clone();
+						cv::Rect nRect = GetNomalizedSize(res.rect);
+						cv::Mat tmpcut = pageImg(res.rect);
 						//cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
 
 						cv::Mat cutImg = cv::Mat(cvSize(nRect.width, nRect.height), tmpcut.type());
@@ -2261,10 +2269,13 @@ bool CMNDataManager::IsSupportFormat(CString strPath)
 void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt)
 {
 	// Prepare Cut&Search matching //	
-	for (auto k = 0; k < m_vecCnSResults.size(); k++) {
-		m_vecCnSResults[k].cutimg.release();
+//	std::vector<_stCNSResult> vecCnSResults;
+//	std::map<unsigned int, std::vector<_stCNSResult>> mapCnSResult;
+
+	for (auto k = 0; k < vecCnSResults.size(); k++) {
+		vecCnSResults[k].cutimg.release();
 	}
-	m_vecCnSResults.clear();
+	vecCnSResults.clear();
 	m_mapCnSResult.clear();
 	//============================================//
 
@@ -2273,6 +2284,16 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 
 	// !!!! ADd vecCnsResult to match_pos into each page  /// Maintail same process with cut & search process !!!!!
 	// !!!!!!!!!!
+	int averheight = 0;
+	int cnt = 0;
+	for (auto i = 0; i < m_vecImgData.size(); i++) {
+		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+		for (auto j = 0; j < ocrRes.size(); j++) {
+			averheight += ocrRes[j].rect.height;
+			cnt++;
+		}
+	}
+	averheight /= cnt;
 
 
 
@@ -2284,44 +2305,84 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		if (srcImg.ptr()) {
 			for (auto j = 0; j < ocrRes.size(); j++) {
 				_stCNSResult cns;
-				cns.uuid = 0;
-				cns.pKey = nullptr;
+				cns.searchid = 0;
+		//		cns.pKey = nullptr;
 				cns.pageid = i;
 				cns.objid = j;
-				cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
-				cns.cutimg = srcImg(ocrRes[j].rect).clone();
-				cv::resize(cns.cutimg, cns.cutimg, cv::Size(nRect.width, nRect.height));
+				cns.rect = ocrRes[j].rect;
+			//	cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
+			//	cv::Rect nRect = GetNomalizedSize(ocrRes[j].rect);	
+				cv::Rect nRect;
+				GetNomalizedWordSize(ocrRes[j].rect, nRect, averheight);
 
-				m_vecCnSResults.push_back(std::move(cns));
+
+				//	cns.cutimg = srcImg(ocrRes[j].rect).clone();
+				cv::Mat cutimg = srcImg(ocrRes[j].rect);
+			//	cv::resize(cutimg, cutimg, cv::Size(nRect.width, nRect.height));
+
+				//if (nRect.width > 32) {
+				//	cv::imshow("error", cutimg);
+				//	return;
+				//}
+
+				cns.cutimg = cv::Mat(cvSize(nRect.width, nRect.height), srcImg.type());
+				cns.cutimg.setTo(255);
+			//	cv::Mat cutimg = srcImg(ocrRes[j].rect);
+				ResizeCutImageByRatio(cns.cutimg, cutimg, nRect.width, nRect.height);
+
+				vecCnSResults.push_back(std::move(cns));
 			}
 		}
 	}
 	addCnt = 0;
-	totalCnt = m_vecCnSResults.size();
+	totalCnt = vecCnSResults.size();
 	//====================================================//
 
 
-	float fTh = 0.75f;
-	for (auto k = 0; k < m_vecCnSResults.size(); k++) {
-		if (m_vecCnSResults[k].pKey == nullptr) {  // Do Cut & Search //
-			m_vecCnSResults[k].fConfi = 1.0f;
+	float fTh = 1.2f;
+	unsigned int searchid= 65536;
+	for (auto k = 0; k < vecCnSResults.size(); k++) {
+		if (vecCnSResults[k].searchid == 0) {  // Do Cut & Search //
+			vecCnSResults[k].fConfi = 1.0f;
+			vecCnSResults[k].searchid = searchid;
 
-			for (auto l = 0; l < m_vecCnSResults.size(); l++) {
-				if (l != k) {
+			for (auto l = 0; l < vecCnSResults.size(); l++) {
+				if ((l != k) && (vecCnSResults[k].cutimg.cols == vecCnSResults[l].cutimg.cols)){   // Compare with same size images !!
 					// Cut and Search matching //
-					cv::Mat result(1, 1, CV_32FC1);
-					cv::matchTemplate(m_vecCnSResults[k].cutimg, m_vecCnSResults[l].cutimg, result, CV_TM_CCOEFF_NORMED);
-					float fD1 = result.at<float>(0, 0);
+					//cv::Mat result(1, 1, CV_32FC1);
 
-					if (fD1 > fTh) {
-						if (m_vecCnSResults[l].pKey == nullptr) {
-							m_vecCnSResults[l].pKey = m_vecCnSResults[k].pKey == nullptr ? &m_vecCnSResults[k] : m_vecCnSResults[k].pKey;
-							m_vecCnSResults[l].fConfi = fD1;
+					cv::Mat dstimg1 = cv::Mat(vecCnSResults[l].cutimg.rows + 4, vecCnSResults[l].cutimg.cols + 4, CV_8UC1, cv::Scalar(255));
+					vecCnSResults[l].cutimg.copyTo(dstimg1(cv::Rect(2, 2, vecCnSResults[l].cutimg.cols, vecCnSResults[l].cutimg.rows)));
+
+					cv::Mat dstimg2 = cv::Mat(vecCnSResults[k].cutimg.rows + 4, vecCnSResults[k].cutimg.cols + 4, CV_8UC1, cv::Scalar(255));
+					vecCnSResults[k].cutimg.copyTo(dstimg2(cv::Rect(2, 2, vecCnSResults[k].cutimg.cols, vecCnSResults[k].cutimg.rows)));
+
+					//cv::matchTemplate(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg, result, CV_TM_CCOEFF_NORMED);
+					//float fD1 = result.at<float>(0, 0);
+
+					float fD1 = TemplateMatching(vecCnSResults[k].cutimg, dstimg1);		
+					float fD2 = TemplateMatching(vecCnSResults[l].cutimg, dstimg2);
+
+					//if (fD1 > 0.99f) {
+					//	cv::imshow("src", vecCnSResults[k].cutimg);
+					//	cv::imshow("dst", vecCnSResults[l].cutimg);
+					//}
+
+					if ((fD1+fD2) > fTh) {
+						if (vecCnSResults[l].searchid == 0) {
+							vecCnSResults[l].searchid = vecCnSResults[k].searchid;
+						//	vecCnSResults[l].searchid = vecCnSResults[k].pKey == nullptr ? &vecCnSResults[k] : vecCnSResults[k].pKey;
+							vecCnSResults[l].fConfi = fD1;
 						}
 						else {  // Change Key Item //
-							if (fD1 > m_vecCnSResults[l].fConfi) {
-								m_vecCnSResults[l].pKey = m_vecCnSResults[k].pKey == nullptr ? &m_vecCnSResults[k] : m_vecCnSResults[k].pKey;
-								m_vecCnSResults[l].fConfi = fD1;
+							if (fD1 > vecCnSResults[l].fConfi) {
+								vecCnSResults[l].searchid = vecCnSResults[k].searchid;
+						//		vecCnSResults[l].pKey = vecCnSResults[k].pKey == nullptr ? &vecCnSResults[k] : vecCnSResults[k].pKey;
+								vecCnSResults[l].fConfi = fD1;
+							}
+							else {   // controversal !!  MERGE ??
+								vecCnSResults[k].searchid = vecCnSResults[l].searchid;
+								vecCnSResults[k].fConfi = fD1;
 							}
 						}
 					}
@@ -2329,26 +2390,31 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 
 				}
 			}
+			searchid++;
 		}
 		addCnt++;
 	}
 
 
-	// Sorting //
+	// Classification //
 	unsigned int uid = 65536;
-	for (auto i = 0; i < m_vecCnSResults.size(); i++) {
-		if (m_vecCnSResults[i].pKey == nullptr) {
-			m_mapCnSResult[uid].push_back(std::move(m_vecCnSResults[i]));
+	for (auto i = 0; i < vecCnSResults.size(); i++) {
+		m_mapCnSResult[vecCnSResults[i].searchid].push_back(std::move(vecCnSResults[i]));
 
-			for (auto j = 0; j < m_vecCnSResults.size(); j++) {
-				if (i != j) {
-					if (m_vecCnSResults[j].pKey == &m_vecCnSResults[i]) {
-						m_mapCnSResult[uid].push_back(std::move(m_vecCnSResults[j]));
-					}
-				}
-			}
+		
+	////	if (vecCnSResults[i].searchid == nullptr) {
+	//		mapCnSResult[uid].push_back(std::move(vecCnSResults[i]));
 
-			uid++;
-		}
+	//		for (auto j = 0; j < vecCnSResults.size(); j++) {
+	//			if (i != j) {
+	//				if (vecCnSResults[j].pKey == &vecCnSResults[i]) {
+	//					mapCnSResult[uid].push_back(std::move(m_vecCnSResults[j]));
+	//				}
+	//			}
+	//		}
+
+	//		uid++;
+	//	}
 	}
+	// Add Match result to each page //
 }

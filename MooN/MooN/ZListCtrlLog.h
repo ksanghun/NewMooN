@@ -59,6 +59,8 @@ protected:
 	int nItem, nSubItem;
 	int m_nCulNum, m_nRecordNum;
 
+	int m_currDrawId;
+
 	afx_msg LRESULT OnPostSubclassListview(WPARAM wParam, LPARAM lParam);
 
 	DECLARE_MESSAGE_MAP()

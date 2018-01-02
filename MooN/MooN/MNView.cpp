@@ -2783,7 +2783,7 @@ void CMNView::ProcCNSSegments()
 	m_fThreshold = pM->GetThreshold()*0.01f;
 	
 	//DoCNSSegments();
-
+	//pM->AddMatchResultCNS();
 	CWinThread* pl;
 	pl = AfxBeginThread(ThreadCNSSegments, this);
 	SetTimer(_DO_CNS_SEGMENTS, 100, NULL);

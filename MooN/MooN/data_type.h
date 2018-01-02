@@ -534,11 +534,12 @@ struct _stSDBWord {
 };
 
 struct _stCNSResult {
-	unsigned int uuid;
+	unsigned int searchid;
 	unsigned int pageid;
 	unsigned int objid;
-	_stCNSResult* pKey;
+//	_stCNSResult* pKey;
 	cv::Mat cutimg;
+	cv::Rect rect;
 
 	float fConfi;
 };
