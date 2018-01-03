@@ -2339,7 +2339,7 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	//====================================================//
 
 
-	float fTh = 1.2f;
+	float fTh = 1.5f;
 	unsigned int searchid= 65536;
 	for (auto k = 0; k < vecCnSResults.size(); k++) {
 		if (vecCnSResults[k].searchid == 0) {  // Do Cut & Search //
