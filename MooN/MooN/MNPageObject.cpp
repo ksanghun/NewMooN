@@ -791,8 +791,11 @@ bool CMNPageObject::IsDuplicate(stMatchInfo& info, int search_size)
 {
 	bool IsDup = false;
 	for (int i = 0; i < m_matched_pos.size(); i++) {
-		float fDist = mtDistance(info.pos, m_matched_pos[i].pos);
-		if (fDist < search_size) {
+
+		cv::Rect andRect_overlap = (info.rect & m_matched_pos[i].rect);
+		if (andRect_overlap.area() > 1) {		// intersected
+		//float fDist = mtDistance(info.pos, m_matched_pos[i].pos);
+		//if (fDist < search_size) {
 			IsDup = true;
 			if (info.accuracy > m_matched_pos[i].accuracy) {  // take more accurate one !!
 				m_matched_pos[i] = info;

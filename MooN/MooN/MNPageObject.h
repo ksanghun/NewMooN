@@ -21,6 +21,7 @@ struct stMatchInfo
 	bool IsAdded;
 
 	_CUTINFO cInfo;
+//	cv::Mat cutImg;
 };
 
 struct stParapgraphInfo

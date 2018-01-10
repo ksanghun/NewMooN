@@ -484,9 +484,12 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			KillTimer(_DO_CNS_SEGMENTS);
 
 			str.Format(_T("Cut & Search All.....done"));
-			pM->AddOutputString(str, true);
+			pM->AddOutputString(str, true);			
 
-			pM->AddMatchResultCNS();
+		//	pM->AddMatchResultCNS();
+			SINGLETON_DataMng::GetInstance()->SetMatchingResults();
+			pM->AddOutputString(SINGLETON_DataMng::GetInstance()->GetCNSResultInfo(), false);
+			pM->AddMatchResult();
 		}
 	}
 	//else if (nIDEvent == _UPDATE_PAGE) {
@@ -881,6 +884,7 @@ bool CMNView::DoSearch()
 						mInfo.searchId = m_cnsSearchId;
 						mInfo.cInfo = m_cutInfo;
 						mInfo.strCode = "-";
+
 
 						m_resColor.a = ((fD)*m_colorAccScale)*0.5f;
 						mInfo.color = m_resColor;
@@ -2562,7 +2566,7 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 		//r.height += 2;
 
 		cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
-		cv::imshow("cword", imgword);
+		//cv::imshow("cword", imgword);
 
 		std::vector<_stOCRResult> ocrTmp;
 		float fScale = 1.0f;
@@ -2782,8 +2786,13 @@ void CMNView::ProcCNSSegments()
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	m_fThreshold = pM->GetThreshold()*0.01f;
 	
-	//DoCNSSegments();
-	//pM->AddMatchResultCNS();
+	//DoCNSSegments();	
+	//SINGLETON_DataMng::GetInstance()->SetMatchingResults();
+	//SINGLETON_DataMng::GetInstance()->SortMatchingResults();
+	//pM->AddMatchResult();
+
+
+	pM->AddMatchResultCNS();
 	CWinThread* pl;
 	pl = AfxBeginThread(ThreadCNSSegments, this);
 	SetTimer(_DO_CNS_SEGMENTS, 100, NULL);
@@ -2797,7 +2806,7 @@ bool CMNView::DoCNSSegments()
 	m_addImgCnt = 0;
 	m_loadedImgCnt = 1;
 
-	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt);
+	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt, m_fThreshold);
 	m_bIsThreadEnd = true;
 
 	//auto i = 0;

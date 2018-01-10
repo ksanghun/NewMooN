@@ -50,6 +50,7 @@ public:
 	BOOL	m_bIsAutoFill;
 
 
+
 protected:
 
 	virtual void PreSubclassWindow();
@@ -60,6 +61,7 @@ protected:
 	int m_nCulNum, m_nRecordNum;
 
 	int m_currDrawId;
+	int m_colorid;
 
 	afx_msg LRESULT OnPostSubclassListview(WPARAM wParam, LPARAM lParam);
 

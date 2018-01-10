@@ -22,7 +22,8 @@ CZListCtrlLog::CZListCtrlLog()
 	m_selItem = -1;
 	m_strSearchId = L"";
 
-	m_currDrawId = -1;
+	m_currDrawId = 0;
+	m_colorid = 0;
 }
 
 CZListCtrlLog::~CZListCtrlLog()
@@ -117,6 +118,8 @@ void CZListCtrlLog::OnNMClick(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO: Add your control notification handler code here
+	m_currDrawId = 0;
+	m_colorid = 0;
 
 	Invalidate();
 	HWND hWnd1 = GetSafeHwnd();
@@ -195,6 +198,9 @@ BOOL CZListCtrlLog::PreTranslateMessage(MSG* pMsg)
 	// TODO: Add your specialized code here and/or call the base class
 	if (pMsg->message == WM_KEYDOWN)
 	{
+		m_currDrawId = 0;
+		m_colorid = 0;
+
 		if (pMsg->wParam == VK_RETURN || pMsg->wParam == VK_ESCAPE)
 		{
 			UpdateCodeValue();
@@ -227,29 +233,51 @@ void CZListCtrlLog::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 		int sid = _wtoi(GetItemText(itemid, 3));
 		int confi = _wtoi(GetItemText(itemid, 2));
 
-		if (confi > 75)
-			pNMCD->clrText = RGB(0, 0, 255);
+		//if (confi > 75)
+		//	pNMCD->clrText = RGB(0, 0, 255);
 
-		else if ((confi > 65) && (confi <= 75))
-			pNMCD->clrText = RGB(0, 200, 0);
+		//else if ((confi > 65) && (confi <= 75))
+		//	pNMCD->clrText = RGB(0, 200, 0);
 
-		else if ((confi > 55) && (confi <= 65))
-			pNMCD->clrText = RGB(255, 125, 0);
+		//else if ((confi > 55) && (confi <= 65))
+		//	pNMCD->clrText = RGB(255, 125, 0);
 
-		else 
-			pNMCD->clrText = RGB(255, 0, 0);
+		//else 
+		//	pNMCD->clrText = RGB(255, 0, 0);
 
 
 
 		// change background //
-		if (sid % 2 == 0) {
-			pNMCD->clrText = RGB(0, 0, 0);
-			pNMCD->clrTextBk = RGB(210, 210, 250);
+		//if (sid % 2 == 0) {
+		//	pNMCD->clrText = RGB(0, 0, 0);
+		//	pNMCD->clrTextBk = RGB(210, 210, 250);
+		//}
+		//else {
+		//	pNMCD->clrText = RGB(0, 0, 0);
+		//	pNMCD->clrTextBk = RGB(210, 250, 210);
+		//}
+
+		pNMCD->clrText = RGB(0, 0, 0);
+		if (sid != m_currDrawId) {
+			// change color//
+			m_currDrawId = sid;
+			m_colorid++;
+		}
+
+		if (m_colorid % 2 == 0) {
+			if (confi < 75) 		pNMCD->clrText = RGB(255, 0, 0);
+			else					pNMCD->clrText = RGB(0, 0, 0);
+
+			pNMCD->clrTextBk = RGB(200, 200, 200);
 		}
 		else {
-			pNMCD->clrText = RGB(0, 0, 0);
-			pNMCD->clrTextBk = RGB(210, 250, 210);
+			if (confi < 75) 		pNMCD->clrText = RGB(255, 0, 0);
+			else					pNMCD->clrText = RGB(0, 0, 0);
+
+			pNMCD->clrTextBk = RGB(250, 250, 250);
 		}
+
+		
 
 
 		// Tell Windows to paint the control itself.
@@ -509,6 +537,8 @@ void CZListCtrlLog::AddUserColumn(CString strLable, unsigned short colWidth)
 }
 void CZListCtrlLog::AddRecode()
 {
+	m_currDrawId = 0;
+	m_colorid = 0;
 	//CString strItem;
 	//std::map<unsigned long, MATCHGROUP>& matches = SINGLETON_TMat::GetInstance()->GetMatchResults();
 	//std::map<unsigned long, MATCHGROUP>::iterator iter_gr = matches.begin();
@@ -563,6 +593,9 @@ void CZListCtrlLog::AddRecode()
 
 void CZListCtrlLog::OnNMDblclk(NMHDR *pNMHDR, LRESULT *pResult)
 {
+	m_currDrawId = 0;
+	m_colorid = 0;
+
 	//LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	//// TODO: Add your control notification handler code here
 	//Invalidate();

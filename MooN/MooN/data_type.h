@@ -449,6 +449,13 @@ struct _CUTINFO{
 	unsigned long fileid;
 	unsigned long posid;
 	float th;
+
+	void init() {
+		id = 0;
+		fileid = 0;
+		posid = 0;
+		th = 0;
+	}
 };
 
 

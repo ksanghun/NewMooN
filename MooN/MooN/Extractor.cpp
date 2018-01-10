@@ -579,7 +579,7 @@ void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, st
 		MeargingtBoundaryBoxText((int)binaryImg.cols, -1, (int)binaryImg.cols, vecBox, depth);		// Merge horizontal
 		depth = 0;
 		//	SortBoundaryBox(vecBox);
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 10; i++) {
 			MeargingtBoundaryBoxTextVerti(0, i, (int)binaryImg.cols, vecBox, depth);		// Merge Vertical
 		}
 	}
@@ -656,11 +656,14 @@ bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _ma
 				//else {
 					cv::Rect checkBox = (tmp[i].textboxForCheck | tmp[j].textboxForCheck);
 					cv::Rect mergeBox = (tmp[i].textbox | tmp[j].textbox);
-					if (mergeBox.height < _maxLength*1.1f) {
+					if (mergeBox.height < _maxLength*1.2f) {
 						tmp[i].textbox = mergeBox;
 						tmp[i].textboxForCheck = checkBox;
 						tmp[j].IsMerged = true;
 						IsMerged = true;
+					}
+					else {
+						int a;
 					}
 					break;
 				//}

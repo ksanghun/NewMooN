@@ -29,7 +29,7 @@ struct stPageGroup {
 struct stMatchResult
 {
 	cv::Mat cutImg;
-	unsigned short searchId;
+	unsigned long searchId;
 	unsigned long cutId;
 	unsigned long fileId;
 	unsigned long posId;
@@ -95,7 +95,7 @@ public:
 	CMNPageObject* GetPageByOrderID(int idx);
 	std::vector<CMNPageObject*>& GetVecImgData() { return m_vecImgData; }
 	std::map<unsigned long, stVecMatchResult>& GetMatchingResults() { return m_mapMatchResults; }
-	std::map<unsigned int, std::vector<_stCNSResult>>& GetCNSMatchingResults() { return m_mapCnSResult; }
+//	std::map<unsigned int, std::vector<_stCNSResult>>& GetCNSMatchingResults() { return m_mapCnSResult; }
 	int GetMaxCutWidth() { return m_maxCutWidth; }
 	//==============================================//
 	void ReturnSlot(int idx);
@@ -117,6 +117,7 @@ public:
 	void ExportDatabase();
 	CString GetEditFilePath(CString strExtension, CString strOrigin);
 	int		GetFileTableSize() { return (int)m_mapFilePathTable.size(); };
+	CString GetCNSResultInfo();
 
 	void ResetResult();
 	void ResetMatchingResult();
@@ -130,7 +131,7 @@ public:
 	DB_CHK IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
 	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);
-	void CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt);
+	void CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh);
 	CMNPageObject* GetPageByID(int pid);
 
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
@@ -176,8 +177,8 @@ private:
 
 
 	// For Cut&Search Matching //
-	std::vector<_stCNSResult> vecCnSResults;
-	std::map<unsigned int, std::vector<_stCNSResult>> m_mapCnSResult;
+	//std::vector<_stCNSResult> vecCnSResults;
+	//std::map<unsigned int, std::vector<_stCNSResult>> m_mapCnSResult;
 	//=================================//
 
 	bool m_bIsUpdateTable;	
@@ -200,6 +201,11 @@ private:
 	//=====================//
 
 	
+
+	// CNS resutls//
+	int m_totalCNSCnt;
+	int m_totalCNSGruop;
+
 
 	std::vector<cv::Point> points;
 

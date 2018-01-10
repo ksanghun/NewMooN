@@ -304,7 +304,7 @@ void COCRMng::TestFunc()
 		}
 
 		boundRect.clear();
-		cv::imshow(sz, image);
+	//	cv::imshow(sz, image);
 		image.release();
 	}
 

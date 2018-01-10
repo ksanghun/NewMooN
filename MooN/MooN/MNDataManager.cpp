@@ -48,6 +48,9 @@ CMNDataManager::CMNDataManager()
 	m_maxCutWidth = _NORMALIZE_SIZE_W + 5;
 
 	m_bIsUpdateTable = false;
+
+	m_totalCNSCnt = 0;
+	m_totalCNSGruop = 0;
 }
 
 
@@ -546,15 +549,28 @@ void CMNDataManager::SetMatchingResults()
 					matchRes.rect = matches[j].rect;
 					matchRes.strCode = "";
 
-					// hold cut image data --> should be deleted //
-					cv::Rect nRect = GetNomalizedSize(matches[j].rect);
+					//// hold cut image data --> should be deleted //
+
+					//cv::Rect nRect = GetNomalizedSize(matches[j].rect);
+					int charSize = matches[j].rect.width > matches[j].rect.height ? matches[j].rect.width : matches[j].rect.height;
+					if (charSize < _NORMALIZE_SIZE_H)
+						charSize = _NORMALIZE_SIZE_H;
+					cv::Rect nRect;
+					GetNomalizedWordSize(matches[j].rect, nRect, charSize);		// "32" should be changed!!
 					cv::Mat tmpcut = srcImg(matches[j].rect).clone();
-					cv::resize(tmpcut, tmpcut, cv::Size(nRect.width, nRect.height));
+				
+					cv::Mat cutimg = cv::Mat(cvSize(nRect.width, nRect.height), srcImg.type());
+					cutimg.setTo(255);
+					//	cv::Mat cutimg = srcImg(ocrRes[j].rect);
+					ResizeCutImageByRatio(cutimg, tmpcut, nRect.width, nRect.height);
 
 					matchRes.cutImg = cv::Mat(cvSize(_NORMALIZE_SIZE_W, _NORMALIZE_SIZE_H),srcImg.type());
 					matchRes.cutImg.setTo(255);
-					tmpcut.copyTo(matchRes.cutImg(nRect));
-					//tmpcut.release();					
+					//cv::Rect nRect(0, 0, matches[j].cutImg.cols, matches[j].cutImg.rows);
+					//matches[j].cutImg.copyTo(matchRes.cutImg(nRect));
+					cutimg.copyTo(matchRes.cutImg(nRect));
+					cutimg.release();
+					tmpcut.release();
 
 					if (m_maxCutWidth > nRect.width)
 						m_maxCutWidth = nRect.width + 5;
@@ -562,9 +578,10 @@ void CMNDataManager::SetMatchingResults()
 					//Encode image file to base64 //
 					std::vector<uchar> data_encode(_NORMALIZE_SIZE_W*_NORMALIZE_SIZE_H * 4);
 					cv::imencode(".bmp", tmpcut, data_encode);
+			//		cv::imencode(".bmp", matches[j].cutImg, data_encode);
 					matchRes.strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
 					data_encode.clear();
-					tmpcut.release();
+			//		tmpcut.release();
 					////===========================================//
 
 					// Add Results==========================================//
@@ -580,6 +597,15 @@ void CMNDataManager::SetMatchingResults()
 			}
 		}
 	}
+
+	
+}
+
+CString CMNDataManager::GetCNSResultInfo()
+{
+	CString strInfo;
+	strInfo.Format(L"%d groups were clasified from %d cuts", m_totalCNSGruop, m_totalCNSCnt);
+	return strInfo;
 }
 
 void CMNDataManager::SortMatchingResults()
@@ -712,7 +738,7 @@ int CMNDataManager::GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect, int
 	if ((inrect.width < basepixel) || (inrect.height < basepixel)) {
 		outRect.width = _NORMALIZE_SIZE_H;
 		outRect.height = _NORMALIZE_SIZE_H;
-		return 0;		// class 1 !!
+		return 1;		// class 1 !!
 	}
 
 	outRect.width = inrect.width*fScale;
@@ -799,7 +825,7 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
 {
 	DB_CHK res = SDB_ADD;
-	float addTh = 0.88f;
+	float addTh = 0.80f;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
@@ -856,14 +882,14 @@ void CMNDataManager::ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int
 	}
 	else {		// Check aspect ratio //
 		float aRatio = (float)cutimg.cols / (float)cutimg.rows;
-		if ((aRatio > 2.67f) && (cutimg.rows < basePixel)){  // horizontal
+		if ((aRatio >= 2.0f) && (cutimg.rows <= basePixel*2)){  // horizontal
 			copyRect.x = 0;
 			copyRect.y = 8;
 			copyRect.width = norWidth;
 			copyRect.height = norHeight-8*2;
 		}
 
-		if ((aRatio < 0.375f) && (cutimg.cols < basePixel)){  // vertical //
+		if ((aRatio <= 0.5f) && (cutimg.cols <= basePixel*2)){  // vertical //
 			copyRect.x = 8;
 			copyRect.y = 0;
 			copyRect.width = norWidth-8*2;
@@ -980,10 +1006,7 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 
 	//	AddSDBTable(0, strcode);
 	//	UpdateImgClassDB();
-	}	
-
-
-	
+	}		
 }
 
 
@@ -1038,7 +1061,6 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 			pPage->UpdateOCRResStatus(j, false, ocrRes[j].type);
 		}
 	}
-
 //	UpdateImgClassDB();
 }
 
@@ -2266,21 +2288,12 @@ bool CMNDataManager::IsSupportFormat(CString strPath)
 	return false;
 }
 
-void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt)
+void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh)
 {
 	// Prepare Cut&Search matching //	
-//	std::vector<_stCNSResult> vecCnSResults;
-//	std::map<unsigned int, std::vector<_stCNSResult>> mapCnSResult;
-
-	for (auto k = 0; k < vecCnSResults.size(); k++) {
-		vecCnSResults[k].cutimg.release();
-	}
-	vecCnSResults.clear();
-	m_mapCnSResult.clear();
+	std::vector<_stCNSResult> vecCnSResults;
+	//std::map<unsigned int, std::vector<_stCNSResult>> mapCnSResult;
 	//============================================//
-
-
-
 
 	// !!!! ADd vecCnsResult to match_pos into each page  /// Maintail same process with cut & search process !!!!!
 	// !!!!!!!!!!
@@ -2294,8 +2307,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		}
 	}
 	averheight /= cnt;
-
-
+	float fNormalScale = 1.0f;
+//	float fNormalScale = 32.0f / static_cast<float>(averheight);
 
 	// Initialize Cut & Search Vector==============//
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
@@ -2317,8 +2330,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 
 
 				//	cns.cutimg = srcImg(ocrRes[j].rect).clone();
-				cv::Mat cutimg = srcImg(ocrRes[j].rect);
-			//	cv::resize(cutimg, cutimg, cv::Size(nRect.width, nRect.height));
+				cv::Mat cutimg = srcImg(ocrRes[j].rect).clone();
+				cv::resize(cutimg, cutimg, cv::Size(ocrRes[j].rect.width *fNormalScale, ocrRes[j].rect.height*fNormalScale));
 
 				//if (nRect.width > 32) {
 				//	cv::imshow("error", cutimg);
@@ -2329,17 +2342,20 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 				cns.cutimg.setTo(255);
 			//	cv::Mat cutimg = srcImg(ocrRes[j].rect);
 				ResizeCutImageByRatio(cns.cutimg, cutimg, nRect.width, nRect.height);
+			//	cv::imshow("cutimg", cns.cutimg);
 
-				vecCnSResults.push_back(std::move(cns));
+				vecCnSResults.push_back(std::move(cns));				
+				cutimg.release();
 			}
 		}
 	}
 	addCnt = 0;
 	totalCnt = vecCnSResults.size();
+	m_totalCNSCnt = totalCnt;
 	//====================================================//
 
 
-	float fTh = 1.5f;
+	float fTh = _fTh * 2;
 	unsigned int searchid= 65536;
 	for (auto k = 0; k < vecCnSResults.size(); k++) {
 		if (vecCnSResults[k].searchid == 0) {  // Do Cut & Search //
@@ -2389,6 +2405,9 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 					//End of CNS ====================================//
 
 				}
+				else {
+					int a = 0;
+				}
 			}
 			searchid++;
 		}
@@ -2396,11 +2415,39 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	}
 
 
+	m_totalCNSGruop = searchid - 65536;
+	
 	// Classification //
+	_CUTINFO cutInfo;
+	cutInfo.init();
+
 	unsigned int uid = 65536;
 	for (auto i = 0; i < vecCnSResults.size(); i++) {
-		m_mapCnSResult[vecCnSResults[i].searchid].push_back(std::move(vecCnSResults[i]));
 
+		stMatchInfo mInfo;
+		mtSetPoint3D(&mInfo.pos, vecCnSResults[i].rect.x, vecCnSResults[i].rect.y, 0.0f);
+		mInfo.accuracy = vecCnSResults[i].fConfi * 100;
+		mInfo.strAccracy.Format(L"%d", (int)(vecCnSResults[i].fConfi));
+		mInfo.rect = vecCnSResults[i].rect;
+		mInfo.searchId = vecCnSResults[i].searchid;
+		mInfo.cInfo = cutInfo;
+		
+		// Get character code value from both OCR and DB, DB first.
+		mInfo.strCode = "-";
+		
+		mInfo.color.r = 100;
+		mInfo.color.g = 255;
+		mInfo.color.b = 100;
+		mInfo.color.a = 255;
+
+		mInfo.IsAdded = false;
+		//mInfo.cutImg = vecCnSResults[i].cutimg.clone();
+		//vecCnSResults[i].cutimg.release();
+		
+		int search_size = (vecCnSResults[i].cutimg.cols > vecCnSResults[i].cutimg.rows) ? vecCnSResults[i].cutimg.cols : vecCnSResults[i].cutimg.rows;
+		m_vecImgData[vecCnSResults[i].pageid]->AddMatchedPoint(std::move(mInfo), search_size);
+		
+		//m_mapCnSResult[vecCnSResults[i].searchid].push_back(std::move(vecCnSResults[i]));
 		
 	////	if (vecCnSResults[i].searchid == nullptr) {
 	//		mapCnSResult[uid].push_back(std::move(vecCnSResults[i]));
