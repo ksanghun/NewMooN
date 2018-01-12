@@ -379,14 +379,14 @@ BEGIN
         MENUITEM "Cut and Search",              ID_OCR_CUTSEARCH
         MENUITEM "Cut and Search All",          ID_OCR_CUTANDSEARCHALL
         MENUITEM SEPARATOR
+        MENUITEM "Add text",                    ID_OCR_ADD_TEXTBOX
+        MENUITEM "Delete text ",                ID_OCR_DELETETE_XTBOX32820
+        MENUITEM SEPARATOR
         MENUITEM "Add line",                    ID_OCR_ADD_LINEBOX
         MENUITEM "Delete Line",                 ID_OCR_DELETEL_INEBOX
         MENUITEM "Rotate line",                 ID_OCR_ROTATE_LINE
         MENUITEM "Undo Rotaion",                ID_OCR_UNDOROTAION_LINE
         MENUITEM "Split line",                  ID_OCR_SPLITE_LINE
-        MENUITEM SEPARATOR
-        MENUITEM "Add text",                    ID_OCR_ADD_TEXTBOX
-        MENUITEM "Delete text ",                ID_OCR_DELETETE_XTBOX32820
         MENUITEM SEPARATOR
         MENUITEM "Search text",                 ID_OCR_SEARCH_SELECTION
         MENUITEM SEPARATOR
