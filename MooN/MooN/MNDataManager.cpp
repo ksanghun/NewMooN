@@ -2350,7 +2350,7 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 			}
 		}
 	}
-	addCnt = 0;
+	addCnt = -1;
 	totalCnt = vecCnSResults.size();
 	m_totalCNSCnt = totalCnt;
 	//====================================================//
@@ -2422,6 +2422,7 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	_CUTINFO cutInfo;
 	cutInfo.init();
 
+	addCnt = 0;
 	unsigned int uid = 65536;
 	for (auto i = 0; i < vecCnSResults.size(); i++) {
 
@@ -2464,6 +2465,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 
 	//		uid++;
 	//	}
+
+		addCnt++;
 	}
 	// Add Match result to each page //
 }
