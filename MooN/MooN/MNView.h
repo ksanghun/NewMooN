@@ -131,6 +131,8 @@ public:
 	void IncreseAddImgCnt() { m_addImgCnt++; };
 	void SetThreadEnd(bool IsEnd);// { m_bIsThreadEnd = IsEnd; }
 
+	_stOCRResult GetCORResult(cv::Mat& cutImg);
+
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;

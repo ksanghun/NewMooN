@@ -2622,7 +2622,7 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 			m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
 			for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __ENG;
 			break;
-		default:
+		default:   // From DB
 			ocrres.fConfidence = 0.1f;
 			ocrres.rect.x = 0;
 			ocrres.rect.y = 0;
@@ -2790,7 +2790,7 @@ void CMNView::ProcCNSSegments()
 	//SINGLETON_DataMng::GetInstance()->SetMatchingResults();
 	//SINGLETON_DataMng::GetInstance()->SortMatchingResults();
 	//pM->AddMatchResult();
-
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 
 	pM->AddMatchResultCNS();
 	CWinThread* pl;
@@ -3021,6 +3021,160 @@ bool CMNView::DoCNSSegments()
 
 
 
+_stOCRResult CMNView::GetCORResult(cv::Mat& cutImg)
+{
+	//if (m_pSelectPageForCNS) {
+	//	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
+	//	_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
+
+	//	cv::Rect r = ocrres.rect;
+	//	//r.x -= 1;
+	//	//r.y -= 1;
+	//	//r.width += 2;
+	//	//r.height += 2;
+
+	//	cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
+	//	//cv::imshow("cword", imgword);
+	_stOCRResult ocrres;
+	ocrres.init();
+	
+	
+	SINGLETON_DataMng::GetInstance()->MatchingFromDB(cutImg, ocrres);
+	if (ocrres.fConfidence > 0.9f) {
+		return ocrres;
+	}
+
+	if (m_extractionSetting.isChi) {
+		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+		_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, 1.0f, __CHI);
+		if (ocrtmp.fConfidence > 0.9f) {
+			return ocrtmp;
+		}
+		else {
+			if (ocrtmp.fConfidence > ocrres.fConfidence) {
+				ocrres = ocrtmp;
+			}
+		}
+	}
+
+	if (m_extractionSetting.isKor) {
+		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
+		_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, 1.0f, __KOR);
+		if (ocrtmp.fConfidence > 0.9f) {
+			return ocrtmp;
+		}
+		else {
+			if (ocrtmp.fConfidence > ocrres.fConfidence) {
+				ocrres = ocrtmp;
+			}
+		}
+	}
+
+	if (m_extractionSetting.isEng) {
+		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+		_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, 1.0f, __ENG);
+		if (ocrtmp.fConfidence > 0.9f) {
+			return ocrtmp;
+		}
+		else {
+			if (ocrtmp.fConfidence > ocrres.fConfidence) {
+				ocrres = ocrtmp;
+			}
+		}
+	}
+
+	return ocrres;
+
+
+		
+		//float fScale = 1.0f;
+		//switch (langType) {
+		//case __CHI:
+		//	if (searchType == 0) {
+		//		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+		//	}
+		//	else {
+		//		if (m_extractionSetting.IsVerti) {
+		//			m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+		//		}
+		//		else {
+		//			m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+		//		}
+		//	}
+		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//	m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+		//	for (int i = 0; i < ocrTmp.size(); i++) {
+		//		ocrTmp[i].type = __CHI;
+		//	}
+		//	break;
+		//case __KOR:
+		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//	if (searchType == 0) {
+		//		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
+		//		m_OCRMng.extractWithOCRSingle(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+		//	}
+		//	else {
+		//		if (m_extractionSetting.IsVerti) {
+		//			m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+		//		}
+		//		else {
+		//			m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
+		//		}
+		//		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+		//	}
+		//	for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __KOR;
+		//	break;
+		//case __ENG:
+		//	if (searchType == 0) {
+		//		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+		//	}
+		//	else {
+		//		if (m_extractionSetting.IsVerti) {
+		//			m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+		//		}
+		//		else {
+		//			m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
+		//		}
+		//	}
+		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//	m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
+		//	for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __ENG;
+		//	break;
+		//default:
+		//	ocrres.fConfidence = 0.1f;
+		//	ocrres.rect.x = 0;
+		//	ocrres.rect.y = 0;
+		//	//ocrres.rect.width += 2;
+		//	//ocrres.rect.height += 2;
+		//	ocrTmp.push_back(ocrres);
+		//	DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
+		//	break;
+
+		//}
+
+		// OCR Correction //
+		//DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
+
+
+		//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+		//std::vector<_stOCRResult> ocrTmp;
+		//float fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+
+		// Update OCR Res //
+	//	if (ocrTmp.size() >= 0) {
+	//		m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
+	//		for (int i = 0; i < ocrTmp.size(); i++) {
+	//			if (ocrTmp[i].type < 100) {
+	//				ocrTmp[i].rect.x += r.x;
+	//				ocrTmp[i].rect.y += r.y;
+	//				m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
+	//			}
+	//		}
+	//		m_selOCRId = -1;
+	//	}
+	//}
+}
 
 
 

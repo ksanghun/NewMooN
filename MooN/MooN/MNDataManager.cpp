@@ -547,7 +547,7 @@ void CMNDataManager::SetMatchingResults()
 					matchRes.accuracy = matches[j].accuracy;
 					matchRes.fTh = matches[j].cInfo.th;
 					matchRes.rect = matches[j].rect;
-					matchRes.strCode = "";
+					matchRes.strCode = matches[j].strCode;
 
 					//// hold cut image data --> should be deleted //
 
@@ -2290,6 +2290,7 @@ bool CMNDataManager::IsSupportFormat(CString strPath)
 
 void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh)
 {
+	CMNView* pViewImage = pView->GetImageView();
 	// Prepare Cut&Search matching //	
 	std::vector<_stCNSResult> vecCnSResults;
 	//std::map<unsigned int, std::vector<_stCNSResult>> mapCnSResult;
@@ -2433,7 +2434,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		mInfo.cInfo = cutInfo;
 		
 		// Get character code value from both OCR and DB, DB first.
-		mInfo.strCode = "-";
+		_stOCRResult ocrres = pViewImage->GetCORResult(vecCnSResults[i].cutimg);
+		mInfo.strCode = ocrres.strCode;
 		
 		mInfo.color.r = 100;
 		mInfo.color.g = 255;

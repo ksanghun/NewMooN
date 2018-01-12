@@ -309,3 +309,40 @@ void COCRMng::TestFunc()
 	}
 
 }
+
+
+
+
+_stOCRResult COCRMng::getOcrResFromSingleCut(cv::Mat& image, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
+{
+	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), image.step1());
+	tess.SetRectangle(0, 0, image.cols, image.rows);
+	tess.Recognize(0);
+
+	_stOCRResult res;
+	tesseract::ResultIterator* ri = tess.GetIterator();
+	if (ri != 0) {
+		do {
+			char* word = ri->GetUTF8Text(level);
+			float conf = ri->Confidence(level);
+
+			res.init();
+			res.type = langType;
+			//	res.rect = cv::Rect(cv::Point(x1, y1), cv::Point(x2, y2));
+			res.rect = cv::Rect(0, 0, image.cols, image.rows);
+
+
+			res.fConfidence = conf*0.01f;
+
+			if ((word)) {
+				Utf8ToUnicode(word, res.strCode);
+				delete[] word;
+			}
+		} while (ri->Next(level));
+
+		delete ri;
+	}
+
+	tess.Clear();
+	return res;
+}
