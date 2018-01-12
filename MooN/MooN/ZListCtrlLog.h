@@ -75,6 +75,9 @@ public:
 	afx_msg void OnNMDblclk(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+
+
+	afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
 };
 
 

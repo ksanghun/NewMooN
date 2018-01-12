@@ -233,9 +233,9 @@ void CFormListView::AddRecord()
 
 
 
-	m_ctrlList.SetItemState(100, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-	m_ctrlList.SetFocus();
-	m_ctrlList.EnsureVisible(100, TRUE);
+	//m_ctrlList.SetItemState(100, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+	//m_ctrlList.SetFocus();
+	//m_ctrlList.EnsureVisible(100, TRUE);
 	
 }
 
