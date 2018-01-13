@@ -760,9 +760,15 @@ RECT2D CMNPageObject::ConvertVec3DtoImgateCoord(POINT3D v1, POINT3D v2)
 	}
 
 	if (selRect.x1 < 0)	selRect.x1 = 0;
-	if (selRect.x2 > m_ImgPlaneSize.width - 1)	selRect.x2 = m_ImgPlaneSize.width - 1;
+//	if (selRect.x2 > m_ImgPlaneSize.width - 1)	selRect.x2 = m_ImgPlaneSize.width - 1;
+
+	if (selRect.x2 > m_ImgPlaneSize.width)	
+		selRect.x2 = m_ImgPlaneSize.width;
+
 	if (selRect.y1 < 0)	selRect.y1 = 0;
-	if (selRect.y2 > m_ImgPlaneSize.height - 1)	selRect.y2 = m_ImgPlaneSize.height - 1;
+//	if (selRect.y2 > m_ImgPlaneSize.height - 1)	selRect.y2 = m_ImgPlaneSize.height - 1;
+	if (selRect.y2 > m_ImgPlaneSize.height)	
+		selRect.y2 = m_ImgPlaneSize.height;
 
 
 	selRect.width = selRect.x2 - selRect.x1;
@@ -905,7 +911,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 	std::vector<_extractBox> vecBox;
 
 	if (IsVerti) {
-		extractor.ExtractionText(paraImg, 4, -4, vecBox, IsVerti);
+		extractor.ExtractionText(paraImg, 0, -4, vecBox, IsVerti);
 		//extractor.ExtractionText(paraImg, 8, 0, vecBox);
 		//// Sort //
 		////extractor.SortBoundaryBox(vecBox);

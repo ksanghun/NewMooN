@@ -577,10 +577,11 @@ void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, st
 	int depth = 0;
 	if (IsVerti) {
 		MeargingtBoundaryBoxText((int)binaryImg.cols, -1, (int)binaryImg.cols, vecBox, depth);		// Merge horizontal
+	//	MeargingtBoundaryBoxText(-1, -1, (int)binaryImg.cols, vecBox, depth);		// Merge horizontal
 		depth = 0;
 		//	SortBoundaryBox(vecBox);
-		for (int i = 0; i < 10; i++) {
-			MeargingtBoundaryBoxTextVerti(0, i, (int)binaryImg.cols, vecBox, depth);		// Merge Vertical
+		for (int i = 0; i < 5; i++) {
+			MeargingtBoundaryBoxTextVerti(i, i, (int)binaryImg.cols, vecBox, depth);		// Merge Vertical
 		}
 	}
 	else {
@@ -662,9 +663,7 @@ bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _ma
 						tmp[j].IsMerged = true;
 						IsMerged = true;
 					}
-					else {
-						int a;
-					}
+
 					break;
 				//}
 			}

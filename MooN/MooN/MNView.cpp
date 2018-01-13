@@ -1052,8 +1052,12 @@ void CMNView::DoExtractBoundaryAuto()
 			continue;
 		}
 
-		CString strpath = vecImg[i]->GetPath();
-		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg().clone();
+		// exclude margin
+		int nMargin = 4;
+		cv::Rect mRect(nMargin, nMargin, vecImg[i]->GetSrcPageGrayImg().cols - nMargin*2, vecImg[i]->GetSrcPageGrayImg().rows - nMargin*2);
+
+		//CString strpath = vecImg[i]->GetPath();
+		cv::Mat srcImg = vecImg[i]->GetSrcPageGrayImg()(mRect).clone();
 		if (srcImg.ptr()) {
 			// Clear previous results (line, text segmentations)
 			//vecImg[i]->ClearParagraph();		
@@ -1075,6 +1079,13 @@ void CMNView::DoExtractBoundaryAuto()
 			}
 
 			ExtractBox(srcImg, vecBox, IsVerti, __ENG);
+
+			for (size_t j = 0; j < vecBox.size(); j++) {
+				vecBox[j].textbox.x += 4;
+				vecBox[j].textbox.y += 4;
+			}
+
+			srcImg.release();
 			//if (IsVerti) {
 			//	m_Extractor.Extraction(srcImg, -1, fsize * 2, vecBox);
 			//}
@@ -1100,13 +1111,15 @@ void CMNView::DoExtractBoundaryAuto()
 			//	m_Extractor.Extraction(srcImg, -1, fsize * 2, vecBox);
 			//}
 
+			cv::Mat srcImgforLine = vecImg[i]->GetSrcPageGrayImg().clone();
+			cv::bitwise_not(srcImgforLine, srcImgforLine);
 			for (size_t j = 0; j < vecBox.size(); j++) {
 				// Calculate Deskew //
 				//m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
 
 				if (vecBox[j].textbox.area() > 25) {  // remove noise
 
-					cv::Mat para = srcImg(vecBox[j].textbox);
+					cv::Mat para = srcImgforLine(vecBox[j].textbox);
 					//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
 
 					float deskew = m_Extractor.DeSkewImg(para);
@@ -1119,7 +1132,7 @@ void CMNView::DoExtractBoundaryAuto()
 				}
 			}
 			vecBox.clear();
-			srcImg.release();
+			srcImgforLine.release();
 		}
 
 		vecImg[i]->SetIsSearched(true);
@@ -2414,7 +2427,13 @@ void CMNView::DoExtractBoundaryForSelected()
 	if (m_pSelectPageForCNS) {
 		if (m_pSelectPageForCNS->GetVecParagraph().size() == 0) {
 
-			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
+
+			int nMargin = 4;
+			cv::Rect mRect(nMargin, nMargin, m_pSelectPageForCNS->GetSrcPageGrayImg().cols - nMargin * 2, m_pSelectPageForCNS->GetSrcPageGrayImg().rows - nMargin * 2);
+
+			//CString strpath = vecImg[i]->GetPath();
+			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg()(mRect).clone();
+			//cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
 			if (srcImg.ptr()) {
 
 				//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
@@ -2426,30 +2445,21 @@ void CMNView::DoExtractBoundaryForSelected()
 				// Detect text block //
 				//_ALIGHN_TYPE align;
 				std::vector<_extractBox> vecBox;
-				//if (m_extractionSetting.nAlign == 0) {
-				//	m_Extractor.Extraction(srcImg, fsize * 2, -1, vecBox);
-				//	align = _HORIZON_ALIGN;
-				//}
-				//else {
-				//	m_Extractor.Extraction(srcImg, -1, fsize * 2, vecBox);
-				//	align = _VERTICAL_ALIGN;
-				//}
-				if (m_extractionSetting.isEng) {
-					ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __ENG);		// Start with English //
-				}
-				else {
-					if (m_extractionSetting.isChi) {
-						ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __CHI);
-					}
-					else if (m_extractionSetting.isKor) {
-						ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __KOR);
-					}
-				}
+				ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __ENG);
 
+				for (size_t j = 0; j < vecBox.size(); j++) {
+					vecBox[j].textbox.x += 4;
+					vecBox[j].textbox.y += 4;
+				}
+				srcImg.release();
+
+				
+				cv::Mat srcImgforLine = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
+				cv::bitwise_not(srcImgforLine, srcImgforLine);
 				for (size_t j = 0; j < vecBox.size(); j++) {
 					// Calculate Deskew //
 					//m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
-					cv::Mat para = srcImg(vecBox[j].textbox);
+					cv::Mat para = srcImgforLine(vecBox[j].textbox);
 					//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
 
 					float deskew = m_Extractor.DeSkewImg(para);
@@ -2459,7 +2469,7 @@ void CMNView::DoExtractBoundaryForSelected()
 					m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
 				}
 				vecBox.clear();
-				srcImg.release();
+				srcImgforLine.release();
 			}
 		}
 	}

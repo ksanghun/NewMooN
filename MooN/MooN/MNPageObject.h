@@ -31,6 +31,8 @@ struct stParapgraphInfo
 	bool IsDeskewed;
 	bool IsVerti;
 
+	std::vector<_stOCRResult> vecTextBox;
+
 	void init() {
 		rect = cv::Rect(0, 0, 0, 0);
 		deSkewAngle = 0.0f;
