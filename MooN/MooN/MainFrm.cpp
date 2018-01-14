@@ -1,4 +1,4 @@
-
+ï»¿
 // MainFrm.cpp : implementation of the CMainFrame class
 //
 
@@ -325,7 +325,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
 	cs.style &= ~(LONG)FWS_ADDTOTITLE;
-	cs.lpszName = L"MoÙþoN";
+	cs.lpszName = L"Moæ–‡oN";
 
 	return TRUE;
 }

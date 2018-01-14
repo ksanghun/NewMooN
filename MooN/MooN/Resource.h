@@ -101,6 +101,7 @@
 #define IDC_BN_ADD_TO_OCR               1002
 #define IDC_LIST1                       1003
 #define IDC_BN_CHI_FONT                 1003
+#define IDC_BUTTON_BROWSER2             1003
 #define IDC_CHECK_AUTOFILL              1004
 #define IDC_BN_KOR_FONT                 1004
 #define IDC_SLIDER1                     1005
@@ -220,14 +221,26 @@
 #define ID_EXPLORER_EXPORTDATABASE32838 32838
 #define ID_EXPLORER_EXPORTDATABASE_HTML 32839
 #define ID_OCR_CUTANDSEARCHALL          32840
+#define ID_OCR_AUTOFILLON               32841
+#define ID_OCR_AUTOFILLOFF              32842
+#define ID_OCR_RECOGNIZETEXT            32843
+#define ID_OCR_RECOGNIZETEXT32844       32844
+#define ID_OCR_RECOGNIZETEXT32845       32845
+#define ID_OCR_RECOGNIZETEXT32846       32846
+#define ID_RECOGNIZETEXT_WORD           32847
+#define ID_RECOGNIZETEXT_LETTER         32848
+#define ID_RECOGNIZETEXT_WORD32849      32849
+#define ID_RECOGNIZETEXT_CHARACTER      32850
+#define ID_RECOGNIZETEXT_COMPOUND       32851
+#define ID_RECOGNIZETEXT_CHARACTER32852 32852
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        319
-#define _APS_NEXT_COMMAND_VALUE         32841
-#define _APS_NEXT_CONTROL_VALUE         1045
+#define _APS_NEXT_RESOURCE_VALUE        320
+#define _APS_NEXT_COMMAND_VALUE         32853
+#define _APS_NEXT_CONTROL_VALUE         1047
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif
