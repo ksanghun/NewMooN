@@ -496,35 +496,59 @@ void CMNPageObject::DrawOCRResForPick()
 {
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
+	glLineWidth(1);
 
-	glLineWidth(2);
-	if (m_ocrResult.size() > 0) {
-		// Draw detected position //
+	for (auto j = 0; j < m_paragraph.size(); j++) {
 		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
 		glPushMatrix();
 		glScalef(m_fXScale, m_fYScale, 1.0f);
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
-		//if (m_bIsNear){		
-		glLineWidth(1);
-
-		for (int i = 0; i < m_ocrResult.size(); i++) {
+		for (int i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
 			glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
 			glPushName(i + _PICK_WORD);
 			glBegin(GL_QUADS);
-			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
-			glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
-			glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
-			glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x, m_nImgHeight - m_paragraph[j].vecTextBox[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x, m_nImgHeight - (m_paragraph[j].vecTextBox[i].rect.y + m_paragraph[j].vecTextBox[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x + m_paragraph[j].vecTextBox[i].rect.width, m_nImgHeight - (m_paragraph[j].vecTextBox[i].rect.y + m_paragraph[j].vecTextBox[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x + m_paragraph[j].vecTextBox[i].rect.width, m_nImgHeight - m_paragraph[j].vecTextBox[i].rect.y, 0.0f);
 			glEnd();
 			glPopName();
 		}
+
 		glPopMatrix();
 	}
 
-	glPointSize(1);
 	glPopMatrix();
-	glLineWidth(1);
+
+
+	//if (m_ocrResult.size() > 0) {
+	//	// Draw detected position //
+	//	glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+	//	glPushMatrix();
+	//	glScalef(m_fXScale, m_fYScale, 1.0f);
+	//	glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
+
+	//	//if (m_bIsNear){		
+	//	glLineWidth(1);
+
+	//	for (int i = 0; i < m_ocrResult.size(); i++) {
+	//		glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
+	//		glPushName(i + _PICK_WORD);
+	//		glBegin(GL_QUADS);
+	//		glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
+	//		glVertex3f(m_ocrResult[i].rect.x, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
+	//		glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - (m_ocrResult[i].rect.y + m_ocrResult[i].rect.height), 0.0f);
+	//		glVertex3f(m_ocrResult[i].rect.x + m_ocrResult[i].rect.width, m_nImgHeight - m_ocrResult[i].rect.y, 0.0f);
+	//		glEnd();
+	//		glPopName();
+	//	}
+	//	glPopMatrix();
+	//}
+
+	//glPointSize(1);
+	//glPopMatrix();
+	//glLineWidth(1);
 }
 void CMNPageObject::DrawParagraph(int selid)
 {
@@ -570,9 +594,9 @@ void CMNPageObject::DrawParagraph(int selid)
 
 void CMNPageObject::DrawSelectedParagraph(int selid)
 {
-	if (m_ocrResult.size() > 0) {
-		return;
-	}
+	//if (m_ocrResult.size() > 0) {
+	//	return;
+	//}
 
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
@@ -868,25 +892,43 @@ void CMNPageObject::ClearMatchResult()
 void CMNPageObject::ClearParagraph()
 {
 	m_IsNeedToSave = true;
+
+	for (auto i = 0; i < m_paragraph.size(); i++) {
+		m_paragraph[i].vecTextBox.clear();
+	}
 	m_paragraph.clear();
-	m_ocrResult.clear();
+//	m_ocrResult.clear();
 }
 
 void CMNPageObject::DeleteAllOcrRes()
 {
 	m_IsNeedToSave = true;
-	m_ocrResult.clear();
+//	m_ocrResult.clear();
+	for (auto i = 0; i < m_paragraph.size(); i++) {
+		m_paragraph[i].vecTextBox.clear();
+	}
 }
+
+void CMNPageObject::DeleteAllOcrResInLine(int lineid)
+{
+	m_IsNeedToSave = true;
+	//	m_ocrResult.clear();
+	if((lineid < m_paragraph.size()) && (lineid>=0)){
+		m_paragraph[lineid].vecTextBox.clear();
+	}
+}
+
 void CMNPageObject::ClearOCRResult()
 {
 	m_IsNeedToSave = true;
 //	m_ocrResult.clear();
-
-	for (auto i = 0; i < m_ocrResult.size(); i++) {
-		m_ocrResult[i].fConfidence = 0.0f;
-//		m_ocrResult[i].strCode 
-		memset(&m_ocrResult[i].strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
-		wsprintf(m_ocrResult[i].strCode, L"");
+	for (auto j = 0; j < m_paragraph.size(); j++) {
+		for (auto i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
+			m_paragraph[j].vecTextBox[i].fConfidence = 0.0f;
+			//		m_ocrResult[i].strCode 
+			memset(&m_paragraph[j].vecTextBox[i].strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+			wsprintf(m_paragraph[j].vecTextBox[i].strCode, L"");
+		}
 	}
 }
 
@@ -906,6 +948,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 	para.IsVerti = IsVerti;
 	para.IsDeskewed = false;
 	m_paragraph.push_back(para);
+	int lineid = m_paragraph.size() - 1;
 
 	// Extract text boundary //
 	std::vector<_extractBox> vecBox;
@@ -921,9 +964,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 	else {
 		extractor.ExtractionText(paraImg, 0, 2, vecBox, IsVerti);
 	}
-
-	
-
+		
 	for (auto i = 0; i < vecBox.size(); i++) {
 		if (vecBox[i].textbox.area() > 4) {
 			_stOCRResult res;
@@ -931,7 +972,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 			res.rect = vecBox[i].textbox;
 			res.rect.x += rect.x;
 			res.rect.y += rect.y;
-			AddOCRResult(res);
+			AddOCRResult(lineid, res);
 		}
 	}
 
@@ -1036,17 +1077,20 @@ void CMNPageObject::UpdateTexture(cv::Mat& texImg)
 //	return 0;
 //}
 
-void CMNPageObject::SetOCRResult(int _id, _stOCRResult _res)
+void CMNPageObject::SetOCRResult(int _lineid, int _id, _stOCRResult _res)
 {
-	if ((_id >= 0) && (_id < m_ocrResult.size())) {
-		m_ocrResult[_id] = _res;
+	if ((_lineid < m_paragraph.size()) && (_id >= 0) && (_id < m_paragraph[_lineid].vecTextBox.size())) {
+	//	m_ocrResult[_id] = _res;
+		m_paragraph[_lineid].vecTextBox[_id] = _res;
 	}
 }
 
-_stOCRResult CMNPageObject::GetOCRResult(int _id)
+_stOCRResult CMNPageObject::GetOCRResult(int _lineid, int _id)
 {
-	if ((_id>=0) && (_id < m_ocrResult.size())) {
-		return m_ocrResult[_id];
+//	if ((_id>=0) && (_id < m_ocrResult.size())) {
+	if ((_lineid < m_paragraph.size()) && (_id >= 0) && (_id < m_paragraph[_lineid].vecTextBox.size())) {
+	//	return m_ocrResult[_id];
+		return m_paragraph[_lineid].vecTextBox[_id];
 	}
 	return _stOCRResult();
 }
@@ -1062,76 +1106,96 @@ void CMNPageObject::DeleteSelPara(int selid)
 
 void CMNPageObject::DeleteOCRResByRect(cv::Rect rect)
 {
-	std::vector<_stOCRResult>::iterator iter = m_ocrResult.begin();
-	for (; iter != m_ocrResult.end();) {
 
-		cv::Rect andRect_overlap = ((*iter).rect & rect);
-		if (andRect_overlap.area() > 1) {
-			iter = m_ocrResult.erase(iter);
-		}
-		else {
-			++iter;
+	for (auto i = 0; i < m_paragraph.size(); i++) {
+
+//		std::vector<_stOCRResult>::iterator iter = m_ocrResult.begin();
+		std::vector<_stOCRResult>::iterator iter = m_paragraph[i].vecTextBox.begin();
+		for (; iter != m_paragraph[i].vecTextBox.end();) {
+
+			cv::Rect andRect_overlap = ((*iter).rect & rect);
+			if (andRect_overlap.area() > 1) {
+				iter = m_paragraph[i].vecTextBox.erase(iter);
+			}
+			else {
+				++iter;
+			}
 		}
 	}
 }
 
 void CMNPageObject::CleanUpOCRres()
 {
-	std::vector<_stOCRResult>::iterator iter = m_ocrResult.begin();
-	for (; iter != m_ocrResult.end();) {
-		if (iter->type == 100) {
-			iter = m_ocrResult.erase(iter);
-		}
-		else {
-			++iter;
+	for (auto i = 0; i < m_paragraph.size(); i++) {
+		std::vector<_stOCRResult>::iterator iter = m_paragraph[i].vecTextBox.begin();
+		for (; iter != m_paragraph[i].vecTextBox.end();) {
+			if (iter->type == 100) {
+				iter = m_paragraph[i].vecTextBox.erase(iter);
+			}
+			else {
+				++iter;
+			}
 		}
 	}
 }
 
 
-bool CMNPageObject::DeleteSelOCRRes(int selid)
+bool CMNPageObject::DeleteSelOCRRes(int lid, int selid)
 {
 	m_IsNeedToSave = true;
-	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
-		m_ocrResult.erase(m_ocrResult.begin() + selid);
+//	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+	if ((lid < m_paragraph.size()) && (selid < m_paragraph[lid].vecTextBox.size()) && (selid >= 0)) {
+//		m_ocrResult.erase(m_ocrResult.begin() + selid);
+		m_paragraph[lid].vecTextBox.erase(m_paragraph[lid].vecTextBox.begin() + selid);
 		return true;
 	}
 	return false;
 }
 
-void CMNPageObject::ConfirmOCRRes(int selid)
+void CMNPageObject::ConfirmOCRRes(int lid, int selid)
 {
 	m_IsNeedToSave = true;
-	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
-		m_ocrResult[selid].fConfidence = 0.9f;
-		m_ocrResult[selid].bNeedToDB = true;
+//	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+	if ((lid < m_paragraph.size()) && (selid < m_paragraph[lid].vecTextBox.size()) && (selid >= 0)) {
+		m_paragraph[lid].vecTextBox[selid].fConfidence = 0.9f;
+		m_paragraph[lid].vecTextBox[selid].bNeedToDB = true;
+
+		//m_ocrResult[selid].fConfidence = 0.9f;
+		//m_ocrResult[selid].bNeedToDB = true;
 	}
 }
 
-void CMNPageObject::UpdateOCRResStatus(int selid, bool IsUpdate, int _type)
+void CMNPageObject::UpdateOCRResStatus(int lid, int selid, bool IsUpdate, int _type)
 {
 	m_IsNeedToSave = true;
-	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
-		m_ocrResult[selid].bNeedToDB = IsUpdate;
-		m_ocrResult[selid].type = _type;
+
+	if ((lid < m_paragraph.size()) && (selid < m_paragraph[lid].vecTextBox.size()) && (selid >= 0)) {
+		m_paragraph[lid].vecTextBox[selid].bNeedToDB = IsUpdate;
+		m_paragraph[lid].vecTextBox[selid].type = _type;
 	}
+
+	//if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+	//	m_ocrResult[selid].bNeedToDB = IsUpdate;
+	//	m_ocrResult[selid].type = _type;
+	//}
 }
 
-void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int selid)
+void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid)
 {
 	m_IsNeedToSave = true;
-	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
-		m_ocrResult[selid].fConfidence = _fConfi;
-		m_ocrResult[selid].bNeedToDB = true;
-		wsprintf(m_ocrResult[selid].strCode, _strCode);
+//	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
+	if ((lid < m_paragraph.size()) && (selid < m_paragraph[lid].vecTextBox.size()) && (selid >= 0)) {
+		m_paragraph[lid].vecTextBox[selid].fConfidence = _fConfi;
+		m_paragraph[lid].vecTextBox[selid].bNeedToDB = true;
+		wsprintf(m_paragraph[lid].vecTextBox[selid].strCode, _strCode);
 
 		char char_str[_MAX_WORD_SIZE * 2];
 		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
-		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[selid].strCode, -1, NULL, 0, NULL, NULL);
-		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[selid].strCode, -1, char_str, char_str_len, 0, 0);
-//		m_ocrResult[selid].hcode = getHashCode(char_str);
+		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_paragraph[lid].vecTextBox[selid].strCode, -1, NULL, 0, NULL, NULL);
+		WideCharToMultiByte(CP_ACP, 0, m_paragraph[lid].vecTextBox[selid].strCode, -1, char_str, char_str_len, 0, 0);
+		m_paragraph[lid].vecTextBox[selid].hcode_s = getHashCode(char_str);
 
-	//	m_ocrResult[selid].strCode = _strCode;
+//		m_paragraph[lid].vecTextBox[selid].strCode = _strCode;
 	}
 }
 
@@ -1156,7 +1220,7 @@ void CMNPageObject::AddDBSearchResult(cv::Rect _rect)
 	m_sdbResult.push_back(res);
 }
 
-void CMNPageObject::AddOCRResult(_stOCRResult res)
+void CMNPageObject::AddOCRResult(int lineid, _stOCRResult res)
 {
 	// !!!!!need to dup check //
 	m_IsNeedToSave = true;
@@ -1165,9 +1229,23 @@ void CMNPageObject::AddOCRResult(_stOCRResult res)
 	memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
 	int char_str_len = WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, NULL, 0, NULL, NULL);
 	WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, char_str, char_str_len, 0, 0);
-//	res.hcode = getHashCode(char_str);
 
-	m_ocrResult.push_back(res);
+	if ((lineid < m_paragraph.size()) && (lineid >= 0)) {
+		m_paragraph[lineid].vecTextBox.push_back(std::move(res));
+	}
+	else {  // Find line if by rect, line id is -1, unknown cut 
+
+		for (auto i = 0; i < m_paragraph.size(); i++) {
+			cv::Rect andRect_overlap = (m_paragraph[i].rect & res.rect);
+			if (andRect_overlap.area() >= res.rect.area()) {
+				m_paragraph[i].vecTextBox.push_back(std::move(res));
+				break;
+			}
+		}		
+	}
+
+//	res.hcode = getHashCode(char_str);
+//	m_ocrResult.push_back(res);
 }
 
 CString CMNPageObject::GetPInfoPath(CString strExtension)
@@ -1194,36 +1272,29 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 	FILE* fp = 0;
 	fopen_s(&fp, sz, "rb");
 	if (fp) {
-
 		int pnum=0, wnum=0;
-
 		fread(&width, sizeof(unsigned short), 1, fp);
 		fread(&height, sizeof(unsigned short), 1, fp);
-		fread(&wnum, sizeof(int), 1, fp);
 		fread(&pnum, sizeof(int), 1, fp);
 		
-
-
-		for (int i = 0; i < wnum; i++) {
-			_stOCRResult ocrRes;
-			//res.init();
-			//fread(&res, sizeof(_stOCRResult), 1, fp);
-			//m_ocrResult.push_back(res);
-			// Generate SDB MAP //
-		//	if()
-
-			_stOCRResultDB res;
-			fread(&res, sizeof(_stOCRResultDB), 1, fp);
-			ocrRes.set(res.rect, res.fConfidence, res.strCode, res.lineId);
-			m_ocrResult.push_back(std::move(ocrRes));
-		}
-
 		for (int i = 0; i < pnum; i++) {
 			stParapgraphInfo data;
-			fread(&data, sizeof(stParapgraphInfo), 1, fp);	
-			m_paragraph.push_back(std::move(data));			
+			fread(&data.rect, sizeof(cv::Rect), 1, fp);
+			fread(&data.IsVerti, sizeof(bool), 1, fp);
+			data.IsDeskewed = true;
+			data.deSkewAngle = 0.0f;
+
+			fread(&wnum, sizeof(int), 1, fp);
+
+			for (int j = 0; j < wnum; j++) {
+				_stOCRResult textbox;
+				fread(&textbox, sizeof(_stOCRResult), 1, fp);
+				data.vecTextBox.push_back(std::move(textbox));
+			}
+			m_paragraph.push_back(std::move(data));
 		}
-		
+
+	
 		//char char_str[_MAX_WORD_SIZE] = { 0, };
 		//wchar_t strUnicode[_MAX_WORD_SIZE] = { 0, };
 
@@ -1248,30 +1319,40 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 
 void CMNPageObject::WriteSearchDBFile()
 {
-	std::map<unsigned int, _stSDB> m_mapSDB;
+	int wnum = 0;
+	for (auto i = 0; i < m_paragraph.size(); i++) {
+		wnum += static_cast<int>(m_paragraph[i].vecTextBox.size());
+	}
 
-	int wnum = m_ocrResult.size();
+
+
+	std::map<unsigned int, _stSDB> mapSDB;
+
+//	int wnum = m_ocrResult.size();
 	char char_str[_MAX_WORD_SIZE * 2];
-	for (int i = 0; i < wnum; i++) {
-		memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
-		int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, NULL, 0, NULL, NULL);
-		WideCharToMultiByte(CP_ACP, 0, m_ocrResult[i].strCode, -1, char_str, char_str_len, 0, 0);
+//	for (int i = 0; i < wnum; i++) {
+	for (auto j = 0; j < m_paragraph.size(); j++) {
+		for (auto i = 0; i < m_paragraph[i].vecTextBox.size(); i++) {
+			memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+			int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_paragraph[i].vecTextBox[i].strCode, -1, NULL, 0, NULL, NULL);
+			WideCharToMultiByte(CP_ACP, 0, m_paragraph[i].vecTextBox[i].strCode, -1, char_str, char_str_len, 0, 0);
 
-		_stSDBWord sdword;
-	//	sdword.strcode = m_ocrResult[i].hcode;
+			_stSDBWord sdword;
+			//	sdword.strcode = m_ocrResult[i].hcode;
 
-		sdword.strcode= getHashCode(char_str);
+			sdword.strcode = getHashCode(char_str);
 
-		//if (sdword.strcode == 5381) 
-		//	continue;
+			//if (sdword.strcode == 5381) 
+			//	continue;
 
-		sdword.filecode = m_nCode;
-		sdword.rect = m_ocrResult[i].rect;
-		sdword.fConfi = m_ocrResult[i].fConfidence;
-		sdword.fDiff = 0.0f;
+			sdword.filecode = m_nCode;
+			sdword.rect = m_paragraph[i].vecTextBox[i].rect;
+			sdword.fConfi = m_paragraph[i].vecTextBox[i].fConfidence;
+			sdword.fDiff = 0.0f;
 
-		m_mapSDB[sdword.strcode].push_back(sdword);		
-	//	SINGLETON_DataMng::GetInstance()->AddSDBTable(sdword.strcode, m_ocrResult[i].strCode);
+			mapSDB[sdword.strcode].push_back(sdword);
+			//	SINGLETON_DataMng::GetInstance()->AddSDBTable(sdword.strcode, m_ocrResult[i].strCode);
+		}
 	}
 
 	USES_CONVERSION;
@@ -1281,10 +1362,10 @@ void CMNPageObject::WriteSearchDBFile()
 	FILE* fp = 0;
 	fopen_s(&fp, sz, "wb");
 	if (fp) {
-		int wnum = m_mapSDB.size();
+		int wnum = mapSDB.size();
 		fwrite(&wnum, sizeof(int), 1, fp);
-		std::map<unsigned int, _stSDB>::iterator iter = m_mapSDB.begin();
-		for (; iter != m_mapSDB.end(); iter++) {
+		std::map<unsigned int, _stSDB>::iterator iter = mapSDB.begin();
+		for (; iter != mapSDB.end(); iter++) {
 
 			int pnum = iter->second.size();
 			fwrite(&pnum, sizeof(unsigned int), 1, fp);
@@ -1296,7 +1377,7 @@ void CMNPageObject::WriteSearchDBFile()
 		}
 		fclose(fp);
 	}
-	m_mapSDB.clear();
+	mapSDB.clear();
 
 	//bool bNeedToUpdateTable = false;
 
@@ -1380,25 +1461,22 @@ void CMNPageObject::WritePageInfo()
 	if (fp) {
 		// Write header 8 byte: paragraph number, word number//
 		int pnum = m_paragraph.size();
-		int wnum = m_ocrResult.size();
-
 		fwrite(&m_nImgWidth, sizeof(unsigned short), 1, fp);
 		fwrite(&m_nImgHeight, sizeof(unsigned short), 1, fp);
-		fwrite(&wnum, sizeof(int), 1, fp);
 		fwrite(&pnum, sizeof(int), 1, fp);
 
-
-		_stOCRResultDB writeItem;
-		for (int i = 0; i < wnum; i++) {
-			m_ocrResult[i].bNeedToDB = false;  // should be mandatory //
-			
-			writeItem.set(m_ocrResult[i].rect, m_ocrResult[i].fConfidence, m_ocrResult[i].strCode, m_ocrResult[i].lineid);
-			fwrite(&writeItem, sizeof(_stOCRResultDB), 1, fp);
-		}
-
 		for (int i = 0; i < pnum; i++) {
-			fwrite(&m_paragraph[i], sizeof(stParapgraphInfo), 1, fp);
-		}
+			fwrite(&m_paragraph[i].rect, sizeof(cv::Rect), 1, fp);
+			fwrite(&m_paragraph[i].IsVerti, sizeof(bool), 1, fp);
+			int wnum = static_cast<int>(m_paragraph[i].vecTextBox.size());
+
+			fwrite(&wnum, sizeof(int), 1, fp);
+
+			for (int j = 0; j < wnum; j++) {
+				m_paragraph[i].vecTextBox[j].bNeedToDB = false;				
+				fwrite(&m_paragraph[i].vecTextBox[j], sizeof(_stOCRResult), 1, fp);
+			}
+		}		
 		fclose(fp);
 	}
 
@@ -1414,287 +1492,287 @@ void CMNPageObject::WritePageInfo()
 
 void CMNPageObject::EncodeTexBoxHori()
 {
-	int wordheight = 32;
-	// Sorting by x, y pos //
-	//=For Encoding======================//
-	typedef struct _EWORDINFO {
-		wchar_t* str;
-		cv::Rect rect;
-	}_EWORDINFO;
-
-	std::vector<_EWORDINFO> vecEncode;
-	for (int i = 0; i < m_ocrResult.size(); i++) {
-
-		if (m_ocrResult[i].fConfidence > 0.1f) {
-			_EWORDINFO tmp;
-			tmp.rect = m_ocrResult[i].rect;
-			tmp.str = m_ocrResult[i].strCode;
-			vecEncode.push_back(tmp);
-		}
-	}
-
-	//std::vector<_ENCODETEXT> encodeWord;
-	////==================================//
-	int minY = 10000, minX = 0;
-	RECT2D r1, r2;
-	int y1, y2, x1, x2;
-
-	int numItem = vecEncode.size();
-	if (numItem > 1) {
-
-		for (int i = 0; i < numItem - 1; i++)
-		{
-			for (int j = 0; j < numItem - i - 1; j++)
-			{
-				int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
-				int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
-				//int yj = vecEncode[j].rect.y;
-				//int yj1 = vecEncode[j + 1].rect.y;
-				if (yj > yj1) /* For decreasing order use < */
-				{
-					_EWORDINFO swap = vecEncode[j];
-					vecEncode[j] = vecEncode[j + 1];
-					vecEncode[j + 1] = swap;
-				}
-			}
-		}
-
-
-		for (int i = 0; i < numItem - 1; i++)
-		{
-			for (int j = 0; j < numItem - i - 1; j++)
-			{
-				if (vecEncode[j].rect.x > vecEncode[j + 1].rect.x) /* For decreasing order use < */
-				{
-					int my1 = vecEncode[j].rect.y + vecEncode[j].rect.height*0.5f;
-					int my2 = vecEncode[j + 1].rect.y + vecEncode[j + 1].rect.height*0.5f;
-
-					//cv::Rect baseRect = vecEncode[i].rect;
-					//baseRect.width = 1000;
-					//cv::Rect andRect_overlap = (baseRect & vecEncode[j].rect);
-
-					//if (andRect_overlap.area() > 0) {
-					//	float fOverlap_j = (float)vecEncode[j].rect.area() / (float)andRect_overlap.area();
-					//	if (fOverlap_j > 0.75f) {
-					//		_EWORDINFO swap = vecEncode[j];
-					//		vecEncode[j] = vecEncode[j + 1];
-					//		vecEncode[j + 1] = swap;
-					//	}
-					//}
-					//int my1 = vecEncode[j].rect.y2;
-					//int my2 = vecEncode[j + 1].rect.y2;
-					if (abs(my1 - my2) < (vecEncode[j].rect.height*0.75f)) {
-						_EWORDINFO swap = vecEncode[j];
-						vecEncode[j] = vecEncode[j + 1];
-						vecEncode[j + 1] = swap;
-					}
-				}
-			}
-		}
-	}
-
-	CString strPath = GetPInfoPath(L".txt");
-
-	//	fopen_s(&fp, (CStringA)strPath, "w");
-	//	fp = _wfopen(strPath, L"w");
-	CFile cfile;
-//	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeNoTruncate | CFile::modeCreate))
-	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
-	{
-		return;
-	}
-
-	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
-	cfile.Write(&nShort, 2);
-
-	//	file.Write(pStrWideChar, nSize * 2);
-	if (vecEncode.size() > 0) {
-	//	wchar_t *wchar_str;
-	//	char *char_str;
-	//	int char_str_len;
-
-		int preYPos = 0, yPos = 0;
-		bool Isfirst = true;
-		int wNum = vecEncode.size();
-		int averHeight = 0;// = vecEncode[0].rect.height;
-		for (int i = 0; i < wNum; i++) {
-
-			if (i < wNum - 1) {
-				averHeight = vecEncode[i].rect.height > vecEncode[i + 1].rect.height ? vecEncode[i].rect.height : vecEncode[i + 1].rect.height;
-			}
-			else {
-				averHeight = vecEncode[i].rect.height;
-			}
-
-		//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
-			yPos = vecEncode[i].rect.y + vecEncode[i].rect.height*0.5f;
-
-			if (i == 0) {
-				preYPos = yPos;
-			}
-			else {
-				int diff = (yPos - preYPos);
-				int enterCnt = diff / (averHeight*0.5f);
-			//	for (int i = 0; i < enterCnt; i++) {
-				if (diff > averHeight*0.5f) {
-					cfile.Write(L"\r\n", 4);
-				}
-			//	}
-				preYPos = yPos;
-			}
-
-			//int diff = abs(preYPos - yPos);
-			//int enterCnt = diff / averHeight*0.75f;
-
-
-		//	if (diff > averHeight*0.75) {		
-
-			//	cfile.Write(L"\r\n", 4);
-
-			//	preYPos = yPos;
-			//	//averHeight += vecEncode[i].rect.height;
-			//	//averHeight /= 2;
-			//}
-			int len = wcslen(vecEncode[i].str) *2;
-			cfile.Write(vecEncode[i].str, len);
-
-			if (i < wNum - 1) {
-				int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
-				if (diff > averHeight / 4) {
-					cfile.Write(L" ", 2);		// Space
-				}
-			}		
-		}
-	}
-	cfile.Close();
-	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+//	int wordheight = 32;
+//	// Sorting by x, y pos //
+//	//=For Encoding======================//
+//	typedef struct _EWORDINFO {
+//		wchar_t* str;
+//		cv::Rect rect;
+//	}_EWORDINFO;
+//
+//	std::vector<_EWORDINFO> vecEncode;
+//	for (int i = 0; i < m_ocrResult.size(); i++) {
+//
+//		if (m_ocrResult[i].fConfidence > 0.1f) {
+//			_EWORDINFO tmp;
+//			tmp.rect = m_ocrResult[i].rect;
+//			tmp.str = m_ocrResult[i].strCode;
+//			vecEncode.push_back(tmp);
+//		}
+//	}
+//
+//	//std::vector<_ENCODETEXT> encodeWord;
+//	////==================================//
+//	int minY = 10000, minX = 0;
+//	RECT2D r1, r2;
+//	int y1, y2, x1, x2;
+//
+//	int numItem = vecEncode.size();
+//	if (numItem > 1) {
+//
+//		for (int i = 0; i < numItem - 1; i++)
+//		{
+//			for (int j = 0; j < numItem - i - 1; j++)
+//			{
+//				int yj = vecEncode[j].rect.y + vecEncode[j].rect.height;
+//				int yj1 = vecEncode[j+1].rect.y + vecEncode[j+1].rect.height;
+//				//int yj = vecEncode[j].rect.y;
+//				//int yj1 = vecEncode[j + 1].rect.y;
+//				if (yj > yj1) /* For decreasing order use < */
+//				{
+//					_EWORDINFO swap = vecEncode[j];
+//					vecEncode[j] = vecEncode[j + 1];
+//					vecEncode[j + 1] = swap;
+//				}
+//			}
+//		}
+//
+//
+//		for (int i = 0; i < numItem - 1; i++)
+//		{
+//			for (int j = 0; j < numItem - i - 1; j++)
+//			{
+//				if (vecEncode[j].rect.x > vecEncode[j + 1].rect.x) /* For decreasing order use < */
+//				{
+//					int my1 = vecEncode[j].rect.y + vecEncode[j].rect.height*0.5f;
+//					int my2 = vecEncode[j + 1].rect.y + vecEncode[j + 1].rect.height*0.5f;
+//
+//					//cv::Rect baseRect = vecEncode[i].rect;
+//					//baseRect.width = 1000;
+//					//cv::Rect andRect_overlap = (baseRect & vecEncode[j].rect);
+//
+//					//if (andRect_overlap.area() > 0) {
+//					//	float fOverlap_j = (float)vecEncode[j].rect.area() / (float)andRect_overlap.area();
+//					//	if (fOverlap_j > 0.75f) {
+//					//		_EWORDINFO swap = vecEncode[j];
+//					//		vecEncode[j] = vecEncode[j + 1];
+//					//		vecEncode[j + 1] = swap;
+//					//	}
+//					//}
+//					//int my1 = vecEncode[j].rect.y2;
+//					//int my2 = vecEncode[j + 1].rect.y2;
+//					if (abs(my1 - my2) < (vecEncode[j].rect.height*0.75f)) {
+//						_EWORDINFO swap = vecEncode[j];
+//						vecEncode[j] = vecEncode[j + 1];
+//						vecEncode[j + 1] = swap;
+//					}
+//				}
+//			}
+//		}
+//	}
+//
+//	CString strPath = GetPInfoPath(L".txt");
+//
+//	//	fopen_s(&fp, (CStringA)strPath, "w");
+//	//	fp = _wfopen(strPath, L"w");
+//	CFile cfile;
+////	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeNoTruncate | CFile::modeCreate))
+//	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+//	{
+//		return;
+//	}
+//
+//	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+//	cfile.Write(&nShort, 2);
+//
+//	//	file.Write(pStrWideChar, nSize * 2);
+//	if (vecEncode.size() > 0) {
+//	//	wchar_t *wchar_str;
+//	//	char *char_str;
+//	//	int char_str_len;
+//
+//		int preYPos = 0, yPos = 0;
+//		bool Isfirst = true;
+//		int wNum = vecEncode.size();
+//		int averHeight = 0;// = vecEncode[0].rect.height;
+//		for (int i = 0; i < wNum; i++) {
+//
+//			if (i < wNum - 1) {
+//				averHeight = vecEncode[i].rect.height > vecEncode[i + 1].rect.height ? vecEncode[i].rect.height : vecEncode[i + 1].rect.height;
+//			}
+//			else {
+//				averHeight = vecEncode[i].rect.height;
+//			}
+//
+//		//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
+//			yPos = vecEncode[i].rect.y + vecEncode[i].rect.height*0.5f;
+//
+//			if (i == 0) {
+//				preYPos = yPos;
+//			}
+//			else {
+//				int diff = (yPos - preYPos);
+//				int enterCnt = diff / (averHeight*0.5f);
+//			//	for (int i = 0; i < enterCnt; i++) {
+//				if (diff > averHeight*0.5f) {
+//					cfile.Write(L"\r\n", 4);
+//				}
+//			//	}
+//				preYPos = yPos;
+//			}
+//
+//			//int diff = abs(preYPos - yPos);
+//			//int enterCnt = diff / averHeight*0.75f;
+//
+//
+//		//	if (diff > averHeight*0.75) {		
+//
+//			//	cfile.Write(L"\r\n", 4);
+//
+//			//	preYPos = yPos;
+//			//	//averHeight += vecEncode[i].rect.height;
+//			//	//averHeight /= 2;
+//			//}
+//			int len = wcslen(vecEncode[i].str) *2;
+//			cfile.Write(vecEncode[i].str, len);
+//
+//			if (i < wNum - 1) {
+//				int diff = vecEncode[i + 1].rect.x - (vecEncode[i].rect.x + vecEncode[i].rect.width);
+//				if (diff > averHeight / 4) {
+//					cfile.Write(L" ", 2);		// Space
+//				}
+//			}		
+//		}
+//	}
+//	cfile.Close();
+//	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
 }
 
 
 
 void CMNPageObject::EncodeTexBoxVerti()
 {
-	int wordheight = 32;
-	// Sorting by x, y pos //
-	//=For Encoding======================//
-	typedef struct _EWORDINFO {
-		wchar_t* str;
-		cv::Rect rect;
-	}_EWORDINFO;
+	//int wordheight = 32;
+	//// Sorting by x, y pos //
+	////=For Encoding======================//
+	//typedef struct _EWORDINFO {
+	//	wchar_t* str;
+	//	cv::Rect rect;
+	//}_EWORDINFO;
 
-	std::vector<_EWORDINFO> vecEncode;
-	for (int i = 0; i < m_ocrResult.size(); i++) {
+	//std::vector<_EWORDINFO> vecEncode;
+	//for (int i = 0; i < m_ocrResult.size(); i++) {
 
-		if (m_ocrResult[i].fConfidence > 0.1f) {
-			_EWORDINFO tmp;
-			tmp.rect = m_ocrResult[i].rect;
-			tmp.str = m_ocrResult[i].strCode;
-			vecEncode.push_back(tmp);
-		}
-	}
+	//	if (m_ocrResult[i].fConfidence > 0.1f) {
+	//		_EWORDINFO tmp;
+	//		tmp.rect = m_ocrResult[i].rect;
+	//		tmp.str = m_ocrResult[i].strCode;
+	//		vecEncode.push_back(tmp);
+	//	}
+	//}
 
-	//std::vector<_ENCODETEXT> encodeWord;
-	////==================================//
-	int minY = 10000, minX = 0;
-	RECT2D r1, r2;
-	int y1, y2, x1, x2;
+	////std::vector<_ENCODETEXT> encodeWord;
+	//////==================================//
+	//int minY = 10000, minX = 0;
+	//RECT2D r1, r2;
+	//int y1, y2, x1, x2;
 
-	int numItem = vecEncode.size();
-	if (numItem > 1) {
+	//int numItem = vecEncode.size();
+	//if (numItem > 1) {
 
-		for (int i = 0; i < numItem - 1; i++)
-		{
-			for (int j = 0; j < numItem - i - 1; j++)
-			{
-				if ((vecEncode[j].rect.x + vecEncode[j].rect.width) < (vecEncode[j + 1].rect.x+ vecEncode[j + 1].rect.width)) /* For decreasing order use < */
-				{
-					_EWORDINFO swap = vecEncode[j];
-					vecEncode[j] = vecEncode[j + 1];
-					vecEncode[j + 1] = swap;
-				}
-			}
-		}
+	//	for (int i = 0; i < numItem - 1; i++)
+	//	{
+	//		for (int j = 0; j < numItem - i - 1; j++)
+	//		{
+	//			if ((vecEncode[j].rect.x + vecEncode[j].rect.width) < (vecEncode[j + 1].rect.x+ vecEncode[j + 1].rect.width)) /* For decreasing order use < */
+	//			{
+	//				_EWORDINFO swap = vecEncode[j];
+	//				vecEncode[j] = vecEncode[j + 1];
+	//				vecEncode[j + 1] = swap;
+	//			}
+	//		}
+	//	}
 
-		for (int i = 0; i < numItem - 1; i++)
-		{
-			for (int j = 0; j < numItem - i - 1; j++)
-			{
-				if ((vecEncode[j].rect.y)  > (vecEncode[j + 1].rect.y) ) /* For decreasing order use < */
-				{
-					int averWidth = vecEncode[j].rect.width > vecEncode[j + 1].rect.width ? vecEncode[j].rect.width : vecEncode[j + 1].rect.width;
-					int my1 = vecEncode[j].rect.x + vecEncode[j].rect.width;
-					int my2 = vecEncode[j + 1].rect.x + vecEncode[j + 1].rect.width;
+	//	for (int i = 0; i < numItem - 1; i++)
+	//	{
+	//		for (int j = 0; j < numItem - i - 1; j++)
+	//		{
+	//			if ((vecEncode[j].rect.y)  > (vecEncode[j + 1].rect.y) ) /* For decreasing order use < */
+	//			{
+	//				int averWidth = vecEncode[j].rect.width > vecEncode[j + 1].rect.width ? vecEncode[j].rect.width : vecEncode[j + 1].rect.width;
+	//				int my1 = vecEncode[j].rect.x + vecEncode[j].rect.width;
+	//				int my2 = vecEncode[j + 1].rect.x + vecEncode[j + 1].rect.width;
 
-					if (abs(my1 - my2) < (averWidth*0.75f)) {
-						_EWORDINFO swap = vecEncode[j];
-						vecEncode[j] = vecEncode[j + 1];
-						vecEncode[j + 1] = swap;
-					}
-				}
+	//				if (abs(my1 - my2) < (averWidth*0.75f)) {
+	//					_EWORDINFO swap = vecEncode[j];
+	//					vecEncode[j] = vecEncode[j + 1];
+	//					vecEncode[j + 1] = swap;
+	//				}
+	//			}
 
-				//if (vecEncode[j].rect.y > vecEncode[j + 1].rect.y) /* For decreasing order use < */
-				//{
-				//	_EWORDINFO swap = vecEncode[j];
-				//	vecEncode[j] = vecEncode[j + 1];
-				//	vecEncode[j + 1] = swap;
-				//}
-			}
-		}
-	}
+	//			//if (vecEncode[j].rect.y > vecEncode[j + 1].rect.y) /* For decreasing order use < */
+	//			//{
+	//			//	_EWORDINFO swap = vecEncode[j];
+	//			//	vecEncode[j] = vecEncode[j + 1];
+	//			//	vecEncode[j + 1] = swap;
+	//			//}
+	//		}
+	//	}
+	//}
 
-	CString strPath = GetPInfoPath(L".txt");
-	CFile cfile;
-	if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
-	{
-		return;
-	}
+	//CString strPath = GetPInfoPath(L".txt");
+	//CFile cfile;
+	//if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+	//{
+	//	return;
+	//}
 
-	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
-	cfile.Write(&nShort, 2);
+	//USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+	//cfile.Write(&nShort, 2);
 
-	//	file.Write(pStrWideChar, nSize * 2);
-	if (vecEncode.size() > 0) {
+	////	file.Write(pStrWideChar, nSize * 2);
+	//if (vecEncode.size() > 0) {
 
-		int preXPos = 0, xPos = 0;
-		bool Isfirst = true;
-		int wNum = vecEncode.size();
-		int averWidth = 0;// = vecEncode[0].rect.height;
-		for (int i = 0; i < wNum; i++) {
+	//	int preXPos = 0, xPos = 0;
+	//	bool Isfirst = true;
+	//	int wNum = vecEncode.size();
+	//	int averWidth = 0;// = vecEncode[0].rect.height;
+	//	for (int i = 0; i < wNum; i++) {
 
-			if (i < wNum - 1) {
-				averWidth = vecEncode[i].rect.width > vecEncode[i + 1].rect.width ? vecEncode[i].rect.width : vecEncode[i + 1].rect.width;
-			}
-			else {
-				averWidth = vecEncode[i].rect.width;
-			}
+	//		if (i < wNum - 1) {
+	//			averWidth = vecEncode[i].rect.width > vecEncode[i + 1].rect.width ? vecEncode[i].rect.width : vecEncode[i + 1].rect.width;
+	//		}
+	//		else {
+	//			averWidth = vecEncode[i].rect.width;
+	//		}
 
-			//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
-			xPos = vecEncode[i].rect.x;
+	//		//	wchar_str = vecEncode[i].str.GetBuffer(vecEncode[i].str.GetLength());
+	//		xPos = vecEncode[i].rect.x;
 
-			if (i == 0) {
-				preXPos = xPos;
-			}
-			else {
-				int diff = abs(preXPos - xPos);
-				if (diff > averWidth*0.75f) {
-					cfile.Write(L"\r\n", 4);
-				}
-				//	}
-				preXPos = xPos;
-			}
-			int len = wcslen(vecEncode[i].str) * 2;
-			cfile.Write(vecEncode[i].str, len);
+	//		if (i == 0) {
+	//			preXPos = xPos;
+	//		}
+	//		else {
+	//			int diff = abs(preXPos - xPos);
+	//			if (diff > averWidth*0.75f) {
+	//				cfile.Write(L"\r\n", 4);
+	//			}
+	//			//	}
+	//			preXPos = xPos;
+	//		}
+	//		int len = wcslen(vecEncode[i].str) * 2;
+	//		cfile.Write(vecEncode[i].str, len);
 
-			if (i < wNum - 1) {
-				int diff = vecEncode[i + 1].rect.y - (vecEncode[i].rect.y + vecEncode[i].rect.height);
-				if (diff > averWidth / 2) {
-					cfile.Write(L" ", 2);		// Space
-				}
-			}
-		}
-	}
-	cfile.Close();
-	::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+	//		if (i < wNum - 1) {
+	//			int diff = vecEncode[i + 1].rect.y - (vecEncode[i].rect.y + vecEncode[i].rect.height);
+	//			if (diff > averWidth / 2) {
+	//				cfile.Write(L" ", 2);		// Space
+	//			}
+	//		}
+	//	}
+	//}
+	//cfile.Close();
+	//::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
 
 }
 

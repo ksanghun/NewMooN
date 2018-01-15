@@ -493,7 +493,7 @@ struct _stOCRResult {
 
 
 	bool IsMatched;
-	unsigned short lineid;
+//	unsigned short lineid;
 
 	void init() {
 		fConfidence = 0.0f;
@@ -504,33 +504,33 @@ struct _stOCRResult {
 		hcode_s = 5381;
 	};
 
-	void set(cv::Rect _r, float _fConfi, wchar_t* _code, unsigned short _line){
+	void set(cv::Rect _r, float _fConfi, wchar_t* _code){
 		rect = _r;
 		fConfidence = _fConfi;
 		memcpy(strCode, _code, sizeof(wchar_t)*_MAX_WORD_SIZE);
 		type = 0;
 		bNeedToDB = false;
 		hcode_s = 5381;
-		lineid = _line;
+//		lineid = _line;
 	};
 };
 
-struct _stOCRResultDB {
-	cv::Rect rect;
-	float fConfidence;
-	wchar_t strCode[_MAX_WORD_SIZE];
-	unsigned short lineId;
-	
-	// Reserve Code //
-	char reserve[64];
-	void set(cv::Rect _r, float _fConfi, wchar_t* _code, unsigned short _line) {
-		rect = _r;
-		fConfidence = _fConfi;
-		memcpy(strCode, _code, sizeof(wchar_t)*_MAX_WORD_SIZE);
-		lineId = _line;
-		memset(reserve, 0x00, 64);
-	};
-};
+//struct _stOCRResultDB {
+//	cv::Rect rect;
+//	float fConfidence;
+//	wchar_t strCode[_MAX_WORD_SIZE];
+////	unsigned short lineId;
+//	
+//	// Reserve Code //
+//	char reserve[64];
+//	void set(cv::Rect _r, float _fConfi, wchar_t* _code /*unsigned short _line*/) {
+//		rect = _r;
+//		fConfidence = _fConfi;
+//		memcpy(strCode, _code, sizeof(wchar_t)*_MAX_WORD_SIZE);
+////		lineId = _line;
+//		memset(reserve, 0x00, 64);
+//	};
+//};
 
 struct _stSDBWord {
 	unsigned int filecode;

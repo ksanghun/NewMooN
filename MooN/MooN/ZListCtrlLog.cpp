@@ -199,10 +199,12 @@ void CZListCtrlLog::UpdateCodeValue()
 BOOL CZListCtrlLog::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: Add your specialized code here and/or call the base class
+	m_currDrawId = 0;
+	m_colorid = 0;
+
 	if (pMsg->message == WM_KEYDOWN)
 	{
-		m_currDrawId = 0;
-		m_colorid = 0;
+		
 
 		if (pMsg->wParam == VK_RETURN || pMsg->wParam == VK_ESCAPE)
 		{
@@ -785,6 +787,10 @@ void CZListCtrlLog::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 		m_Edit.SetFocus();
 		::Rectangle(::GetDC(temp->hdr.hwndFrom), rect.left, rect.top - 1, rect.right, rect.bottom);
 		m_Edit.SetWindowTextW(str);
+		
+		DWORD dwSel = m_Edit.GetSel();
+		m_Edit.SetSel(HIWORD(dwSel), -1);
+
 		m_selItem = nItem;
 		m_strSearchId = GetItemText(nItem, 3);
 	}

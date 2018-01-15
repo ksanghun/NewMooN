@@ -516,7 +516,7 @@ void CMNDataManager::SetMatchingResults()
 	bool IsAdded = false;
 	int cnt = 0;
 
-	for (size_t i = 0; i < m_vecImgData.size(); i++) {
+	for (auto i = 0; i < m_vecImgData.size(); i++) {
 		std::vector<stMatchInfo>& matches = m_vecImgData[i]->GetMatchResult();
 		if (matches.size() > 0) {
 			unsigned int matchFile = getHashCode((CStringA)m_vecImgData[i]->GetPath());
@@ -579,7 +579,7 @@ void CMNDataManager::SetMatchingResults()
 					std::vector<uchar> data_encode(_NORMALIZE_SIZE_W*_NORMALIZE_SIZE_H * 4);
 					cv::imencode(".bmp", tmpcut, data_encode);
 			//		cv::imencode(".bmp", matches[j].cutImg, data_encode);
-					matchRes.strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
+					matchRes.strBase64 = base64_encode((unsigned char*)&data_encode[0], static_cast<int>(data_encode.size()));
 					data_encode.clear();
 			//		tmpcut.release();
 					////===========================================//
@@ -715,8 +715,8 @@ void CMNDataManager::MultiToUniCode(char* char_str, wchar_t* str_unicode)
 	//char char_str[_MAX_WORD_SIZE] = { 0, };
 	//wchar_t strUnicode[_MAX_WORD_SIZE] = { 0, };
 	// Multi to Unicode //
-	int nLen = MultiByteToWideChar(CP_ACP, 0, &char_str[0], strlen(char_str), NULL, NULL);		
-	MultiByteToWideChar(CP_ACP, 0, char_str, strlen(char_str), str_unicode, nLen);
+	int nLen = MultiByteToWideChar(CP_ACP, 0, &char_str[0], static_cast<int>(strlen(char_str)), NULL, NULL);		
+	MultiByteToWideChar(CP_ACP, 0, char_str, static_cast<int>(strlen(char_str)), str_unicode, nLen);
 }
 
 _stExtractionSetting CMNDataManager::GetExtractionSetting() 
@@ -1012,53 +1012,63 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 
 void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 {
-	std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
-	for (int j = 0; j < ocrRes.size(); j++) {
-		if ((ocrRes[j].bNeedToDB) && (ocrRes[j].fConfidence > 0.1f)) {
+//	std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
 
-			if (ocrRes[j].strCode == '\0') 
-				continue;
+	std::vector<stParapgraphInfo> vecLine = pPage->GetVecParagraph();
+	for (auto i = 0; i < vecLine.size(); i++) {
 
 
-			cv::Mat cutimg = pPage->GetSrcPageGrayImg()(ocrRes[j].rect);
-			cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
-			int classid = GetNomalizedWordSize(ocrRes[j].rect, norRect, 32) - 1;
-			int imgid = m_refImgClass[classid].nCurrImgId;
-
-			cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
-			resimg.setTo(255);
-			//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
-			ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
 
-			// Verify to add into DB =====================================//
-			DB_CHK IsAdd = IsNeedToAddDB(resimg, ocrRes[j].strCode, classid);
-			//===========================================================//
 
-			if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
-				int wordPosId = m_refImgClass[classid].vecStr.size();
+	//	for (int j = 0; j < ocrRes.size(); j++) {
+		for (int j = 0; j < vecLine[i].vecTextBox.size(); j++) {
+			if ((vecLine[i].vecTextBox[j].bNeedToDB) && (vecLine[i].vecTextBox[j].fConfidence > 0.1f)) {
 
-				int w = (classid + 1) * DB_IMGCHAR_SIZE;
-				int h = DB_IMGCHAR_SIZE;
+				if (vecLine[i].vecTextBox[j].strCode == '\0')
+					continue;
 
-				norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
-				norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
 
-				resimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+				cv::Mat cutimg = pPage->GetSrcPageGrayImg()(vecLine[i].vecTextBox[j].rect);
+				cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
+				int classid = GetNomalizedWordSize(vecLine[i].vecTextBox[j].rect, norRect, 32) - 1;
+				int imgid = m_refImgClass[classid].nCurrImgId;
 
-				int clen = m_refImgClass[classid].maxCharLen;
-				wchar_t* strcode = new wchar_t[clen];
-				memset(strcode, 0x00, sizeof(wchar_t)*clen);
-				memcpy(strcode, ocrRes[j].strCode, sizeof(wchar_t)*clen);
-				m_refImgClass[classid].vecStr.push_back(strcode);
+				cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
+				resimg.setTo(255);
+				//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+				ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
-				m_refImgClass[classid].needToUpdate = true;
 
-				// Update Table //
-//				AddSDBTable(ocrRes[j].hcode, strcode);
-				m_bIsUpdateTable = true;
+				// Verify to add into DB =====================================//
+				DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[i].vecTextBox[j].strCode, classid);
+				//===========================================================//
+
+				if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
+					int wordPosId = m_refImgClass[classid].vecStr.size();
+
+					int w = (classid + 1) * DB_IMGCHAR_SIZE;
+					int h = DB_IMGCHAR_SIZE;
+
+					norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
+					norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
+
+					resimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+
+					int clen = m_refImgClass[classid].maxCharLen;
+					wchar_t* strcode = new wchar_t[clen];
+					memset(strcode, 0x00, sizeof(wchar_t)*clen);
+					memcpy(strcode, vecLine[i].vecTextBox[j].strCode, sizeof(wchar_t)*clen);
+					m_refImgClass[classid].vecStr.push_back(strcode);
+
+					m_refImgClass[classid].needToUpdate = true;
+
+					// Update Table //
+	//				AddSDBTable(ocrRes[j].hcode, strcode);
+					m_bIsUpdateTable = true;
+				}
+				pPage->UpdateOCRResStatus(i, j, false, vecLine[i].vecTextBox[j].type);
 			}
-			pPage->UpdateOCRResStatus(j, false, ocrRes[j].type);
 		}
 	}
 //	UpdateImgClassDB();
@@ -2301,10 +2311,14 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	int averheight = 0;
 	int cnt = 0;
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
-		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
-		for (auto j = 0; j < ocrRes.size(); j++) {
-			averheight += ocrRes[j].rect.height;
-			cnt++;
+//		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
+		for (auto k = 0; k < vecLine.size(); k++) {
+		//	for (auto j = 0; j < ocrRes.size(); j++) {
+			for (auto j = 0; j < vecLine[k].vecTextBox.size(); j++) {
+				averheight += vecLine[k].vecTextBox[j].rect.height;
+				cnt++;
+			}
 		}
 	}
 	averheight /= cnt;
@@ -2313,40 +2327,44 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 
 	// Initialize Cut & Search Vector==============//
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
-		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+		//		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 
 		cv::Mat srcImg = m_vecImgData[i]->GetSrcPageGrayImg();
 		if (srcImg.ptr()) {
-			for (auto j = 0; j < ocrRes.size(); j++) {
-				_stCNSResult cns;
-				cns.searchid = 0;
-		//		cns.pKey = nullptr;
-				cns.pageid = i;
-				cns.objid = j;
-				cns.rect = ocrRes[j].rect;
-			//	cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
-			//	cv::Rect nRect = GetNomalizedSize(ocrRes[j].rect);	
-				cv::Rect nRect;
-				GetNomalizedWordSize(ocrRes[j].rect, nRect, averheight);
+			for (auto k = 0; k < vecLine.size(); k++) {
+//				for (auto j = 0; j < ocrRes.size(); j++) {
+				for (auto j = 0; j < vecLine[k].vecTextBox.size(); j++) {
+					_stCNSResult cns;
+					cns.searchid = 0;
+					//		cns.pKey = nullptr;
+					cns.pageid = i;
+					cns.objid = j;
+					cns.rect = vecLine[k].vecTextBox[j].rect;
+					//	cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
+					//	cv::Rect nRect = GetNomalizedSize(ocrRes[j].rect);	
+					cv::Rect nRect;
+					GetNomalizedWordSize(vecLine[k].vecTextBox[j].rect, nRect, averheight);
 
 
-				//	cns.cutimg = srcImg(ocrRes[j].rect).clone();
-				cv::Mat cutimg = srcImg(ocrRes[j].rect).clone();
-				cv::resize(cutimg, cutimg, cv::Size(ocrRes[j].rect.width *fNormalScale, ocrRes[j].rect.height*fNormalScale));
+					//	cns.cutimg = srcImg(ocrRes[j].rect).clone();
+					cv::Mat cutimg = srcImg(vecLine[k].vecTextBox[j].rect).clone();
+					cv::resize(cutimg, cutimg, cv::Size(vecLine[k].vecTextBox[j].rect.width *fNormalScale, vecLine[k].vecTextBox[j].rect.height*fNormalScale));
 
-				//if (nRect.width > 32) {
-				//	cv::imshow("error", cutimg);
-				//	return;
-				//}
+					//if (nRect.width > 32) {
+					//	cv::imshow("error", cutimg);
+					//	return;
+					//}
 
-				cns.cutimg = cv::Mat(cvSize(nRect.width, nRect.height), srcImg.type());
-				cns.cutimg.setTo(255);
-			//	cv::Mat cutimg = srcImg(ocrRes[j].rect);
-				ResizeCutImageByRatio(cns.cutimg, cutimg, nRect.width, nRect.height);
-			//	cv::imshow("cutimg", cns.cutimg);
+					cns.cutimg = cv::Mat(cvSize(nRect.width, nRect.height), srcImg.type());
+					cns.cutimg.setTo(255);
+					//	cv::Mat cutimg = srcImg(ocrRes[j].rect);
+					ResizeCutImageByRatio(cns.cutimg, cutimg, nRect.width, nRect.height);
+					//	cv::imshow("cutimg", cns.cutimg);
 
-				vecCnSResults.push_back(std::move(cns));				
-				cutimg.release();
+					vecCnSResults.push_back(std::move(cns));
+					cutimg.release();
+				}
 			}
 		}
 	}

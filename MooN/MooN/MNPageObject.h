@@ -130,23 +130,23 @@ public:
 	bool IsDuplicate(stMatchInfo& info, int search_size);
 
 //	float GetDeskewParam(int pid);
-	_stOCRResult GetOCRResult(int _id);
-	void CMNPageObject::SetOCRResult(int _id, _stOCRResult _res);
+	_stOCRResult GetOCRResult(int _lineid, int _id);
+	void CMNPageObject::SetOCRResult(int _lineid, int _id, _stOCRResult _re);
 
 	// Edit Paragraph box //
 	void DeleteSelPara(int selid);
 	void DeleteOCRResByRect(cv::Rect rect);
 	void CleanUpOCRres();
 	cv::Rect GetSelParaRect(int selid);
-	bool DeleteSelOCRRes(int selid);
-	void ConfirmOCRRes(int selid);
-	void UpdateOCRCode(CString _strCode, float _fConfi, int selid);
-	void UpdateOCRResStatus(int selid, bool IsUpdate, int _type);
+	bool DeleteSelOCRRes(int lid, int selid);
+	void ConfirmOCRRes(int lid, int selid);
+	void UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid);
+	void UpdateOCRResStatus(int lid, int selid, bool IsUpdate, int _type);
 
 	// OCR //
 	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }
-	std::vector<_stOCRResult>& GetVecOCRResult() { return m_ocrResult; }
-	void AddOCRResult(_stOCRResult res);
+//	std::vector<_stOCRResult>& GetVecOCRResult() { return m_ocrResult; }
+	void AddOCRResult(int lineid, _stOCRResult res);
 	void AddDBSearchResult(cv::Rect _rect);
 	void ClearDBSearchResult();
 
@@ -162,6 +162,7 @@ public:
 	void ClearParagraph();
 	void ClearOCRResult();
 	void DeleteAllOcrRes();
+	void DeleteAllOcrResInLine(int lineid);
 
 	bool IsNeedToExtract();
 
@@ -211,7 +212,7 @@ private:
 
 	std::vector<stMatchInfo> m_matched_pos;
 	std::vector<stParapgraphInfo> m_paragraph;
-	std::vector<_stOCRResult> m_ocrResult;
+//	std::vector<_stOCRResult> m_ocrResult;
 	std::vector<stDBSearchRes> m_sdbResult;
 	
 	

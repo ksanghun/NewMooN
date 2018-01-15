@@ -178,6 +178,7 @@ private:
 	int m_selParaId;
 	int m_selOCRId;
 	int m_selOCRIdforMouseHover;
+	int m_selParaIdforMouseHover;
 
 	CMNPageObject* m_pSelectPageForCNS;
 	CMNPageObject* m_pSelectPageForCNSAll;
