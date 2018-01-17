@@ -684,16 +684,17 @@ void CMNPageObject::DrawMatchItem()
 				glEnd();
 			}
 
-
-			glColor4f(m_matched_pos[i].color.r, m_matched_pos[i].color.g, m_matched_pos[i].color.b, 0.5f);
-			glBegin(GL_LINE_STRIP);
-			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-			glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-			glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
-			glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
-			glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-			glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-			glEnd();
+			if (m_matched_pos[i].lineid < 0) {
+				glColor4f(m_matched_pos[i].color.r, m_matched_pos[i].color.g, m_matched_pos[i].color.b, 0.5f);
+				glBegin(GL_LINE_STRIP);
+				//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glEnd();
+			}
 		}
 		glPopMatrix();
 	}
@@ -847,14 +848,20 @@ void CMNPageObject::SetFitCurArea()
 
 bool CMNPageObject::AddMatchedPoint(stMatchInfo info, int search_size)
 {
-	if (search_size > 0) {
-		if (IsDuplicate(info, search_size) == false) {
+	//if ((info.lineid >= 0) && (info.objid >= 0)) {  // Update previous textBox;
+	//	m_paragraph[info.lineid].vecTextBox[info.objid].fConfidence = info.accuracy;
+	//}
+
+	//else {
+		if (search_size > 0) {
+			if (IsDuplicate(info, search_size) == false) {
+				m_matched_pos.push_back(info);
+			}
+		}
+		else {
 			m_matched_pos.push_back(info);
 		}
-	}
-	else {
-		m_matched_pos.push_back(info);
-	}
+//	}
 	return true;
 }
 

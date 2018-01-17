@@ -19,6 +19,8 @@ public:
 	void AddListToTraining();
 	void SetAutoFillOption(BOOL IsAutoFill) { m_bIsAutoFill = IsAutoFill; }
 
+	void SelItemByLineTextBoxID(int _id);
+
 // ColumnHeader Class============================//
 	class CCustomDrawHeaderCtrl : public CHeaderCtrl
 	{

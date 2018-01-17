@@ -34,6 +34,7 @@ public:
 	COLORREF GetMatchingColor() { return m_wndProperties.GetMatchingColor(); }
 
 	void SetParagraphInfo(float fdeskew, CString strName, bool IsVerti);
+	void SelectListItemById(int line_text_id);
 	void GetCurrSetting() { return m_wndProperties.GetCurrSetting(); }
 
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);

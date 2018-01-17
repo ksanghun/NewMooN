@@ -808,3 +808,27 @@ void CZListCtrlLog::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 
 	*pResult = 0;
 }
+
+
+void CZListCtrlLog::SelItemByLineTextBoxID(int _id)
+{
+	m_currDrawId = 0;
+	m_colorid = 0;
+
+
+	int cnt = GetItemCount();
+	for (int i = 0; i < cnt; i++) {
+		CString strId = GetItemText(i, 15);
+		int id = _ttoi(strId);
+		if (id == _id) {
+			SetItemState(m_selItem, 0, LVIS_FOCUSED | LVIS_SELECTED);
+			m_selItem = i;
+			break;
+		}
+	}
+
+	
+	EnsureVisible(m_selItem, TRUE);
+	SetItemState(m_selItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+	
+}

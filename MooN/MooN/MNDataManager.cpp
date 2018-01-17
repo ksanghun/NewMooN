@@ -587,6 +587,15 @@ void CMNDataManager::SetMatchingResults()
 					// Add Results==========================================//
 					matchRes.id_page = i;
 					matchRes.id_match = j;
+
+					if (matches[j].lineid < 0) {
+						matchRes.id_line_textbox = -1;
+					}
+					else {
+						matchRes.id_line_textbox = matches[j].lineid * 10000 + matches[j].objid;
+					}
+
+
 					matchRes.IsOnList = false;
 					m_mapMatchResults[matchRes.searchId].push_back(matchRes);
 					matches[j].IsAdded = true;
@@ -2340,6 +2349,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 					//		cns.pKey = nullptr;
 					cns.pageid = i;
 					cns.objid = j;
+					cns.lineid = k;
+
 					cns.rect = vecLine[k].vecTextBox[j].rect;
 					//	cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
 					//	cv::Rect nRect = GetNomalizedSize(ocrRes[j].rect);	
@@ -2451,10 +2462,13 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		mInfo.rect = vecCnSResults[i].rect;
 		mInfo.searchId = vecCnSResults[i].searchid;
 		mInfo.cInfo = cutInfo;
-		
+
 		// Get character code value from both OCR and DB, DB first.
 		_stOCRResult ocrres = pViewImage->GetCORResult(vecCnSResults[i].cutimg);
+
 		mInfo.strCode = ocrres.strCode;
+		mInfo.lineid = vecCnSResults[i].lineid;
+		mInfo.objid = vecCnSResults[i].objid;
 		
 		mInfo.color.r = 100;
 		mInfo.color.g = 255;

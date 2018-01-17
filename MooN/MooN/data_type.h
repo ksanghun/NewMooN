@@ -544,6 +544,7 @@ struct _stCNSResult {
 	unsigned int searchid;
 	unsigned int pageid;
 	unsigned int objid;
+	unsigned int lineid;
 //	_stCNSResult* pKey;
 	cv::Mat cutimg;
 	cv::Rect rect;

@@ -110,11 +110,12 @@ void CFormListView::OnInitialUpdate()
 	m_ctrlList.AddUserColumn(L"Match File ID", 100);
 	m_ctrlList.AddUserColumn(L"Match Pos", 100);
 	m_ctrlList.AddUserColumn(L"Threshold", 100);	
-	m_ctrlList.AddUserColumn(L"Base64", 1000);
+	m_ctrlList.AddUserColumn(L"Base64", 100);
 	m_ctrlList.AddUserColumn(L"ID", 0);
 
-	m_ctrlList.AddUserColumn(L"PID", 0);
-	m_ctrlList.AddUserColumn(L"MID", 0);
+	m_ctrlList.AddUserColumn(L"PID", 100);
+	m_ctrlList.AddUserColumn(L"MID", 100);
+	m_ctrlList.AddUserColumn(L"LINE_TEXT_ID", 100);
 
 	UINT nFlags = ILC_MASK;
 	nFlags |= (theApp.m_bHiColorIcons) ? ILC_COLOR24 : ILC_COLOR4;
@@ -153,6 +154,11 @@ void CFormListView::ResetLogList()
 	m_imgListId = 0;
 }
 
+void CFormListView::SelItemByLineTextBoxID(int _id)
+{
+	m_ctrlList.SelItemByLineTextBoxID(_id);
+}
+
 void CFormListView::AddRecord()
 {
 //	ResetLogList();	
@@ -173,7 +179,7 @@ void CFormListView::AddRecord()
 					m_imgList.Add(pbmp, RGB(255, 0, 0));
 					delete pbmp;
 
-					// Add resutl information //
+										// Add resutl information //
 					m_ctrlList.InsertItem(m_nRecordNum, L"", m_imgListId);
 
 					m_ctrlList.SetItem(m_nRecordNum, 1, LVIF_TEXT, iter->second[i].strCode, m_imgListId, 0, 0, NULL);	// CODE //
@@ -216,6 +222,9 @@ void CFormListView::AddRecord()
 
 					strItem.Format(L"%d", iter->second[i].id_match);
 					m_ctrlList.SetItem(m_nRecordNum, 14, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
+
+					strItem.Format(L"%d", iter->second[i].id_line_textbox);
+					m_ctrlList.SetItem(m_nRecordNum, 15, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
 					//=========================================================================//
 
 					iter->second[i].IsOnList = true;

@@ -21,6 +21,10 @@ struct stMatchInfo
 	bool IsAdded;
 
 	_CUTINFO cInfo;
+
+	// if exist //
+	int lineid;
+	int objid;
 //	cv::Mat cutImg;
 };
 

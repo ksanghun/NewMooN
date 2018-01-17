@@ -17,6 +17,7 @@ public:
 	virtual ~CFormListView();
 
 	void ResizeListColSize(int _maxwidth);
+	void SelItemByLineTextBoxID(int _id);
 public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_FORMLISTVIEW };

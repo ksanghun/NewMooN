@@ -48,6 +48,8 @@ struct stMatchResult
 	unsigned int id_page;
 	unsigned int id_match;
 
+	int id_line_textbox;	
+
 	bool IsOnList;
 	//=================//
 };

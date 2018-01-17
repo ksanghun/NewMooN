@@ -17,6 +17,7 @@ public:
 	void AddMatchResultCNS();
 	void ResizeListColSize(int _maxwidth);
 	void ResetLogList();
+	void SelItemByLineTextBoxID(int _id);
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

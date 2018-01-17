@@ -896,6 +896,11 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 	return CFrameWndEx::PreTranslateMessage(pMsg);
 }
 
+void CMainFrame::SelectListItemById(int line_text_id)
+{
+//	m_wndProperties.SetParagraphInfo(fdeskew, strName, IsVerti);
+	m_wndFormListView.SelItemByLineTextBoxID(line_text_id);
+}
 
 void CMainFrame::SetParagraphInfo(float fdeskew, CString strName, bool IsVerti)
 {

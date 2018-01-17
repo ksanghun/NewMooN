@@ -82,3 +82,10 @@ void CDockFormView::ResetLogList()
 		m_pMyFormView->ResetLogList();
 	}
 }
+
+void CDockFormView::SelItemByLineTextBoxID(int _id)
+{
+	if (m_pMyFormView) {
+		m_pMyFormView->SelItemByLineTextBoxID(_id);
+	}
+}

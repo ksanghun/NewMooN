@@ -685,6 +685,14 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 
+
+	// Select Item on the list view //
+	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
+		int id = m_selParaId * 10000 + m_selOCRId;
+		pM->SelectListItemById(id);
+	}
+
+
 	return hits;
 }
 
@@ -885,6 +893,8 @@ bool CMNView::DoSearch()
 						mInfo.searchId = m_cnsSearchId;
 						mInfo.cInfo = m_cutInfo;
 						mInfo.strCode = "-";
+						mInfo.lineid = -1;
+						mInfo.objid = -1;
 
 
 						m_resColor.a = ((fD)*m_colorAccScale)*0.5f;
