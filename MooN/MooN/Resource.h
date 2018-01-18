@@ -113,7 +113,9 @@
 #define IDC_RADIO_HORIZON               1011
 #define IDC_RADIO_VERT                  1012
 #define IDC_EDIT_ENG_SIZE               1013
+#define IDC_SLIDER2                     1013
 #define IDC_EDIT_KOR_SIZE               1014
+#define IDC_EDIT4                       1014
 #define IDC_EDIT_CHI_SIZE               1015
 #define IDC_EDIT6                       1016
 #define IDC_EDIT_DESKEW                 1016
@@ -137,6 +139,7 @@
 #define IDC_EDIT3                       1029
 #define IDC_EDIT_KEYWORD_SEARCH         1029
 #define IDC_BN_KEYWORD_SEARCH           1030
+#define IDC_EDIT_KEYWORD_SEARCH2        1030
 #define IDC_BN_RUNOCR                   1031
 #define IDC_CHECK_LINEBIOX              1032
 #define IDC_BN_WORD_CONFIRM             1033
@@ -240,7 +243,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        320
 #define _APS_NEXT_COMMAND_VALUE         32853
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1049
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

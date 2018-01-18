@@ -106,6 +106,7 @@ public:
 	UINT m_editDBth;
 	afx_msg void OnNMCustomdrawSliderDbth(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBnMatchFromDb();
+	afx_msg void OnEnChangeEditKeywordSearch();
 };
 
 

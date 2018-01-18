@@ -113,6 +113,7 @@ ON_BN_CLICKED(IDC_BN_DESKEW_ALL, &CFormProperties::OnBnClickedBnDeskewAll)
 ON_BN_CLICKED(IDC_BN_SETFONTSIZE, &CFormProperties::OnBnClickedBnSetfontsize)
 ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_DBTH, &CFormProperties::OnNMCustomdrawSliderDbth)
 ON_BN_CLICKED(IDC_BN_MATCH_FROM_DB, &CFormProperties::OnBnClickedBnMatchFromDb)
+ON_EN_CHANGE(IDC_EDIT_KEYWORD_SEARCH, &CFormProperties::OnEnChangeEditKeywordSearch)
 END_MESSAGE_MAP()
 
 
@@ -638,4 +639,15 @@ void CFormProperties::OnBnClickedBnMatchFromDb()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DoOCRFromMooN();
+}
+
+
+void CFormProperties::OnEnChangeEditKeywordSearch()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CFormView::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
 }
