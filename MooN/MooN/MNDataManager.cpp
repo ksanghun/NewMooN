@@ -132,9 +132,12 @@ void CMNDataManager::ClearAllImages()
 		delete m_vecImgData[i];
 	}
 
-	m_vecImgData.clear();
-	m_mapImageData.clear();
-	m_mapGrupImg.clear();
+//	m_vecImgData.clear();
+	m_vecImgData.swap(std::vector<CMNPageObject*>());
+//	m_mapImageData.clear();
+	m_mapImageData.swap(std::map<unsigned long, CMNPageObject*>());
+//	m_mapGrupImg.clear();
+	m_mapGrupImg.swap(std::map<unsigned long, stPageGroup>());
 
 	memset(m_bSlot, 0x00, sizeof(m_bSlot));
 	m_xOffset = DEFAULT_X_OFFSET;
@@ -227,7 +230,8 @@ void CMNDataManager::PopImageDataSet(unsigned long _pcode)
 			SelectPages(_pcode);
 		}
 		iter_gr->second.nSlot = -1;
-		iter_gr->second.imgVec.clear();
+	//	iter_gr->second.imgVec.clear();
+		iter_gr->second.imgVec.swap(stVecPageObj());
 		m_mapGrupImg.erase(iter_gr);
 	}
 
@@ -580,7 +584,8 @@ void CMNDataManager::SetMatchingResults()
 					cv::imencode(".bmp", tmpcut, data_encode);
 			//		cv::imencode(".bmp", matches[j].cutImg, data_encode);
 					matchRes.strBase64 = base64_encode((unsigned char*)&data_encode[0], static_cast<int>(data_encode.size()));
-					data_encode.clear();
+			//		data_encode.clear();
+					data_encode.swap(std::vector<uchar>());
 			//		tmpcut.release();
 					////===========================================//
 
@@ -714,9 +719,11 @@ void CMNDataManager::ResetMatchingResult()
 				iter_gr->second[j].cutImg.release();
 			}
 		}
-		iter_gr->second.clear();
+	//	iter_gr->second.clear();
+		iter_gr->second.swap(stVecMatchResult());
 	}
-	m_mapMatchResults.clear();
+//	m_mapMatchResults.clear();
+	m_mapMatchResults.swap(std::map<unsigned long, stVecMatchResult>());
 }
 
 void CMNDataManager::MultiToUniCode(char* char_str, wchar_t* str_unicode)
@@ -927,7 +934,7 @@ void CMNDataManager::ProcDBTrainingFromCutSearch()
 			DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid);
 
 			if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
-				int wordPosId = m_refImgClass[classid].vecStr.size();
+				int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
 
 				int w = (classid + 1) * DB_IMGCHAR_SIZE;
 				int h = DB_IMGCHAR_SIZE;
@@ -985,7 +992,7 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 	//===========================================================//
 
 	if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
-		int wordPosId = m_refImgClass[classid].vecStr.size();
+		int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
 
 		int w = (classid + 1) * DB_IMGCHAR_SIZE;
 		int h = DB_IMGCHAR_SIZE;
@@ -1054,7 +1061,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 				//===========================================================//
 
 				if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
-					int wordPosId = m_refImgClass[classid].vecStr.size();
+					int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
 
 					int w = (classid + 1) * DB_IMGCHAR_SIZE;
 					int h = DB_IMGCHAR_SIZE;
@@ -1156,7 +1163,7 @@ void CMNDataManager::UpdateImgClassDB()
 			FILE* fp = 0;
 			fopen_s(&fp, sz, "wb");
 
-			int num = m_refImgClass[i].vecStr.size();
+			int num = static_cast<int>(m_refImgClass[i].vecStr.size());
 			int clen = m_refImgClass[i].maxCharLen;
 			fwrite(&num, sizeof(int), 1, fp);
 			fwrite(&clen, sizeof(int), 1, fp);
@@ -1227,7 +1234,8 @@ void CMNDataManager::DeSkew(cv::Mat& img)
 	cv::Mat tmpimg = img.clone();
 	cv::bitwise_not(tmpimg, tmpimg);
 	
-	points.clear();
+//	points.clear();
+	points.swap(std::vector<cv::Point>());
 	findNonZero(tmpimg, points);
 	cv::RotatedRect box = cv::minAreaRect(points);
 
@@ -1274,7 +1282,8 @@ void CMNDataManager::AddSDBTable(unsigned int hcode, wchar_t* strCode)
 
 void CMNDataManager::LoadSDBFiles()
 {
-	m_mapWordTable.clear();
+//	m_mapWordTable.clear();
+	m_mapWordTable.swap(std::map<unsigned int, _stSDBWordTable>());
 	
 	USES_CONVERSION;
 	CString strFile;
@@ -1339,7 +1348,7 @@ void CMNDataManager::UpdateSDBFiles()
 		FILE* fp = 0;
 		fopen_s(&fp, sz, "wb");
 		if (fp) {
-			int wnum = m_mapWordTable.size();
+			int wnum = static_cast<int>(m_mapWordTable.size());
 			std::map<unsigned int, _stSDBWordTable>::iterator iter= m_mapWordTable.begin();
 
 			fwrite(&wnum, sizeof(int), 1, fp);
@@ -1366,18 +1375,18 @@ void CMNDataManager::UpdateSDBFiles()
 
 		// Write data //
 		CString strtmp;
-		int wnum = m_mapWordTable.size();
+		int wnum = static_cast<int>(m_mapWordTable.size());
 		strtmp.Format(L"Total character: %d", wnum);
-		int len = wcslen(strtmp.GetBuffer()) * 2;		// word code //
+		int len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);		// word code //
 		cfile.Write(strtmp.GetBuffer(), len);
 		cfile.Write(L"\r\n", 4);
 		std::map<unsigned int, _stSDBWordTable>::iterator iter = m_mapWordTable.begin();
 		for (; iter != m_mapWordTable.end(); iter++) {
 			strtmp.Format(L"%d ", iter->first);
-			int len = wcslen(strtmp.GetBuffer()) * 2;		// word code //
+			int len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);		// word code //
 			cfile.Write(strtmp.GetBuffer(), len);
 
-			len = wcslen(iter->second.str) * 2;
+			len = static_cast<int>(wcslen(iter->second.str) * 2);
 			cfile.Write(&iter->second.str, len);
 			cfile.Write(L"\r\n", 4);
 		}		
@@ -1464,7 +1473,8 @@ void CMNDataManager::DoKeywordSearch(CString strKeyword)
 void CMNDataManager::SetUserDBFolder(CString str) 
 { 
 	m_strUserDataFolder = str; 
-	m_mapFilePathTable.clear();
+//	m_mapFilePathTable.clear();
+	m_mapFilePathTable.swap(std::map<unsigned int, CString>());
 }
 
 void CMNDataManager::InitSDB(CString strPath, CString strName)
@@ -1559,7 +1569,7 @@ void CMNDataManager::ExportDatabase()
 		cfile.Write(&nShort, 2);
 
 		CString strRecord = L"CODE POS_X POS_Y SIZE CONFIDENCE DIFFERENCE BASE64\n";
-		int len = wcslen(strRecord.GetBuffer()) * 2;		// word code //
+		int len = static_cast<int>(wcslen(strRecord.GetBuffer()) * 2);		// word code //
 		cfile.Write(strRecord.GetBuffer(), len);
 
 		//====================================================================//
@@ -1604,43 +1614,44 @@ void CMNDataManager::ExportDatabase()
 
 						std::vector<uchar> data_encode;
 						imencode(".bmp", cutImg, data_encode);
-						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
-						data_encode.clear();
+						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], static_cast<int>(data_encode.size()));
+					//	data_encode.clear();
+						data_encode.swap(std::vector<uchar>());
 
 						_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
 						CString strWord = tmpstr.str;
 						//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
 
-						int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
+						int len = static_cast<int>(wcslen(strWord.GetBuffer()) * 2);		// word code //
 						cfile.Write(strWord.GetBuffer(), len);
 						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%d", res.rect.x);		// position x
-						len = wcslen(strtmp.GetBuffer()) * 2;
+						len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 						cfile.Write(strtmp.GetBuffer(), len);
 						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%d", res.rect.y);		// position y
-						len = wcslen(strtmp.GetBuffer()) * 2;
+						len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 						cfile.Write(strtmp.GetBuffer(), len);
 						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%d", res.rect.width);		// size
-						len = wcslen(strtmp.GetBuffer()) * 2;
+						len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 						cfile.Write(strtmp.GetBuffer(), len);
 						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%3.2f", res.fConfi);		// confidence
-						len = wcslen(strtmp.GetBuffer()) * 2;
+						len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 						cfile.Write(strtmp.GetBuffer(), len);
 						cfile.Write(L" ", 2);
 
 						strtmp.Format(L"%3.2f", res.fDiff);		// confidence
-						len = wcslen(strtmp.GetBuffer()) * 2;
+						len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 						cfile.Write(strtmp.GetBuffer(), len);
 						cfile.Write(L" ", 2);
 
-						len = wcslen(strBase64.GetBuffer()) * 2;
+						len = static_cast<int>(wcslen(strBase64.GetBuffer()) * 2);
 						cfile.Write(strBase64.GetBuffer(), len);
 						//cfile.Write(L",", 2);
 
@@ -1676,7 +1687,7 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 		cfile.Write(&nShort, 2);
 
 		CString strRecord = L"CODE POS_X POS_Y SIZE CONFIDENCE DIFFERENCE BASE64\n";
-		int len = wcslen(strRecord.GetBuffer()) * 2;		// word code //
+		int len = static_cast<int>(wcslen(strRecord.GetBuffer()) * 2);		// word code //
 		cfile.Write(strRecord.GetBuffer(), len);
 
 		//====================================================================//
@@ -1742,45 +1753,46 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 						//CString strBase64 = L"";
 						std::vector<uchar> data_encode;
 						imencode(".bmp", cutImg, data_encode);
-						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
-						data_encode.clear();
+						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], static_cast<int>(data_encode.size()));
+					//	data_encode.clear();
+						data_encode.swap(std::vector<uchar>());
 
 						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
 							_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
 							CString strWord = tmpstr.str;
 							//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
 
-							int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
+							int len = static_cast<int>(wcslen(strWord.GetBuffer()) * 2);		// word code //
 							cfile.Write(strWord.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%d", res.rect.x);		// position x
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%d", res.rect.y);		// position y
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%d", res.rect.width);		// size
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%3.2f", res.fConfi);		// confidence
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%3.2f", res.fDiff);		// confidence
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 
-							len = wcslen(strBase64.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strBase64.GetBuffer()) * 2);
 							cfile.Write(strBase64.GetBuffer(), len);
 							//cfile.Write(L",", 2);
 
@@ -1951,7 +1963,7 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 		cfile.Write(&nShort, 2);
 
 		CString strRecord = L"<html><br>";
-		int len = wcslen(strRecord.GetBuffer()) * 2;		// word code //
+		int len = static_cast<int>(wcslen(strRecord.GetBuffer()) * 2);		// word code //
 		cfile.Write(strRecord.GetBuffer(), len);
 
 		//====================================================================//
@@ -2015,8 +2027,9 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 						//CString strBase64 = L"";
 						std::vector<uchar> data_encode;
 						imencode(".bmp", cutImg, data_encode);
-						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], data_encode.size());
-						data_encode.clear();
+						CString strBase64 = base64_encode((unsigned char*)&data_encode[0], static_cast<int>(data_encode.size()));
+					//	data_encode.clear();
+						data_encode.swap(std::vector<uchar>());
 
 						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
 
@@ -2024,48 +2037,48 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 							CString strWord = tmpstr.str;
 							//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
 
-							int len = wcslen(strWord.GetBuffer()) * 2;		// word code //
+							int len = static_cast<int>(wcslen(strWord.GetBuffer()) * 2);		// word code //
 							cfile.Write(strWord.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%d", res.rect.x);		// position x
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%d", res.rect.y);		// position y
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%d", res.rect.width);		// size
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%3.2f", res.fConfi);		// confidence
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 							strtmp.Format(L"%3.2f", res.fDiff);		// confidence
-							len = wcslen(strtmp.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);
 							cfile.Write(strtmp.GetBuffer(), len);
 							cfile.Write(L" ", 2);
 
 
 							// 
 							strHtml = L"<img src=\" data:image/png; base64, ";
-							len = wcslen(strHtml.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strHtml.GetBuffer()) * 2);
 							cfile.Write(strHtml.GetBuffer(), len);
 
 
-							len = wcslen(strBase64.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strBase64.GetBuffer()) * 2);
 							cfile.Write(strBase64.GetBuffer(), len);
 
 
 							strHtml = L"\" / ><br><br>";
-							len = wcslen(strHtml.GetBuffer()) * 2;
+							len = static_cast<int>(wcslen(strHtml.GetBuffer()) * 2);
 							cfile.Write(strHtml.GetBuffer(), len);
 
 
@@ -2084,7 +2097,7 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 		pageImg.release();
 
 		strHtml = L"</html>";
-		len = wcslen(strHtml.GetBuffer()) * 2;
+		len = static_cast<int>(wcslen(strHtml.GetBuffer()) * 2);
 		cfile.Write(strHtml.GetBuffer(), len);
 
 		cfile.Close();
@@ -2290,6 +2303,8 @@ bool CMNDataManager::FindVerticalEage(cv::Mat &srcImg, cv::Rect& cutRect, int ty
 		}
 		break;
 	}
+
+	return false;
 }
 
 bool CMNDataManager::IsSupportFormat(CString strPath)
@@ -2380,7 +2395,7 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		}
 	}
 	addCnt = -1;
-	totalCnt = vecCnSResults.size();
+	totalCnt = static_cast<int>(vecCnSResults.size());
 	m_totalCNSCnt = totalCnt;
 	//====================================================//
 

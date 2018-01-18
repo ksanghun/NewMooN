@@ -231,7 +231,7 @@ void CFormProperties::GetCurrSetting()
 	_stExtractionSetting extractonInfo;
 	extractonInfo.init();
 
-	extractonInfo.IsVerti = (bool)m_nAlign;
+	extractonInfo.IsVerti = static_cast<bool>(m_nAlign);
 	//extractonInfo.chiSize = m_nChiFontSize;
 	//extractonInfo.engSize = m_nEngFontSize;
 	//extractonInfo.korSize = m_nEngFontSize;

@@ -54,8 +54,9 @@ CMNView::CMNView()
 
 	m_resColor.r = 1.0f; m_resColor.g = 0.0f; m_resColor.b = 0.0f;  m_resColor.a = 1.0f;
 	m_cnsSearchId = 1;
-	m_selParaId = -1;
-	m_selOCRId = -1;
+	//m_selParaId = -1;
+	//m_selOCRId = -1;
+	
 	m_selOCRIdforMouseHover = - 1;
 	m_selParaIdforMouseHover = -1;
 
@@ -166,8 +167,9 @@ void CMNView::Render()
 	DrawCNSRect(0.0f, 0.99f, 0.1f, 1.0f);	
 
 	if (m_bIsShowParagraph) {
-		if ((m_selParaId >= 0) && (m_pSelectPageForCNS)) {
-			m_pSelectPageForCNS->DrawSelectedParagraph(m_selParaId);
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		if ((iter != m_mapSelectionInfo.end()) && (m_pSelectPageForCNS)) {
+			m_pSelectPageForCNS->DrawSelectedParagraph(iter->second.lineid);
 		}
 		DrawOCRRes();
 	//	glCallList(m_glListIdForDrawOCRRes);
@@ -208,7 +210,9 @@ void CMNView::DrawBGPageAni()
 		
 
 		if (m_bIsShowParagraph) {
-			vecImg[i]->DrawParagraph(m_selParaId);
+			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+			if((iter != m_mapSelectionInfo.end()) && (iter->second.vecTextId.size() >0))
+				vecImg[i]->DrawParagraph(iter->second.vecTextId[0]);
 		}
 		else {
 			vecImg[i]->DrawSDBItem();
@@ -224,10 +228,14 @@ void CMNView::DrawBGPage()
 	for (size_t i = 0; i < vecImg.size(); i++) {
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->DrawMatchItem();
-		if (m_bIsShowParagraph)
-			vecImg[i]->DrawParagraph(m_selParaId);
-		else
+		if (m_bIsShowParagraph){
+			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+			if (iter != m_mapSelectionInfo.end())
+				vecImg[i]->DrawParagraph(iter->second.lineid);
+		}
+		else {
 			vecImg[i]->DrawSDBItem();
+		}
 
 	//	vecImg[i]->DrawOCRRes();
 		vecImg[i]->DrawSDBItem();
@@ -583,8 +591,13 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	if (m_pSelectPageForCNS) {
 		m_pSelectPageForCNS->SetSelection(false);
 		m_pSelectPageForCNS = NULL;
-		m_selParaId = -1;
-		m_selOCRId = -1;
+		//m_selParaId = -1;
+		//m_selOCRId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 	}
 
 	if (m_IsSearchMatchItems)
@@ -626,10 +639,13 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	//}
 	//=============================================//
 	hits = glRenderMode(GL_RENDER);
+	int lineid = -1, textid = -1;
+
 	if (hits > 0)
-	{
+	{		
 		for (int i = 0; i < hits; i++) {
 			int selid = selectBuff[i * 4 + 3];
+			
 
 			if (selid < _PICK_PARA) {		// Page selection
 				m_pSelectPageForCNS = SINGLETON_DataMng::GetInstance()->GetPageByOrderID(selid);
@@ -645,19 +661,39 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 				}
 			}
 			else if ((selid >= _PICK_PARA) && (selid < _PICK_WORD)) {		// Text block selectoin
-				m_selParaId = selid - _PICK_PARA;
+			//	m_selParaId = selid - _PICK_PARA;
+				lineid = selid - _PICK_PARA;
 				if (m_pSelectPageForCNS) {
-					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(m_selParaId);
+					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(lineid);
 					if (lineInfo.rect.width > 0) {
 						pM->SetParagraphInfo(lineInfo.deSkewAngle, m_pSelectPageForCNS->GetName(), lineInfo.IsVerti);
 					}
 				}
+
+				if (m_mapSelectionInfo.find(lineid) == m_mapSelectionInfo.end()) {
+					_stLineTextSelectionInfo selinfo;
+					selinfo.lineid = lineid;
+					m_mapSelectionInfo[lineid] = selinfo;
+				}
+
 			}
 			else if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)){		// Word selection
-				m_selOCRId = selid - _PICK_WORD;
+				selid = selid - _PICK_WORD;
 				if (m_pSelectPageForCNS) {
-					_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+				//	_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+					_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(lineid, selid);
 					pM->SetOCRResInfo(ocrRes.strCode, ocrRes.fConfidence, ocrRes.type);
+
+					if (m_mapSelectionInfo.find(lineid) == m_mapSelectionInfo.end()) {
+						_stLineTextSelectionInfo selinfo;
+						selinfo.lineid = lineid;
+						selinfo.vecTextId.push_back(selid);
+						m_mapSelectionInfo[lineid] = selinfo;
+					}
+					else {
+						m_mapSelectionInfo[lineid].vecTextId.push_back(selid);
+					}
+
 				}
 			}
 			//else if (selid >= _PICK_MATCH) {
@@ -687,9 +723,14 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 
 	// Select Item on the list view //
-	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
-		int id = m_selParaId * 10000 + m_selOCRId;
-		pM->SelectListItemById(id);
+	std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
+//	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
+	if(iter != m_mapSelectionInfo.end()){
+		if (iter->second.vecTextId.size() > 0) {
+		//	int id = m_selParaId * 10000 + m_selOCRId;
+			int id = iter->second.lineid * 10000 + iter->second.vecTextId[0];
+			pM->SelectListItemById(id);
+		}
 	}
 
 
@@ -1149,7 +1190,7 @@ void CMNView::DoExtractBoundaryAuto()
 					para.release();
 				}
 			}
-			vecBox.clear();
+			vecBox.swap(std::vector<_extractBox>());
 			srcImgforLine.release();
 		}
 
@@ -1361,8 +1402,13 @@ void CMNView::MoveNextDown()
 void CMNView::DeleteSelParagraph()
 {
 	if((m_pSelectPageForCNS)){
-		m_pSelectPageForCNS->DeleteSelPara(m_selParaId);
-		m_selParaId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
+
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			m_pSelectPageForCNS->DeleteSelPara(iter->second.lineid);
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 	}
 }
 
@@ -1370,8 +1416,16 @@ bool CMNView::DeleteSelOCRRes()
 {
 	bool res = false;
 	if ((m_pSelectPageForCNS)) {
-		res = m_pSelectPageForCNS->DeleteSelOCRRes(m_selParaId, m_selOCRId);
-		m_selOCRId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+				res = m_pSelectPageForCNS->DeleteSelOCRRes(iter->second.lineid, iter->second.vecTextId[i]);
+			}
+
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+	//	m_selOCRId = -1;
 	}
 
 	return res;
@@ -1380,8 +1434,16 @@ bool CMNView::DeleteSelOCRRes()
 void CMNView::ConfirmOCRRes()
 {
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
-		m_selOCRId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+			//	m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
+				m_pSelectPageForCNS->ConfirmOCRRes(iter->second.lineid, iter->second.vecTextId[0]);
+			}
+		//	m_selOCRId = -1;
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
@@ -1389,8 +1451,15 @@ void CMNView::ConfirmOCRRes()
 void CMNView::UpdateOCRCode(CString _strCode)
 {
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->UpdateOCRCode(_strCode, 1.0f, m_selParaId, m_selOCRId);
-		m_selOCRId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+				m_pSelectPageForCNS->UpdateOCRCode(_strCode, 1.0f, iter->second.lineid, iter->second.vecTextId[i]);
+			}
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		//m_selOCRId = -1;
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
@@ -1399,7 +1468,12 @@ void CMNView::DeleteAllLines()
 {
 	if ((m_pSelectPageForCNS)) {
 		m_pSelectPageForCNS->ClearParagraph();
-		m_selParaId = -1;
+//		m_selParaId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			iter->second.vecTextId.swap(std::vector<int>()); 
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 	}
 }
 
@@ -1407,7 +1481,12 @@ void CMNView::DeleteAllOCRRes()
 {
 	if ((m_pSelectPageForCNS)) {
 		m_pSelectPageForCNS->ClearOCRResult();
-		m_selOCRId = -1;
+	//	m_selOCRId = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 	}
 }
 
@@ -1502,7 +1581,11 @@ void CMNView::DeskewParagraph(float fAngle)
 {
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->DeSkewImg(m_selParaId, fAngle);
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		if (iter != m_mapSelectionInfo.end()) {
+			m_pSelectPageForCNS->DeSkewImg(iter->second.lineid, fAngle);
+		}
+	//	m_pSelectPageForCNS->DeSkewImg(m_selParaId, fAngle);
 	//	m_pSelectPageForCNS->UpdateTexture();
 	}
 }
@@ -1511,7 +1594,11 @@ void CMNView::UndoDeskewParagraph()
 {
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 	if ((m_pSelectPageForCNS)) {
-		m_pSelectPageForCNS->UnDoDeSkewImg(m_selParaId);
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		if (iter != m_mapSelectionInfo.end()) {
+			m_pSelectPageForCNS->UnDoDeSkewImg(iter->second.lineid);
+		}
+		//m_pSelectPageForCNS->UnDoDeSkewImg(m_selParaId);
 	}
 }
 
@@ -1556,49 +1643,70 @@ void CMNView::ReExtractParagraph()
 {
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 	if ((m_pSelectPageForCNS)) {
-		cv::Rect r = m_pSelectPageForCNS->GetSelParaRect(m_selParaId);
-		if ((r.width > 0) && (r.height > 0)) {
 
-			// Delete Previous Para rect //
-			m_pSelectPageForCNS->DeleteSelPara(m_selParaId);
-			m_selParaId = -1;
+		int selline = 0;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		if (iter != m_mapSelectionInfo.end()) {
+			selline = iter->second.lineid;
+		}
+		else {
+			return;
+		}
+		// Reset Selections //
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			iter->second.vecTextId.swap(std::vector<int>());
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		//=====================//
 
-			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();
-			if (srcImg.ptr()) {
-				cv::Mat para = srcImg(r).clone();
-				cv::threshold(para, para, 128, 255, cv::THRESH_OTSU);
-				cv::bitwise_not(para, para);
-			//	cv::imshow("Re-ext", para);
-				//int fsize = (int)m_extractionSetting.engSize;
-				//// Detect text block //
-				std::vector<_extractBox> vecLines;
-				ExtractBox(para, vecLines, m_extractionSetting.IsVerti, __ENG);
-				//_ALIGHN_TYPE align;
-				//if (m_extractionSetting.nAlign == 0) {
-				//	m_Extractor.Extraction(para, fsize * 2, -1, vecLines, _ALPHABETIC, _UNKNOWN_ALIGN);
-				//	align = _HORIZON_ALIGN;
-				//}
-				//else {
-				//	m_Extractor.Extraction(para, -1, fsize * 2, vecLines, _NONALPHABETIC, _UNKNOWN_ALIGN);
-				//	align = _VERTICAL_ALIGN;
-				//}
 
-				for (size_t j = 0; j < vecLines.size(); j++) {
-					// Calculate Deskew //
-					cv::Mat imgLine = para(vecLines[j].textbox);
-					float deskew = m_Extractor.DeSkewImg(imgLine);
 
-					vecLines[j].textbox.x += r.x;
-					vecLines[j].textbox.y += r.y;
 
-					bool IsAlphabetic = false;
-					if (m_extractionSetting.isEng)	IsAlphabetic = true;
-					m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecLines[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+		//	cv::Rect r = m_pSelectPageForCNS->GetSelParaRect(m_selParaId);
+			cv::Rect r = m_pSelectPageForCNS->GetSelParaRect(selline);
+			if ((r.width > 0) && (r.height > 0)) {
+
+				// Delete Previous Para rect //
+				m_pSelectPageForCNS->DeleteSelPara(selline);
+	//			m_selParaId = -1;
+
+				cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();
+				if (srcImg.ptr()) {
+					cv::Mat para = srcImg(r).clone();
+					cv::threshold(para, para, 128, 255, cv::THRESH_OTSU);
+					cv::bitwise_not(para, para);
+					//	cv::imshow("Re-ext", para);
+						//int fsize = (int)m_extractionSetting.engSize;
+						//// Detect text block //
+					std::vector<_extractBox> vecLines;
+					ExtractBox(para, vecLines, m_extractionSetting.IsVerti, __ENG);
+					//_ALIGHN_TYPE align;
+					//if (m_extractionSetting.nAlign == 0) {
+					//	m_Extractor.Extraction(para, fsize * 2, -1, vecLines, _ALPHABETIC, _UNKNOWN_ALIGN);
+					//	align = _HORIZON_ALIGN;
+					//}
+					//else {
+					//	m_Extractor.Extraction(para, -1, fsize * 2, vecLines, _NONALPHABETIC, _UNKNOWN_ALIGN);
+					//	align = _VERTICAL_ALIGN;
+					//}
+
+					for (size_t j = 0; j < vecLines.size(); j++) {
+						// Calculate Deskew //
+						cv::Mat imgLine = para(vecLines[j].textbox);
+						float deskew = m_Extractor.DeSkewImg(imgLine);
+
+						vecLines[j].textbox.x += r.x;
+						vecLines[j].textbox.y += r.y;
+
+						bool IsAlphabetic = false;
+						if (m_extractionSetting.isEng)	IsAlphabetic = true;
+						m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecLines[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+					}
+					para.release();
 				}
-				para.release();
 			}
 		}
-	}
+	
 }
 
 
@@ -1718,7 +1826,8 @@ void CMNView::DrawOCRRes()
 						glEnd();
 					}
 
-					if ((j == m_selOCRId) && (i == m_selParaId)) {
+				//	if ((j == m_selOCRId) && (i == m_selParaId)) {
+					if (IsTextBoxSelected(i, j)){
 						glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
 						glBegin(GL_LINE_STRIP);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
@@ -1739,6 +1848,19 @@ void CMNView::DrawOCRRes()
 //	glEndList();
 }
 
+bool CMNView::IsTextBoxSelected(int lineid, int selid) 
+{
+	std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+	for (; iter != m_mapSelectionInfo.end(); iter++) {
+		for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+			if ((lineid == iter->second.lineid) && (selid == iter->second.vecTextId[i])) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 
 void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
 {
@@ -1757,7 +1879,7 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 					ocrTmp[m].rect.y += ocrRes[k].rect.y;
 					ocrAdd.push_back(ocrTmp[m]);
 				}
-				ocrTmp.clear();
+				ocrTmp.swap(std::vector<_stOCRResult>());
 			}
 			imgword.release();
 		}
@@ -1766,14 +1888,15 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 	for (int i = 0; i < ocrAdd.size(); i++) {
 		ocrRes.push_back(ocrAdd[i]);
 	}
-	ocrAdd.clear();
+	ocrAdd.swap(std::vector<_stOCRResult>());
 }
 
 
 bool CMNView::MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth)
 {
 	std::vector<_stOCRResult> tmp = vecBox;
-	vecBox = std::vector<_stOCRResult>();
+//	vecBox = std::vector<_stOCRResult>();
+	vecBox.swap(std::vector<_stOCRResult>());
 
 	int nWidth = 0, nHeight = 0;
 	bool IsMerged = false;
@@ -1805,7 +1928,7 @@ bool CMNView::MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth)
 			vecBox.push_back(tmp[i]);
 		}
 	}
-	tmp.clear();
+	tmp.swap(std::vector<_stOCRResult>());
 
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;
@@ -1902,7 +2025,7 @@ void CMNView::TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect)
 			if (tmp[i].rect.x < 0) tmp[i].rect.x = 0;
 			ocrRes.push_back(tmp[i]);
 		}
-		tmp.clear();
+		tmp.swap(std::vector<_stOCRResult>());
 	}
 
 }
@@ -1939,7 +2062,7 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 	for (int i = 0; i < ocrAdd.size(); i++) {
 		ocrRes.push_back(ocrAdd[i]);
 	}
-	ocrAdd.clear();
+	ocrAdd.swap(std::vector<_stOCRResult>());
 }
 
 void CMNView::DoOCRFromMooN()
@@ -2372,7 +2495,8 @@ void CMNView::RemoveNoise()
 bool CMNView::MeargingtLineBox(std::vector<stParapgraphInfo>& vecBox, int& depth)
 {
 	std::vector<stParapgraphInfo> tmp = vecBox;
-	vecBox = std::vector<stParapgraphInfo>();
+//	vecBox = std::vector<stParapgraphInfo>();
+	vecBox.swap(std::vector<stParapgraphInfo>());
 
 	int nWidth = 0, nHeight = 0;
 	bool IsMerged = false;
@@ -2404,7 +2528,7 @@ bool CMNView::MeargingtLineBox(std::vector<stParapgraphInfo>& vecBox, int& depth
 		//	vecBox.push_back(tmp[i]);
 		//}
 	}
-	tmp.clear();
+	tmp.swap(std::vector<stParapgraphInfo>());
 
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;
@@ -2528,7 +2652,7 @@ void CMNView::DoExtractBoundaryForSelected()
 					if (m_extractionSetting.isEng)	IsAlphabetic = true;
 					m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
 				}
-				vecBox.clear();
+				vecBox.swap(std::vector<_extractBox>());
 				srcImgforLine.release();
 			}
 		}
@@ -2562,9 +2686,16 @@ void CMNView::OnRButtonDown(UINT nFlags, CPoint point)
 
 void CMNView::ProcDoSearchSelection()
 {
-	_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
-	SINGLETON_DataMng::GetInstance()->DoKeywordSearch(ocrRes.strCode);
-	InitCamera();
+	std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+	if (iter != m_mapSelectionInfo.end() && (iter->second.vecTextId.size() > 0)) {
+		_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(iter->second.lineid, iter->second.vecTextId[0]);
+		SINGLETON_DataMng::GetInstance()->DoKeywordSearch(ocrRes.strCode);
+		InitCamera();
+	}
+
+	//_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+	//SINGLETON_DataMng::GetInstance()->DoKeywordSearch(ocrRes.strCode);
+	//InitCamera();
 }
 
 int CMNView::SelectObject3DForMouseOver(int x, int y, int rect_width, int rect_height, int selmode)
@@ -2627,8 +2758,19 @@ int CMNView::SelectObject3DForMouseOver(int x, int y, int rect_width, int rect_h
 void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 {
 	if (m_pSelectPageForCNS) {
+		int selline = -1, seltext = -1;
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		if (iter != m_mapSelectionInfo.end() && (iter->second.vecTextId.size() > 0)) {
+			selline = iter->second.lineid;
+			seltext = iter->second.vecTextId[0];
+		}
+		else {
+			return;
+		}
+
 		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
-		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+	//	_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(selline, seltext);
 
 		cv::Rect r = ocrres.rect;
 		//r.x -= 1;
@@ -2716,15 +2858,21 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 
 		// Update OCR Res //
 		if (ocrTmp.size() >= 0) {
-			m_pSelectPageForCNS->DeleteSelOCRRes(m_selParaId, m_selOCRId);
+			m_pSelectPageForCNS->DeleteSelOCRRes(selline, seltext);
 			for (int i = 0; i < ocrTmp.size(); i++) {
 				if (ocrTmp[i].type < 100) {
 					ocrTmp[i].rect.x += r.x;
 					ocrTmp[i].rect.y += r.y;
-					m_pSelectPageForCNS->AddOCRResult(m_selParaId, ocrTmp[i]);
+					m_pSelectPageForCNS->AddOCRResult(selline, ocrTmp[i]);
 				}
 			}
-			m_selOCRId = -1;
+		//	m_selOCRId = -1;
+		// Reset Selection  //
+			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+			for (; iter != m_mapSelectionInfo.end(); iter++) {
+				iter->second.vecTextId.swap(std::vector<int>());
+			}
+			m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		}
 	}
 }
@@ -2732,7 +2880,14 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 void CMNView::ProcDoSearchBySelection()
 {
 	InitCamera(false);
-	if ((m_pSelectPageForCNS) && (m_selOCRId >=0) && (m_selParaId>=0)){
+	int selline = -1, seltext = -1;
+	std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+	if (iter != m_mapSelectionInfo.end() && (iter->second.vecTextId.size() > 0)) {
+		selline = iter->second.lineid;
+		seltext = iter->second.vecTextId[0];
+	}
+
+	if ((m_pSelectPageForCNS) && (selline >=0) && (seltext>=0)){
 
 		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 		// Load Full image //
@@ -2741,7 +2896,7 @@ void CMNView::ProcDoSearchBySelection()
 		//	imgVec[i]->SetIsSearched(false);
 		//}
 
-		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(selline, seltext);
 		// Prepare Cut&Search ==========================================//
 		RECT2D rect;
 		rect.set(ocrres.rect.x, ocrres.rect.x + ocrres.rect.width, ocrres.rect.y, ocrres.rect.y + ocrres.rect.height);

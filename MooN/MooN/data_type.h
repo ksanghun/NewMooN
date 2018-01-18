@@ -566,5 +566,16 @@ struct _stParaInfoFormat {
 };
 
 
+struct _stLineTextSelectionInfo {
+	int lineid;
+	std::vector<int> vecTextId;
+
+	void init() {
+		lineid = -1;
+		std::vector<int>tmp;
+	//	vecTextId.swap(std::vector<int>());
+	}
+};
+
 
 #pragma pack()

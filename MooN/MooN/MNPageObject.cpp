@@ -177,7 +177,7 @@ GLuint CMNPageObject::LoadFullImage()
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false)) {
 
 		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 170, 255, cv::THRESH_OTSU);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 125, 255, cv::THRESH_OTSU);
 
 		// Save original size //
 		m_nImgHeight = m_fullImg.rows;
@@ -186,6 +186,7 @@ GLuint CMNPageObject::LoadFullImage()
 		int w = ConvertGLTexSize(m_fullImg.cols);
 		int h = ConvertGLTexSize(m_fullImg.rows);
 		cv::resize(m_fullImg, pimg, cvSize(w, h));
+
 
 		glGenTextures(1, &m_texId);
 		glBindTexture(GL_TEXTURE_2D, m_texId);
@@ -222,7 +223,7 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 	if (SINGLETON_DataMng::GetInstance()->LoadImageData(strPath, m_fullImg, false))
 	{
 		cv::cvtColor(m_fullImg, m_srcGrayImg, CV_BGR2GRAY);
-		cv::threshold(m_srcGrayImg, m_srcGrayImg, 170, 255, cv::THRESH_OTSU);
+		cv::threshold(m_srcGrayImg, m_srcGrayImg, 100, 255, cv::THRESH_OTSU);
 
 		unsigned short width = 0, height = 0;
 		if (LoadPageInfo(width, height)) {
@@ -893,17 +894,18 @@ bool CMNPageObject::GetPosByMatchID(int mid, POINT3D& pos)
 
 void CMNPageObject::ClearMatchResult()
 {
-	m_matched_pos.clear();
+//	m_matched_pos.clear();
+	m_matched_pos.swap(std::vector<stMatchInfo>());
 }
 
 void CMNPageObject::ClearParagraph()
 {
 	m_IsNeedToSave = true;
 
-	for (auto i = 0; i < m_paragraph.size(); i++) {
-		m_paragraph[i].vecTextBox.clear();
-	}
-	m_paragraph.clear();
+	//for (auto i = 0; i < m_paragraph.size(); i++) {
+	//	m_paragraph[i].vecTextBox.clear();
+	//}
+	m_paragraph.swap(std::vector<stParapgraphInfo>());
 //	m_ocrResult.clear();
 }
 
@@ -912,7 +914,8 @@ void CMNPageObject::DeleteAllOcrRes()
 	m_IsNeedToSave = true;
 //	m_ocrResult.clear();
 	for (auto i = 0; i < m_paragraph.size(); i++) {
-		m_paragraph[i].vecTextBox.clear();
+	//	m_paragraph[i].vecTextBox.clear();
+		m_paragraph[i].vecTextBox.swap(std::vector<_stOCRResult>());
 	}
 }
 
@@ -921,7 +924,7 @@ void CMNPageObject::DeleteAllOcrResInLine(int lineid)
 	m_IsNeedToSave = true;
 	//	m_ocrResult.clear();
 	if((lineid < m_paragraph.size()) && (lineid>=0)){
-		m_paragraph[lineid].vecTextBox.clear();
+		m_paragraph[lineid].vecTextBox.swap(std::vector<_stOCRResult>());
 	}
 }
 
@@ -955,7 +958,7 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 	para.IsVerti = IsVerti;
 	para.IsDeskewed = false;
 	m_paragraph.push_back(para);
-	int lineid = m_paragraph.size() - 1;
+	int lineid = static_cast<int>(m_paragraph.size() - 1);
 
 	// Extract text boundary //
 	std::vector<_extractBox> vecBox;
@@ -1218,7 +1221,8 @@ cv::Rect CMNPageObject::GetSelParaRect(int selid)
 
 void CMNPageObject::ClearDBSearchResult()
 {
-	m_sdbResult.clear();
+//	m_sdbResult.clear();
+	m_sdbResult.swap(std::vector<stDBSearchRes>());
 }
 void CMNPageObject::AddDBSearchResult(cv::Rect _rect)
 {
@@ -1339,10 +1343,10 @@ void CMNPageObject::WriteSearchDBFile()
 	char char_str[_MAX_WORD_SIZE * 2];
 //	for (int i = 0; i < wnum; i++) {
 	for (auto j = 0; j < m_paragraph.size(); j++) {
-		for (auto i = 0; i < m_paragraph[i].vecTextBox.size(); i++) {
+		for (auto i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
 			memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
-			int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_paragraph[i].vecTextBox[i].strCode, -1, NULL, 0, NULL, NULL);
-			WideCharToMultiByte(CP_ACP, 0, m_paragraph[i].vecTextBox[i].strCode, -1, char_str, char_str_len, 0, 0);
+			int char_str_len = WideCharToMultiByte(CP_ACP, 0, m_paragraph[j].vecTextBox[i].strCode, -1, NULL, 0, NULL, NULL);
+			WideCharToMultiByte(CP_ACP, 0, m_paragraph[j].vecTextBox[i].strCode, -1, char_str, char_str_len, 0, 0);
 
 			_stSDBWord sdword;
 			//	sdword.strcode = m_ocrResult[i].hcode;
@@ -1353,8 +1357,8 @@ void CMNPageObject::WriteSearchDBFile()
 			//	continue;
 
 			sdword.filecode = m_nCode;
-			sdword.rect = m_paragraph[i].vecTextBox[i].rect;
-			sdword.fConfi = m_paragraph[i].vecTextBox[i].fConfidence;
+			sdword.rect = m_paragraph[j].vecTextBox[i].rect;
+			sdword.fConfi = m_paragraph[j].vecTextBox[i].fConfidence;
 			sdword.fDiff = 0.0f;
 
 			mapSDB[sdword.strcode].push_back(sdword);
@@ -1369,12 +1373,12 @@ void CMNPageObject::WriteSearchDBFile()
 	FILE* fp = 0;
 	fopen_s(&fp, sz, "wb");
 	if (fp) {
-		int wnum = mapSDB.size();
+		int wnum = static_cast<int>(mapSDB.size());
 		fwrite(&wnum, sizeof(int), 1, fp);
 		std::map<unsigned int, _stSDB>::iterator iter = mapSDB.begin();
 		for (; iter != mapSDB.end(); iter++) {
 
-			int pnum = iter->second.size();
+			int pnum = static_cast<int>(iter->second.size());
 			fwrite(&pnum, sizeof(unsigned int), 1, fp);
 			fwrite(&iter->first, sizeof(unsigned int), 1, fp);
 
@@ -1384,7 +1388,9 @@ void CMNPageObject::WriteSearchDBFile()
 		}
 		fclose(fp);
 	}
-	mapSDB.clear();
+
+//	mapSDB.clear();
+	mapSDB.swap(std::map<unsigned int, _stSDB>());
 
 	//bool bNeedToUpdateTable = false;
 
@@ -1467,7 +1473,7 @@ void CMNPageObject::WritePageInfo()
 	fopen_s(&fp, sz, "wb");
 	if (fp) {
 		// Write header 8 byte: paragraph number, word number//
-		int pnum = m_paragraph.size();
+		int pnum = static_cast<int>(m_paragraph.size());
 		fwrite(&m_nImgWidth, sizeof(unsigned short), 1, fp);
 		fwrite(&m_nImgHeight, sizeof(unsigned short), 1, fp);
 		fwrite(&pnum, sizeof(int), 1, fp);

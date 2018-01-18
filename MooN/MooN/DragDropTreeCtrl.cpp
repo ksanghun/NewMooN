@@ -224,7 +224,8 @@ void CDragDropTreeCtrl::ClearSelection()
 	{
 		SetItemState(m_vSelItem[nIdx], 0, TVIS_SELECTED);
 	}
-	m_vSelItem.clear();
+//	m_vSelItem.clear();
+	m_vSelItem.swap(SEL_ITEM_LIST());
 }
 void CDragDropTreeCtrl::RemoveFromSelectionList(HTREEITEM hItem)
 {
@@ -500,7 +501,7 @@ void CDragDropTreeCtrl::RemoveFromSelList(HTREEITEM hItem)
 		if ((*itr) == hItem)
 		{
 			m_vSelItem.erase(itr);
-			m_vSelItem.clear();
+//			m_vSelItem.clear();
 			break;
 		}
 	}

@@ -12,8 +12,10 @@ CExtractor::CExtractor()
 
 CExtractor::~CExtractor()
 {
-	total_lines.clear();
-	contours_poly.clear();
+	//total_lines.clear();
+	//contours_poly.clear();
+
+
 }
 
 void CExtractor::TestFunc()
@@ -33,7 +35,8 @@ float CExtractor::DeSkewImg(cv::Mat& img)
 	//cv::threshold(tmp, tmp, 125, 255, cv::THRESH_OTSU);
 	//cv::bitwise_not(tmp, tmp);
 
-	points.clear();
+	points.swap(std::vector<cv::Point>());
+
 	findNonZero(img, points);
 	cv::RotatedRect box = cv::minAreaRect(points);
 
@@ -80,7 +83,9 @@ _ALIGHN_TYPE CExtractor::CheckHoughLines(cv::Mat& binaryImg)
 //	cv::Canny(dst, dst, 50, 200, 3);
 	cv::GaussianBlur(dst, dst, cv::Size(9, 9), 2, 2);
 
-	total_lines.clear();
+	total_lines.swap(std::vector<cv::Vec4i>());
+	
+
 
 //	cv::imshow("img", dst);
 
@@ -97,9 +102,9 @@ _ALIGHN_TYPE CExtractor::CheckHoughLines(cv::Mat& binaryImg)
 	 for (unsigned i = 0; i < total_lines.size(); ++i)
 	 {
 		 POINT3D v;
-		 v.x = total_lines[i][2] - total_lines[i][0];
-		 v.y = total_lines[i][3] - total_lines[i][1];
-		 v.z = 0;
+		 v.x = static_cast<float>(total_lines[i][2] - total_lines[i][0]);
+		 v.y = static_cast<float>(total_lines[i][3] - total_lines[i][1]);
+		 v.z = 0.0f;
 
 		 vecAlign = vecAlign+v;
 
@@ -125,11 +130,28 @@ _ALIGHN_TYPE CExtractor::CheckHoughLines(cv::Mat& binaryImg)
 	 }	
 }
 
+void CExtractor::InitializeContourVectors()
+{
+	//for (auto i = 0; i < contours_poly.size(); i++) {
+	//	contours_poly[i].resize(0);
+	//}
+	//contours_poly = std::vector<std::vector<cv::Point>>();
+
+	contours_poly.swap(std::vector<std::vector<cv::Point>>());
+	contours.swap(std::vector<std::vector<cv::Point>>());
+	hierarchy.swap(std::vector<cv::Vec4i>());
+
+	//for (auto i = 0; i < contours.size(); i++) {
+	//	contours[i].resize(0);
+	//}
+	//contours.resize(0);
+//	contours = std::vector<std::vector<cv::Point>>();
+//	hierarchy.clear();
+}
+
 void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox)
 {
-	contours_poly.clear();
-	contours.clear();
-	hierarchy.clear();
+	InitializeContourVectors();
 	/// Find contours
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles
@@ -157,7 +179,7 @@ void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::v
 bool CExtractor::MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& depth)
 {
 	std::vector<_extractBox> tmp = vecBox;
-	vecBox = std::vector<_extractBox>();
+	vecBox.swap(std::vector<_extractBox>());
 
 	int nWidth = 0, nHeight = 0;
 	bool IsMerged = false;
@@ -197,7 +219,8 @@ bool CExtractor::MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& dep
 			}
 		}
 	}
-	tmp.clear();
+//	tmp.clear();
+	tmp.swap(std::vector<_extractBox>());
 
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;
@@ -212,9 +235,8 @@ bool CExtractor::MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& dep
 
 void CExtractor::ExtractLines(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
 {
-	contours_poly.clear();
-	std::vector<std::vector<cv::Point> > contours;
-	std::vector<cv::Vec4i> hierarchy;
+	InitializeContourVectors();
+
 	/// Find contours
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles
@@ -222,8 +244,6 @@ void CExtractor::ExtractLines(cv::Mat& binaryImg, int xMargin, int yMargin, std:
 	for (int i = 0; i < contours.size(); i++) {
 		cv::approxPolyDP(cv::Mat(contours[i]), contours_poly[i], 1, true);		
 	}
-
-
 
 
 	// Detect Paragraphs //
@@ -422,8 +442,8 @@ int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, float xTh, 
 				if (tmp[i].textbox.y + tmp[i].textbox.height > tmp[j].textbox.y + tmp[j].textbox.height)				y2 = tmp[i].textbox.y + tmp[i].textbox.height;
 				else																									y2 = tmp[j].textbox.y + tmp[j].textbox.height;
 
-				width = x2 - x;
-				height = y2 - y;
+				width = static_cast<float>(x2 - x);
+				height = static_cast<float>(y2 - y);
 
 				//if((height < m_fontSize.height * yTh) && (width < m_fontSize.width * xTh)){
 				//	if ((width < (maxwidth*1.25f)) && (height < (maxheight*1.25f))){
@@ -435,8 +455,8 @@ int CExtractor::FindOptimalBox(std::vector<_extractBox>& tmp, int i, float xTh, 
 
 					resBox.textbox.x = x;
 					resBox.textbox.y = y;
-					resBox.textbox.width = width;
-					resBox.textbox.height = height;
+					resBox.textbox.width = static_cast<int>(width);
+					resBox.textbox.height = static_cast<int>(height);
 					break;
 					//	}
 				//}
@@ -551,9 +571,8 @@ void CExtractor::SortBoundaryBox(std::vector<_extractBox>& vecBox)
 
 void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, bool IsVerti)
 {
-	contours_poly.clear();
-	contours.clear();
-	hierarchy.clear();
+	InitializeContourVectors();
+
 	/// Find contours
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles
@@ -618,7 +637,7 @@ int CExtractor::MinDist(cv::Rect r1, cv::Rect r2)
 bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth)
 {
 	std::vector<_extractBox> tmp = vecBox;
-	vecBox = std::vector<_extractBox>();
+	vecBox.swap(std::vector<_extractBox>());
 
 	int nWidth = 0, nHeight = 0;
 	bool IsMerged = false;
@@ -682,7 +701,8 @@ bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _ma
 	}
 
 //	maxLength /= (int)tmp.size();
-	tmp.clear();
+//	tmp.clear();
+	tmp.swap(std::vector<_extractBox>());
 
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;
@@ -764,7 +784,7 @@ bool CExtractor::MeargingtBoundaryBoxTextVerti(int xMargin, int yMargin, int _ma
 bool CExtractor::MeargingtBoundaryBoxText(int xMargin, int yMargin, int _maxLength, std::vector<_extractBox>& vecBox, int& depth)
 {
 	std::vector<_extractBox> tmp = vecBox;
-	vecBox = std::vector<_extractBox>();
+	vecBox.swap(std::vector<_extractBox>());
 
 	int nWidth = 0, nHeight = 0;
 	bool IsMerged = false;
@@ -807,7 +827,8 @@ bool CExtractor::MeargingtBoundaryBoxText(int xMargin, int yMargin, int _maxLeng
 	}
 
 	maxLength /= (int)tmp.size();
-	tmp.clear();
+//	tmp.clear();
+	vecBox.swap(std::vector<_extractBox>());
 
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;

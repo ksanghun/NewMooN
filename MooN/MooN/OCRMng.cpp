@@ -84,7 +84,7 @@ float COCRMng::extractWithOCR(cv::Mat& image, std::vector<_stOCRResult>& boundRe
 
 //	tess.SetImage((uchar*)resizeImg.data, resizeImg.size().width, resizeImg.size().height, resizeImg.channels(), resizeImg.step1());
 //	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
-	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), image.step1());
+	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), static_cast<int>(image.step1()));
 //	tess.SetRectangle(0, 0, image.cols, image.rows);
 	tess.Recognize(0);
 
@@ -188,7 +188,7 @@ float COCRMng::extractWithOCRSingle(cv::Mat& image, std::vector<_stOCRResult>& b
 
 	//tess.SetImage((uchar*)resizeImg.data, resizeImg.cols, resizeImg.rows, resizeImg.channels(), resizeImg.step1());
 	//	tess.SetImage((uchar*)image.data, image.size().width, image.size().height, image.channels(), image.step1());
-	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), image.step1());
+	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), static_cast<int>(image.step1()));
 	tess.SetRectangle(0, 0, image.cols, image.rows);
 	tess.Recognize(0);
 
@@ -274,9 +274,9 @@ float COCRMng::extractWithOCRSingle(cv::Mat& image, std::vector<_stOCRResult>& b
 
 void COCRMng::Utf8ToUnicode(char* szU8, wchar_t* strwchar)
 {
-	int wcsLen = ::MultiByteToWideChar(CP_UTF8, NULL, szU8, strlen(szU8), NULL, 0);
+	int wcsLen =::MultiByteToWideChar(CP_UTF8, NULL, szU8, static_cast<int>(strlen(szU8)), NULL, 0);
 //	wchar_t* wszString = new wchar_t[wcsLen + 1];
-	::MultiByteToWideChar(CP_UTF8, NULL, szU8, strlen(szU8), strwchar, wcsLen);
+	::MultiByteToWideChar(CP_UTF8, NULL, szU8, static_cast<int>(strlen(szU8)), strwchar, wcsLen);
 	strwchar[wcsLen] = '\0';
 //	return wszString;
 }
@@ -303,7 +303,7 @@ void COCRMng::TestFunc()
 			rectangle(image, cv::Point(r.x, r.y), cv::Point(r.x + r.width, r.y + r.height), cv::Scalar(0, 0, 255), 2);
 		}
 
-		boundRect.clear();
+		boundRect.swap(std::vector<_stOCRResult>());
 	//	cv::imshow(sz, image);
 		image.release();
 	}
@@ -315,7 +315,7 @@ void COCRMng::TestFunc()
 
 _stOCRResult COCRMng::getOcrResFromSingleCut(cv::Mat& image, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
 {
-	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), image.step1());
+	tess.SetImage((uchar*)image.data, image.cols, image.rows, image.channels(), static_cast<int>(image.step1()));
 	tess.SetRectangle(0, 0, image.cols, image.rows);
 	tess.Recognize(0);
 
