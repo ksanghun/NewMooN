@@ -20,6 +20,8 @@ static UINT ThreadCNSSegments(LPVOID lpParam);
 static bool  m_bIsThreadEnd;
 
 
+
+
 class CMNView : public COGLWnd
 {
 public:
@@ -96,6 +98,8 @@ public:
 	void DrawMatchItemForPicking();
 	void DrawParagrphForPicking();
 	void DrawOCRForPicking();
+
+	bool IsTextBoxSelected(int lineid, int selid);
 
 	// Set values ==================//
 	//void SetThreshold(float _th) {		m_fThreshold = _th;	}
@@ -175,8 +179,12 @@ private:
 
 	// For Extracting Box =====//
 	int m_cnsSearchId;
-	int m_selParaId;
-	int m_selOCRId;
+
+	std::map<int, _stLineTextSelectionInfo> m_mapSelectionInfo;
+	//int m_selParaId;
+	//int m_selOCRId;
+
+
 	int m_selOCRIdforMouseHover;
 	int m_selParaIdforMouseHover;
 
