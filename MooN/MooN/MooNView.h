@@ -34,7 +34,7 @@ public:
 	void InitCamera(bool bInit);
 	void RemoveImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl);
 
-	void SetPositionByList(CString strPid, CString strMid);
+	void SetPositionByList(CString strPid, CString strMid, bool IsCameraMove);
 	void AddListToTraining(int pageid, int matchid, CString strCode);
 	CMNView* GetImageView() { return m_pViewImage; }
 

@@ -815,6 +815,13 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			}
 		}
 
+		else if (nChar == 16) {		// Shift Key
+			if (pViewImage) {
+				pViewImage->EnableMultiSelectionhMode(true, true);
+				pViewImage->SendMessage(WM_SETCURSOR);
+			}
+		}
+
 		else if (nChar == 39) {
 			//if (pViewImage) {
 			//	pViewImage->MoveNextPage();
@@ -877,6 +884,13 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		if (nChar == 17) {  // z key
 			if (pViewImage) {
 				pViewImage->EnableCutSearchMode(false, false);
+				pViewImage->SendMessage(WM_SETCURSOR);
+			}
+		}
+
+		else if (nChar == 16) {		// Shift Key
+			if (pViewImage) {
+				pViewImage->EnableMultiSelectionhMode(false, false);
 				pViewImage->SendMessage(WM_SETCURSOR);
 			}
 		}

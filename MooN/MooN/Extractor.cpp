@@ -828,7 +828,7 @@ bool CExtractor::MeargingtBoundaryBoxText(int xMargin, int yMargin, int _maxLeng
 
 	maxLength /= (int)tmp.size();
 //	tmp.clear();
-	vecBox.swap(std::vector<_extractBox>());
+	tmp.swap(std::vector<_extractBox>());
 
 	if ((depth < _MAX_EXTRACT_ITERATION) && (IsMerged)) {
 		depth++;

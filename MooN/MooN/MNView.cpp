@@ -35,6 +35,7 @@ CMNView::CMNView()
 
 	m_pSelectPageForCNS = NULL;
 	m_bIsCutNSearchMode = false;
+	m_bIsMultiSelectionhMode = false;
 	m_stateKeyDown = false;
 
 	mtSetPoint3D(&m_PO, 0.0f, 0.0f, 0.0f);
@@ -164,14 +165,23 @@ void CMNView::Render()
 	//for (; iter != SINGLETON_TMat::GetInstance()->GetVecImageEnd(); iter++) {
 	//	(*iter)->DrawWordBoundary(m_selWordId);
 	//}	
-	DrawCNSRect(0.0f, 0.99f, 0.1f, 1.0f);	
+	POINT3D rectColor;
+	mtSetPoint3D(&rectColor, 0.0f, 0.99f, 0.1f);
+	if (m_bIsMultiSelectionhMode) {
+		mtSetPoint3D(&rectColor, 0.99f, 0.5f, 0.1f);
+	}
+	DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
+
 
 	if (m_bIsShowParagraph) {
-		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
-		if ((iter != m_mapSelectionInfo.end()) && (m_pSelectPageForCNS)) {
-			m_pSelectPageForCNS->DrawSelectedParagraph(iter->second.lineid);
+		//std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		//if ((iter != m_mapSelectionInfo.end()) && (m_pSelectPageForCNS)) {
+		//	m_pSelectPageForCNS->DrawSelectedParagraph(iter->second.lineid);
+		//}
+		if (m_pSelectPageForCNS) {
+			m_pSelectPageForCNS->DrawSelectedParagraph(0);
+			DrawOCRRes();
 		}
-		DrawOCRRes();
 	//	glCallList(m_glListIdForDrawOCRRes);
 	}
 
@@ -210,9 +220,12 @@ void CMNView::DrawBGPageAni()
 		
 
 		if (m_bIsShowParagraph) {
+//			vecImg[i]->DrawParagraph(m_selParaId);
 			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
-			if((iter != m_mapSelectionInfo.end()) && (iter->second.vecTextId.size() >0))
-				vecImg[i]->DrawParagraph(iter->second.vecTextId[0]);
+			//if((iter != m_mapSelectionInfo.end())/* && (iter->second.vecTextId.size() >0)*/)
+			for (; iter != m_mapSelectionInfo.end(); iter++) {
+				vecImg[i]->DrawParagraph(iter->second.lineid);
+			}
 		}
 		else {
 			vecImg[i]->DrawSDBItem();
@@ -229,6 +242,8 @@ void CMNView::DrawBGPage()
 		vecImg[i]->DrawThumbNail(0.3f);
 		vecImg[i]->DrawMatchItem();
 		if (m_bIsShowParagraph){
+//			vecImg[i]->DrawParagraph(m_selParaId);
+
 			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 			if (iter != m_mapSelectionInfo.end())
 				vecImg[i]->DrawParagraph(iter->second.lineid);
@@ -249,14 +264,17 @@ void CMNView::OnLButtonDown(UINT nFlags, CPoint point)
 	// TODO: Add your message handler code here and/or call default
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 
+
 	mtSetPoint3D(&m_CNSRectEnd, 0.0f, 0.0f, MAX_CAM_HIGHTLEVEL * 3);
 	m_CNSRectStart = m_CNSRectEnd;
 	//=======================//
 
-	SelectObject3D(point.x, point.y, 2, 2, 0);
+	if (!m_bIsMultiSelectionhMode) {
+		SelectObject3D(point.x, point.y, 2, 2, 0);
+	}
 	m_stratPnt = point;
 
-	if (m_bIsCutNSearchMode) {
+	if ((m_bIsCutNSearchMode) || (m_bIsMultiSelectionhMode)){
 		m_cameraPri.InsetsectRayToPlane(m_PN, m_PO, point.x, point.y, m_CNSRectStart);
 		m_CNSRectEnd = m_CNSRectStart;
 	}
@@ -520,12 +538,38 @@ void CMNView::OnMouseHover(UINT nFlags, CPoint point)
 void CMNView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
-	if (m_bIsCutNSearchMode) {
+	if ((m_bIsCutNSearchMode)) {
 		if (m_stateKeyDown == false) {
 			m_bIsCutNSearchMode = false;
+			m_bIsMultiSelectionhMode = false;
 			SendMessage(WM_SETCURSOR);
 		}
 	}
+
+	else if (m_bIsMultiSelectionhMode) {
+
+		// Call Selection Function //
+		CPoint cPos;
+		cPos.x = (m_stratPnt.x + point.x) / 2;
+		cPos.y = (m_stratPnt.y + point.y) / 2;
+		int width = m_stratPnt.x - point.x;
+		int height = m_stratPnt.y - point.y;
+		if (width < 0) width *= -1;
+		if (height < 0) height *= -1;
+		if (width < 1) width = 1;
+		if (height < 1) height = 1;
+		
+		SelectObject3D(cPos.x, cPos.y, width, height, 0);
+
+		mtSetPoint3D(&m_CNSRectEnd, 0.0f, 0.0f, MAX_CAM_HIGHTLEVEL * 3);
+		m_CNSRectStart = m_CNSRectEnd;
+		if (m_stateKeyDown == false) {
+			m_bIsCutNSearchMode = false;
+			m_bIsMultiSelectionhMode = false;
+			SendMessage(WM_SETCURSOR);
+		}
+	}
+
 	else {
 		m_mouseMode = 0;
 		IDragMap(point.x, point.y, 2);
@@ -559,7 +603,7 @@ void CMNView::OnLButtonDblClk(UINT nFlags, CPoint point)
 		//m_fAniMoveSca = m_cameraPri.GetLevelHeight() - DEFAULT_PAGE_SIZE - 200;
 		//SetTimer(_MOVECAMANI, 20, NULL);
 	}
-
+	m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 	COGLWnd::OnLButtonDblClk(nFlags, point);
 }
 
@@ -591,13 +635,12 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	if (m_pSelectPageForCNS) {
 		m_pSelectPageForCNS->SetSelection(false);
 		m_pSelectPageForCNS = NULL;
-		//m_selParaId = -1;
-		//m_selOCRId = -1;
-		std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
-		for (; iter != m_mapSelectionInfo.end(); iter++) {
-			iter->second.vecTextId.swap(std::vector<int>());
-		}
-		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		m_selParaId = -1;
+		m_selOCRId = -1;		
+		//std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		//for (; iter != m_mapSelectionInfo.end(); iter++) {
+		//	iter->second.vecTextId.swap(std::vector<int>());
+		//}
 	}
 
 	if (m_IsSearchMatchItems)
@@ -618,7 +661,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	gluPickMatrix(x, viewport[3] - y, 2, 2, viewport);
+	gluPickMatrix(x, viewport[3] - y, rect_width, rect_height, viewport);
 	gluPerspective(m_cameraPri.m_Cntfovy, (float)viewport[2] / (float)viewport[3], m_cameraPri.GetNearPlane(), m_cameraPri.GetFarPlane());
 
 	//m_cameraPri.SetProjectionMatrix(45.0f, 0.0f, 0.0f, cx, cy);
@@ -643,16 +686,19 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 	if (hits > 0)
 	{		
+		if ((!m_bIsMultiSelectionhMode) &&(hits>1)) {
+			m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		}
+
 		for (int i = 0; i < hits; i++) {
-			int selid = selectBuff[i * 4 + 3];
-			
+			int selid = selectBuff[i * 4 + 3];			
 
 			if (selid < _PICK_PARA) {		// Page selection
 				m_pSelectPageForCNS = SINGLETON_DataMng::GetInstance()->GetPageByOrderID(selid);
 				if (m_pSelectPageForCNS) {
 					m_pSelectPageForCNS->SetSelection(true);
 					m_pSelectPageForCNS->SetIsNear(true);
-				//	DrawOCRRes();
+				//	DrawOCRRes();					
 					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(0);
 					if (lineInfo.rect.width > 0) {
 						pM->SetParagraphInfo(lineInfo.deSkewAngle, L"", lineInfo.IsVerti);
@@ -661,7 +707,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 				}
 			}
 			else if ((selid >= _PICK_PARA) && (selid < _PICK_WORD)) {		// Text block selectoin
-			//	m_selParaId = selid - _PICK_PARA;
+				m_selParaId = selid - _PICK_PARA;
 				lineid = selid - _PICK_PARA;
 				if (m_pSelectPageForCNS) {
 					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(lineid);
@@ -670,35 +716,37 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 					}
 				}
 
-				if (m_mapSelectionInfo.find(lineid) == m_mapSelectionInfo.end()) {
-					_stLineTextSelectionInfo selinfo;
-					selinfo.lineid = lineid;
-					m_mapSelectionInfo[lineid] = selinfo;
-				}
-
-			}
-			else if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)){		// Word selection
-				selid = selid - _PICK_WORD;
-				if (m_pSelectPageForCNS) {
-				//	_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
-					_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(lineid, selid);
-					pM->SetOCRResInfo(ocrRes.strCode, ocrRes.fConfidence, ocrRes.type);
-
+		//		if (m_bIsMultiSelectionhMode) {
 					if (m_mapSelectionInfo.find(lineid) == m_mapSelectionInfo.end()) {
 						_stLineTextSelectionInfo selinfo;
 						selinfo.lineid = lineid;
-						selinfo.vecTextId.push_back(selid);
 						m_mapSelectionInfo[lineid] = selinfo;
 					}
-					else {
-						m_mapSelectionInfo[lineid].vecTextId.push_back(selid);
-					}
+		//		}
 
+			}
+			else if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)){		// Word selection
+				selid -= _PICK_WORD;
+				lineid = selid / 10000;
+				textid = selid % 10000;
+			//	selid = selid - _PICK_WORD;
+				m_selOCRId = textid;
+				if (m_pSelectPageForCNS) {
+				//	_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+					_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(lineid, textid);
+					pM->SetOCRResInfo(ocrRes.strCode, ocrRes.fConfidence, ocrRes.type);
+
+						if (m_mapSelectionInfo.find(lineid) == m_mapSelectionInfo.end()) {
+							_stLineTextSelectionInfo selinfo;
+							selinfo.lineid = lineid;
+							selinfo.vecTextId.push_back(textid);
+							m_mapSelectionInfo[lineid] = selinfo;
+						}
+						else {
+							m_mapSelectionInfo[lineid].vecTextId.push_back(textid);
+						}
 				}
 			}
-			//else if (selid >= _PICK_MATCH) {
-			//	selid = selid - _PICK_MATCH;
-			//}
 		}
 	}
 	//	if (m_IsSearchMatchItems) {
@@ -724,16 +772,17 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 	// Select Item on the list view //
 	std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
-//	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
-	if(iter != m_mapSelectionInfo.end()){
-		if (iter->second.vecTextId.size() > 0) {
-		//	int id = m_selParaId * 10000 + m_selOCRId;
-			int id = iter->second.lineid * 10000 + iter->second.vecTextId[0];
-			pM->SelectListItemById(id);
-		}
+	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
+		int id = m_selParaId * 10000 + m_selOCRId;
+		pM->SelectListItemById(id);
 	}
-
-
+	//if(iter != m_mapSelectionInfo.end()){
+	//	if (iter->second.vecTextId.size() > 0) {
+	//		int id = m_selParaId * 10000 + m_selOCRId;
+	//	//	int id = iter->second.lineid * 10000 + iter->second.vecTextId[0];
+	//		pM->SelectListItemById(id);
+	//	}
+	//}
 	return hits;
 }
 
@@ -779,7 +828,7 @@ void CMNView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	if (GetCapture()) {
-		if (m_bIsCutNSearchMode) {
+		if ((m_bIsCutNSearchMode)|| (m_bIsMultiSelectionhMode)){
 			m_cameraPri.InsetsectRayToPlane(m_PN, m_PO, point.x, point.y, m_CNSRectEnd);
 		}
 		else {
@@ -811,10 +860,16 @@ void CMNView::EnableCutSearchMode(bool IsEnable, bool bKey)
 	m_stateKeyDown = bKey;
 }
 
+void CMNView::EnableMultiSelectionhMode(bool IsEnable, bool bKey)
+{
+	m_bIsMultiSelectionhMode = IsEnable;
+	m_stateKeyDown = bKey;
+}
+
 BOOL CMNView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
 	// TODO: Add your message handler code here and/or call default
-	if (m_bIsCutNSearchMode) {
+	if ((m_bIsCutNSearchMode) || (m_bIsMultiSelectionhMode)){
 		SetCursor(LoadCursor(NULL, IDC_CROSS));
 		return TRUE;
 	}
@@ -1433,17 +1488,20 @@ bool CMNView::DeleteSelOCRRes()
 
 void CMNView::ConfirmOCRRes()
 {
-	if ((m_pSelectPageForCNS)) {
+	if ((m_pSelectPageForCNS)) {  // Last selected one !!
 		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
-		for (; iter != m_mapSelectionInfo.end(); iter++) {
-			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
-			//	m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
-				m_pSelectPageForCNS->ConfirmOCRRes(iter->second.lineid, iter->second.vecTextId[0]);
-			}
-		//	m_selOCRId = -1;
-			iter->second.vecTextId.swap(std::vector<int>());
+		if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
+			m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
 		}
-		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		//for (; iter != m_mapSelectionInfo.end(); iter++) {
+		//	for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+		//	//	m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
+		//		m_pSelectPageForCNS->ConfirmOCRRes(iter->second.lineid, iter->second.vecTextId[0]);
+		//	}
+		////	m_selOCRId = -1;
+		//	iter->second.vecTextId.swap(std::vector<int>());
+		//}
+		//m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
@@ -1722,7 +1780,7 @@ void CMNView::DrawOCRRes()
 			glPushMatrix();
 			glTranslatef(m_pSelectPageForCNS->GetPos().x, m_pSelectPageForCNS->GetPos().y, m_pSelectPageForCNS->GetPos().z);
 
-			glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
+			glColor4f(0.0f, 0.99f, 0.1f, 0.9f);
 			glPushMatrix();
 			glScalef(m_pSelectPageForCNS->GetfXScale(), m_pSelectPageForCNS->GetfYScale(), 1.0f);
 			glTranslatef(-m_pSelectPageForCNS->GetImgWidth()*0.5f, -m_pSelectPageForCNS->GetImgHeight()*0.5f, 0.0f);
@@ -1804,10 +1862,10 @@ void CMNView::DrawOCRRes()
 						//}
 					}
 
-					glLineWidth(2);
+					glLineWidth(4);
 					if ((j == m_selOCRIdforMouseHover)&&(i== m_selParaIdforMouseHover)) {
 
-						glColor4f(1.0f, 0.0f, 0.0f, 0.99f);
+					//	glColor4f(0.0f, 1.0f, 0.0f, 0.99f);
 						if (m_extractionSetting.IsVerti) {
 							mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
 						}
@@ -1816,7 +1874,7 @@ void CMNView::DrawOCRRes()
 						}
 						gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
 
-						glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+						glColor4f(0.0f, 1.0f, 0.0f, 0.7f);
 						glBegin(GL_LINE_STRIP);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
@@ -1828,7 +1886,7 @@ void CMNView::DrawOCRRes()
 
 				//	if ((j == m_selOCRId) && (i == m_selParaId)) {
 					if (IsTextBoxSelected(i, j)){
-						glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+						glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
 						glBegin(GL_LINE_STRIP);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
@@ -2680,7 +2738,10 @@ void CMNView::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
-	SelectObject3D(point.x, point.y, 2, 2, 0);	
+		
+
+//	m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+//	SelectObject3D(point.x, point.y, 2, 2, 0);	
 	COGLWnd::OnRButtonDown(nFlags, point);
 }
 
@@ -2735,15 +2796,23 @@ int CMNView::SelectObject3DForMouseOver(int x, int y, int rect_width, int rect_h
 	hits = glRenderMode(GL_RENDER);
 	if (hits > 0)
 	{
+		int lineid = 0, objid = 0;;
 		for (int i = 0; i < hits; i++) {
 			int selid = selectBuff[i * 4 + 3];
 
+			
+
 			if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)) {		// Word selection
-				m_selOCRIdforMouseHover = selid - _PICK_WORD;
+				selid -= _PICK_WORD;
+				lineid = selid / 10000;
+				objid = selid % 10000;
+
+				m_selOCRIdforMouseHover = objid;
+				m_selParaIdforMouseHover = lineid;
 			}
-			else if ((selid >= _PICK_PARA) && (selid < _PICK_WORD)) {		// Text block selectoin
-				m_selParaIdforMouseHover = selid - _PICK_PARA;
-			}
+			//else if ((selid >= _PICK_PARA) && (selid < _PICK_WORD)) {		// Text block selectoin
+			//	m_selParaIdforMouseHover = selid - _PICK_PARA;
+			//}
 		}
 	}
 

@@ -82,6 +82,9 @@ public:
 	void Render2D();
 
 	void EnableCutSearchMode(bool IsEnable, bool bKey);
+	void EnableMultiSelectionhMode(bool IsEnable, bool bKey);
+
+	
 
 	void DrawCNSRect(float r, float g, float b, float a);
 	void DrawBGPageAni();
@@ -163,6 +166,7 @@ private:
 	// For Cut & Search  //
 	POINT3D m_PN, m_PO, m_CNSRectStart, m_CNSRectEnd;
 	bool m_bIsCutNSearchMode;
+	bool m_bIsMultiSelectionhMode;
 	bool m_stateKeyDown;
 
 	bool m_IsSearchMatchItems;
@@ -181,8 +185,8 @@ private:
 	int m_cnsSearchId;
 
 	std::map<int, _stLineTextSelectionInfo> m_mapSelectionInfo;
-	//int m_selParaId;
-	//int m_selOCRId;
+	int m_selParaId;
+	int m_selOCRId;
 
 
 	int m_selOCRIdforMouseHover;

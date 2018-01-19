@@ -50,7 +50,7 @@ public:
 	CString	m_strSearchId;
 
 	BOOL	m_bIsAutoFill;
-
+	bool	m_bMoveCamera;
 
 
 protected:

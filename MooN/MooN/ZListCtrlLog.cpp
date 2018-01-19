@@ -23,6 +23,7 @@ CZListCtrlLog::CZListCtrlLog()
 
 	m_currDrawId = 0;
 	m_colorid = 0;
+	m_bMoveCamera = true;
 }
 
 CZListCtrlLog::~CZListCtrlLog()
@@ -119,6 +120,8 @@ void CZListCtrlLog::AddListToTraining()
 
 void CZListCtrlLog::OnNMClick(NMHDR *pNMHDR, LRESULT *pResult)
 {
+	m_bMoveCamera = true;
+
 	//LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	//// TODO: Add your control notification handler code here
 	//m_currDrawId = 0;
@@ -754,7 +757,8 @@ void CZListCtrlLog::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 	nSubItem = 1;
 
 	// Update Camera Pos //
-	pView->SetPositionByList(GetItemText(nItem, 13), GetItemText(nItem, 14));
+	pView->SetPositionByList(GetItemText(nItem, 13), GetItemText(nItem, 14), m_bMoveCamera);
+//	m_bMoveCamera = true;
 
 	//if (nSubItem != 1) {
 	//	*pResult = 0;
@@ -829,6 +833,7 @@ void CZListCtrlLog::SelItemByLineTextBoxID(int _id)
 
 	
 	EnsureVisible(m_selItem, TRUE);
+	m_bMoveCamera = false;
 	SetItemState(m_selItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	
 }

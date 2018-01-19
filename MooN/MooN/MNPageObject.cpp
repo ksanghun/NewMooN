@@ -505,9 +505,11 @@ void CMNPageObject::DrawOCRResForPick()
 		glScalef(m_fXScale, m_fYScale, 1.0f);
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
-		for (int i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
+		int pid = j * 10000 + _PICK_WORD; // !!
+
+		for (auto i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
 			glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
-			glPushName(i + _PICK_WORD);
+			glPushName(pid + i);
 			glBegin(GL_QUADS);
 			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x, m_nImgHeight - m_paragraph[j].vecTextBox[i].rect.y, 0.0f);
 			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x, m_nImgHeight - (m_paragraph[j].vecTextBox[i].rect.y + m_paragraph[j].vecTextBox[i].rect.height), 0.0f);
@@ -566,23 +568,25 @@ void CMNPageObject::DrawParagraph(int selid)
 
 		if (m_bIsNear) {
 			glEnable(GL_LINE_STIPPLE);
-			for (int i = 0; i < m_paragraph.size(); i++) {
+		//	for (auto i = 0; i < m_paragraph.size(); i++) {
 
-				glColor4f(0.99f, 0.0f, 0.0f, 0.3f);
-				if (i == selid)
+			//	glColor4f(0.99f, 0.0f, 0.0f, 0.3f);
+			//	if (i == selid) {
+			int i = selid;
 					glColor4f(0.99f, 0.0f, 0.0f, 0.99f);
 
-				glLineStipple(2, 0xAAAA);				
-				glBegin(GL_LINE_STRIP);
-				//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-				glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-				glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
-				glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
-				glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-				glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-				glEnd();
+					glLineStipple(2, 0xAAAA);
+					glBegin(GL_LINE_STRIP);
+					//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+					glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+					glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+					glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+					glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+					glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+					glEnd();
+		//		}
 
-			}
+		//	}
 			glDisable(GL_LINE_STIPPLE);			
 		}
 		glPopMatrix();
@@ -602,14 +606,15 @@ void CMNPageObject::DrawSelectedParagraph(int selid)
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
-	if (selid < m_paragraph.size()) {
+//	if (selid < m_paragraph.size()) {
+	for(auto i=0; i<m_paragraph.size(); i++){
 		// Draw detected position //
 		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
 		glPushMatrix();
 		glScalef(m_fXScale, m_fYScale, 1.0f);
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
-		int i = selid;
+	//	int i = selid;
 		glColor4f(1.0f, 1.0f, 0.0f, 0.3f);
 		glBegin(GL_QUADS);
 		glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);

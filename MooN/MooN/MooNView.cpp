@@ -399,7 +399,7 @@ void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 }
 
 
-void CMooNView::SetPositionByList(CString strPid, CString strMid)
+void CMooNView::SetPositionByList(CString strPid, CString strMid, bool IsCameraMove)
 {
 	CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(_ttoi(strPid));
 	if (pPage) {
@@ -407,7 +407,8 @@ void CMooNView::SetPositionByList(CString strPid, CString strMid)
 		int mid = _ttoi(strMid);
 		if(pPage->GetPosByMatchID(mid, tPos)){
 			pPage->SetSelMatchItem(mid);
-			m_pViewImage->MoveCameraPos(tPos, 200);
+			if(IsCameraMove)
+				m_pViewImage->MoveCameraPos(tPos, 200);
 		}
 	}
 }
