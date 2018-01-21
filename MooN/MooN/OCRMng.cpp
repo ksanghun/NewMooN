@@ -14,56 +14,73 @@ COCRMng::COCRMng()
 
 COCRMng::~COCRMng()
 {
-	m_tessEng.End();
-	m_tessChi.End();
-	m_tessKor.End();
+	//m_tessEng.End();
+	//m_tessChi.End();
+	//m_tessKor.End();
+	for (int i = 0; i < _NUM_LANGUAGE_TYPE; i++) {
+		m_tess[i].End();
+	}
 }
 
 
 bool COCRMng::InitOCRMng()
 {
-	if (m_tessEng.Init("./tessdata/", "eng")){
-		return false;
-	}
-	if (m_tessChi.Init("./tessdata/", "chi_tra")){
-		return false;
-	}
-	if (m_tessKor.Init("./tessdata/", "kor")) {
-		return false;
-	}
+	//if (m_tessEng.Init("./tessdata/", "eng")){
+	//	return false;
+	//}
+	//if (m_tessChi.Init("./tessdata/", "chi_tra")){
+	//	return false;
+	//}
+	//if (m_tessKor.Init("./tessdata/", "kor")) {
+	//	return false;
+	//}
+
+	m_tess[__ENG].Init("./tessdata/", "eng");
+	m_tess[__CHI].Init("./tessdata/", "chi_tra");
+	m_tess[__KOR].Init("./tessdata/", "kor");
+//	m_tess[__JAP].Init("./tessdata/", "jap");
+
 
 //	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
 //	m_tessEng.SetVariable("tessedit_char_whitelist", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmonpqrstuvwxyz~!@#$%^&*()_-+={}[]:;'<>?,./\|");
 //	m_tessChi.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
 //	m_tessChi.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
 
-	SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-	SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
-	SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
+	for (int i = 0; i < _NUM_LANGUAGE_TYPE; i++) {
+		SetOCRDetectMode((_LANGUAGE_TYPE)i, tesseract::PSM_SINGLE_BLOCK);
+	}
+	//m_tess[__CHI].SetVariable("tessedit_char_blacklist", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+	
 
 
+	//SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
+	//SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+	//SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
 //	m_tessEng.SetVariable("tessedit_char_blacklist", ":;()[]{}!?");
-	m_tessChi.SetVariable("tessedit_char_blacklist", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-
+//	m_tessChi.SetVariable("tessedit_char_blacklist", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 //	m_tessChi.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
 //	m_tessKor.SetVariable("tessedit_char_blacklist", "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz(){}[]~!@#$%^&*()_+-=,.?;:'\"");
 
 	return true;
 }
 
+//void COCRMng::SetOCRDetectModeEng(tesseract::PageSegMode mode)
+//{
+//	m_tessEng.SetPageSegMode(mode);
+//}
+//
+//void COCRMng::SetOCRDetectModeChi(tesseract::PageSegMode mode)
+//{
+//	m_tessChi.SetPageSegMode(mode);
+//}
+//void COCRMng::SetOCRDetectModeKor(tesseract::PageSegMode mode)
+//{
+//	m_tessKor.SetPageSegMode(mode);
+//}
 
-void COCRMng::SetOCRDetectModeEng(tesseract::PageSegMode mode)
+void COCRMng::SetOCRDetectMode(_LANGUAGE_TYPE _type, tesseract::PageSegMode mode)
 {
-	m_tessEng.SetPageSegMode(mode);
-}
-
-void COCRMng::SetOCRDetectModeChi(tesseract::PageSegMode mode)
-{
-	m_tessChi.SetPageSegMode(mode);
-}
-void COCRMng::SetOCRDetectModeKor(tesseract::PageSegMode mode)
-{
-	m_tessKor.SetPageSegMode(mode);
+	m_tess[_type].SetPageSegMode(mode);
 }
 
 float COCRMng::extractWithOCR(cv::Mat& image, std::vector<_stOCRResult>& boundRect, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType)
@@ -160,6 +177,8 @@ float COCRMng::extractWithOCR(cv::Mat& image, std::vector<_stOCRResult>& boundRe
 
 	if (cnt > 0)
 		averConf /= cnt;
+	if (langType == __CHI)
+		averConf += 10;
 	return averConf*0.01f;
 
 	// Need to return the lowest value //
@@ -284,29 +303,29 @@ void COCRMng::Utf8ToUnicode(char* szU8, wchar_t* strwchar)
 
 void COCRMng::TestFunc()
 {
-	for (int i = 1; i < 3; i++) {
-		CString strFile;
-		strFile.Format(L"D:/%d.jpg", i);
-		USES_CONVERSION;
-		char* sz = T2A(strFile);
+	//for (int i = 1; i < 3; i++) {
+	//	CString strFile;
+	//	strFile.Format(L"D:/%d.jpg", i);
+	//	USES_CONVERSION;
+	//	char* sz = T2A(strFile);
 
-		std::vector<_stOCRResult> boundRect;
-		cv::Mat image = cv::imread(sz);
-		cv::cvtColor(image, image, CV_BGR2GRAY);
-		cv::threshold(image, image, 128, 255, cv::THRESH_BINARY);
-	//	cv::imshow("Binary", image);
+	//	std::vector<_stOCRResult> boundRect;
+	//	cv::Mat image = cv::imread(sz);
+	//	cv::cvtColor(image, image, CV_BGR2GRAY);
+	//	cv::threshold(image, image, 128, 255, cv::THRESH_BINARY);
+	////	cv::imshow("Binary", image);
 
-		extractWithOCR(image, boundRect, GetEngTess(), tesseract::RIL_WORD, 1.0f, 0);
+	//	extractWithOCR(image, boundRect, GetEngTess(), tesseract::RIL_WORD, 1.0f, 0);
 
-		for (int i = 0; i < boundRect.size(); i++) {
-			cv::Rect r = boundRect[i].rect;
-			rectangle(image, cv::Point(r.x, r.y), cv::Point(r.x + r.width, r.y + r.height), cv::Scalar(0, 0, 255), 2);
-		}
+	//	for (int i = 0; i < boundRect.size(); i++) {
+	//		cv::Rect r = boundRect[i].rect;
+	//		rectangle(image, cv::Point(r.x, r.y), cv::Point(r.x + r.width, r.y + r.height), cv::Scalar(0, 0, 255), 2);
+	//	}
 
-		boundRect.swap(std::vector<_stOCRResult>());
-	//	cv::imshow(sz, image);
-		image.release();
-	}
+	//	boundRect.swap(std::vector<_stOCRResult>());
+	////	cv::imshow(sz, image);
+	//	image.release();
+	//}
 
 }
 

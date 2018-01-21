@@ -18,6 +18,7 @@ public:
 	void ResizeListColSize(int _maxwidth);
 	void ResetLogList();
 	void SelItemByLineTextBoxID(int _id);
+	void DeleteItemByLineTextBoxID(int _id);
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

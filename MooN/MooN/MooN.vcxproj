@@ -219,6 +219,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ViewTree.h" />
+    <ClInclude Include="ZEdit.h" />
     <ClInclude Include="ZListCtrlLog.h" />
   </ItemGroup>
   <ItemGroup>
@@ -254,6 +255,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ViewTree.cpp" />
+    <ClCompile Include="ZEdit.cpp" />
     <ClCompile Include="ZListCtrlLog.cpp" />
   </ItemGroup>
   <ItemGroup>

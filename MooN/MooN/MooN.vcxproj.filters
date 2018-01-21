@@ -114,6 +114,9 @@
     <ClInclude Include="DlgFileSaving.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ZEdit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MooN.cpp">
@@ -198,6 +201,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DlgFileSaving.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ZEdit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

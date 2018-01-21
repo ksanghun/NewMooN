@@ -68,6 +68,16 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_OCR_CUTSEARCH, &CMainFrame::OnOcrCutsearch)
 	ON_COMMAND(ID_EXPLORER_EXPORTDATABASE_HTML, &CMainFrame::OnExplorerExportdatabaseHtml)
 	ON_COMMAND(ID_OCR_CUTANDSEARCHALL, &CMainFrame::OnOcrCutandsearchall)
+	ON_COMMAND(ID_OPTIONS_AUTOFILLON, &CMainFrame::OnOptionsAutofillon)
+	ON_COMMAND(ID_OPTIONS_AUTOFILLOFF, &CMainFrame::OnOptionsAutofilloff)
+	ON_COMMAND(ID_OPTIONS_TRAININGALL, &CMainFrame::OnOptionsTrainingall)
+	ON_COMMAND(ID_OPTIONS_TRAININGSELECTION, &CMainFrame::OnOptionsTrainingselection)
+	ON_COMMAND(ID_OCR_MERGE_BOX, &CMainFrame::OnOcrMergeBox)
+	ON_COMMAND(ID_SPLITETEXTBOX_VERTICALLY, &CMainFrame::OnSplitetextboxVertically)
+	ON_COMMAND(ID_SPLITETEXTBOX_HORIZONTALL, &CMainFrame::OnSplitetextboxHorizontall)
+	ON_COMMAND(ID_OCR_MERGELINEBOX, &CMainFrame::OnOcrMergelinebox)
+	ON_COMMAND(ID_SPLITLINEBOX_VERTICALLY, &CMainFrame::OnSplitlineboxVertically)
+	ON_COMMAND(ID_SPLITLINEBOX_HORIZONTALY, &CMainFrame::OnSplitlineboxHorizontaly)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -686,6 +696,9 @@ void CMainFrame::OnProjectRemoveimage()
 	for (unsigned int i = 0; i < pCtrl->GetSelItemList()->size(); i++) {
 		HTREEITEM selItem = (*pCtrl->GetSelItemList())[i];
 		pView->RemoveImageData(selItem, pCtrl);
+
+		//SINGLETON_DataMng::GetInstance()->ResetResult();
+		//ClearAllResults();
 	}
 }
 
@@ -761,6 +774,11 @@ void CMainFrame::OnToolsKeywordsearch()
 void CMainFrame::OnToolsClearresult()
 {
 	// TODO: Add your command handler code here
+	ClearAllResults();
+}
+
+void CMainFrame::ClearAllResults()
+{
 	SINGLETON_DataMng::GetInstance()->ResetResult();
 	m_wndFormListView.ResetLogList();
 }
@@ -926,6 +944,11 @@ void CMainFrame::SetOCRResInfo(wchar_t* strCode, float fConfi, int lang)
 	m_wndProperties.SetOCRResInfo(strCode, fConfi, lang);
 }
 
+void CMainFrame::DeleteMatchList(int line_text_id)
+{
+	m_wndFormListView.DeleteItemByLineTextBoxID(line_text_id);
+}
+
 void CMainFrame::OnOcrEnglishword()
 {
 	// TODO: Add your command handler code here
@@ -1020,7 +1043,9 @@ void CMainFrame::OnOcrAddLinebox()
 {
 	// TODO: Add your command handler code here
 	CMNView* pImgView = pView->GetImageView();
-	pImgView->AddParagraph();
+	RECT2D rect = pImgView->GetSelectedAreaForCNS();
+	cv::Rect r(rect.x1, rect.y1, rect.width, rect.height);
+	pImgView->AddNewLineBox(r);
 }
 
 
@@ -1029,6 +1054,8 @@ void CMainFrame::OnOcrDeletelInebox()
 	// TODO: Add your command handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DeleteSelParagraph();
+
+	
 }
 
 
@@ -1060,7 +1087,10 @@ void CMainFrame::OnOcrAddTextbox()
 {
 	// TODO: Add your command handler code here
 	CMNView* pImgView = pView->GetImageView();
-	pImgView->AddOCRRes();
+
+	RECT2D rect = pImgView->GetSelectedAreaForCNS();
+	cv::Rect r(rect.x1, rect.y1, rect.width, rect.height);
+	pImgView->AddNewTextBox(r);
 }
 
 
@@ -1084,7 +1114,7 @@ void CMainFrame::OnRecognizetextFromuserdb()
 {
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->OcrFromTextBox(_NONE, 0);
+	pViewImage->OcrFromTextBox(__LANG_NONE, 0);
 }
 
 
@@ -1148,3 +1178,76 @@ void CMainFrame::OnOcrCutandsearchall()
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->ProcDoSearchBySelectionAll();
 }
+
+
+void CMainFrame::OnOptionsAutofillon()
+{
+	// TODO: Add your command handler code here
+}
+
+
+void CMainFrame::OnOptionsAutofilloff()
+{
+	// TODO: Add your command handler code here
+}
+
+
+void CMainFrame::OnOptionsTrainingall()
+{
+	// TODO: Add your command handler code here
+}
+
+
+void CMainFrame::OnOptionsTrainingselection()
+{
+	// TODO: Add your command handler code here
+}
+
+
+void CMainFrame::OnOcrMergeBox()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->MergeSelectedTextBox();
+}
+
+
+void CMainFrame::OnSplitetextboxVertically()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->SetSplitBoxMode(_VERTI_DIR, _SPLIT_TEXT);
+}
+
+
+void CMainFrame::OnSplitetextboxHorizontall()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->SetSplitBoxMode(_HORI_DIR, _SPLIT_TEXT);
+}
+
+
+void CMainFrame::OnOcrMergelinebox()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->MergeSelectedLineBox();
+}
+
+
+void CMainFrame::OnSplitlineboxVertically()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->SetSplitBoxMode(_VERTI_DIR, _SPLIT_LINE);
+}
+
+
+void CMainFrame::OnSplitlineboxHorizontaly()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->SetSplitBoxMode(_HORI_DIR, _SPLIT_LINE);
+}
+

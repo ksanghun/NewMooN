@@ -12,7 +12,7 @@ IMPLEMENT_DYNCREATE(CFormListView, CFormView)
 
 CFormListView::CFormListView()
 	: CFormView(IDD_FORMLISTVIEW)
-	, m_bIsAutoFill(TRUE)
+//	, m_bIsAutoFill(TRUE)
 {
 	m_bIsCreated = false;
 	m_cutMaxWidth = _NORMALIZE_SIZE_H;
@@ -30,13 +30,13 @@ void CFormListView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST1, m_ctrlList);
-	DDX_Check(pDX, IDC_CHECK_AUTOFILL, m_bIsAutoFill);
+//	DDX_Check(pDX, IDC_CHECK_AUTOFILL, m_bIsAutoFill);
 }
 
 BEGIN_MESSAGE_MAP(CFormListView, CFormView)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BN_ADD_TO_OCR, &CFormListView::OnBnClickedBnAddToOcr)
-	ON_BN_CLICKED(IDC_CHECK_AUTOFILL, &CFormListView::OnBnClickedCheckAutofill)
+//	ON_BN_CLICKED(IDC_CHECK_AUTOFILL, &CFormListView::OnBnClickedCheckAutofill)
 END_MESSAGE_MAP()
 
 
@@ -159,14 +159,23 @@ void CFormListView::SelItemByLineTextBoxID(int _id)
 	m_ctrlList.SelItemByLineTextBoxID(_id);
 }
 
+void CFormListView::DeleteItemByLineTextBoxID(int _id)
+{
+	m_ctrlList.DeleteItemByLineTextBoxID(_id);
+}
+
 void CFormListView::AddRecord()
 {
 //	ResetLogList();	
 	CString strItem;
 	std::map<unsigned long, stVecMatchResult>& mapMatchRes = SINGLETON_DataMng::GetInstance()->GetMatchingResults();
-	std::map<unsigned long, stVecMatchResult>::iterator iter = mapMatchRes.begin();
-	for (; iter != mapMatchRes.end(); iter++) {
-		for (int i = 0; i < iter->second.size(); i++) {
+	//std::map<unsigned long, stVecMatchResult>::iterator iter = mapMatchRes.begin();
+	//for (; iter != mapMatchRes.end(); iter++) {
+	std::map<unsigned long, stVecMatchResult>::iterator iter = mapMatchRes.end();
+	iter--;
+	for (; iter != mapMatchRes.end(); iter--) {
+	//	for (int i = 0; i < iter->second.size(); i++) {
+		for (int i = iter->second.size()-1; i >=0; i--) {
 
 			if (iter->second[i].IsOnList == false) {
 
@@ -223,7 +232,7 @@ void CFormListView::AddRecord()
 					strItem.Format(L"%d", iter->second[i].id_match);
 					m_ctrlList.SetItem(m_nRecordNum, 14, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
 
-					strItem.Format(L"%d", iter->second[i].id_line_textbox);
+					strItem.Format(L"%d", iter->second[i].uuid);
 					m_ctrlList.SetItem(m_nRecordNum, 15, LVIF_TEXT, strItem, m_imgListId, 0, 0, NULL);
 					//=========================================================================//
 
@@ -256,17 +265,17 @@ void CFormListView::OnBnClickedBnAddToOcr()
 }
 
 
-void CFormListView::OnBnClickedCheckAutofill()
-{
-	// TODO: Add your control notification handler code here
-	if (m_bIsAutoFill == TRUE) {
-		m_bIsAutoFill = FALSE;
-	}
-	else {
-		m_bIsAutoFill = TRUE;
-	}
-	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
-}
+//void CFormListView::OnBnClickedCheckAutofill()
+//{
+//	// TODO: Add your control notification handler code here
+//	if (m_bIsAutoFill == TRUE) {
+//		m_bIsAutoFill = FALSE;
+//	}
+//	else {
+//		m_bIsAutoFill = TRUE;
+//	}
+//	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
+//}
 
 
 void CFormListView::AddRecord_CNSAll()

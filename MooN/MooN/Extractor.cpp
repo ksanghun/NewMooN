@@ -12,17 +12,16 @@ CExtractor::CExtractor()
 
 CExtractor::~CExtractor()
 {
-	//total_lines.clear();
-	//contours_poly.clear();
-
-
+	InitializeContourVectors();
+	total_lines.swap(std::vector<cv::Vec4i>());
+	points.swap(std::vector<cv::Point>());
 }
 
 void CExtractor::TestFunc()
 {
 //	cv::Mat input = cv::imread("D:/Untitled.bmp");
-	cv::Mat input = cv::imread("D:/17_212.jp2");
-	cv::imshow("kim", input);
+	//cv::Mat input = cv::imread("D:/17_212.jp2");
+	//cv::imshow("kim", input);
 //	DeSkewImg(input);
 //	AllHoriVertLines(input);
 //	input.release();

@@ -38,7 +38,8 @@ public:
 	void GetCurrSetting() { return m_wndProperties.GetCurrSetting(); }
 
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
-	
+	void DeleteMatchList(int line_text_id);
+	void ClearAllResults();
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);
@@ -128,6 +129,16 @@ public:
 	afx_msg void OnOcrCutsearch();
 	afx_msg void OnExplorerExportdatabaseHtml();
 	afx_msg void OnOcrCutandsearchall();
+	afx_msg void OnOptionsAutofillon();
+	afx_msg void OnOptionsAutofilloff();
+	afx_msg void OnOptionsTrainingall();
+	afx_msg void OnOptionsTrainingselection();
+	afx_msg void OnOcrMergeBox();
+	afx_msg void OnSplitetextboxVertically();
+	afx_msg void OnSplitetextboxHorizontall();
+	afx_msg void OnOcrMergelinebox();
+	afx_msg void OnSplitlineboxVertically();
+	afx_msg void OnSplitlineboxHorizontaly();
 };
 
 

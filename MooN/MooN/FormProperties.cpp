@@ -76,6 +76,10 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_DBTH, m_sliderForDBTh);
 	DDX_Text(pDX, IDC_EDIT_DBTH, m_editDBth);
 	DDV_MinMaxUInt(pDX, m_editDBth, 0, 100);
+	DDX_Control(pDX, IDC_COMBO_1ST_LANGUAGE, m_combo1stLanguage);
+	DDX_Control(pDX, IDC_COMBO_2ND_LANGUAGE, m_combo2ndLanguage);
+	DDX_Control(pDX, IDC_COMBO_3RD_LANGUAGE, m_combo3rdLanguage);
+	DDX_Control(pDX, IDC_COMBO_4TH_LANGUAGE, m_combo4thLanguage);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -114,6 +118,10 @@ ON_BN_CLICKED(IDC_BN_SETFONTSIZE, &CFormProperties::OnBnClickedBnSetfontsize)
 ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_DBTH, &CFormProperties::OnNMCustomdrawSliderDbth)
 ON_BN_CLICKED(IDC_BN_MATCH_FROM_DB, &CFormProperties::OnBnClickedBnMatchFromDb)
 ON_EN_CHANGE(IDC_EDIT_KEYWORD_SEARCH, &CFormProperties::OnEnChangeEditKeywordSearch)
+ON_CBN_SELCHANGE(IDC_COMBO_4TH_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo4thLanguage)
+ON_CBN_SELCHANGE(IDC_COMBO_3RD_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo3rdLanguage)
+ON_CBN_SELCHANGE(IDC_COMBO_2ND_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo2ndLanguage)
+ON_CBN_SELCHANGE(IDC_COMBO_1ST_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo1stLanguage)
 END_MESSAGE_MAP()
 
 
@@ -178,8 +186,38 @@ void CFormProperties::OnInitialUpdate()
 	pImgView->SetDBTreshold(m_editDBth);
 
 	pImgView->EnableShowLine(true);
-	UpdateData(FALSE);
 
+
+
+	m_combo1stLanguage.AddString(L"--None--");
+	m_combo1stLanguage.AddString(L"English");
+	m_combo1stLanguage.AddString(L"Chinese");
+	m_combo1stLanguage.AddString(L"Korean");
+	m_combo1stLanguage.AddString(L"Japanese");
+	m_combo1stLanguage.SetCurSel(0);
+
+	m_combo2ndLanguage.AddString(L"--None--");
+	m_combo2ndLanguage.AddString(L"English");
+	m_combo2ndLanguage.AddString(L"Chinese");
+	m_combo2ndLanguage.AddString(L"Korean");
+	m_combo2ndLanguage.AddString(L"Japanese");
+	m_combo2ndLanguage.SetCurSel(0);
+
+	m_combo3rdLanguage.AddString(L"--None--");
+	m_combo3rdLanguage.AddString(L"English");
+	m_combo3rdLanguage.AddString(L"Chinese");
+	m_combo3rdLanguage.AddString(L"Korean");
+	m_combo3rdLanguage.AddString(L"Japanese");
+	m_combo3rdLanguage.SetCurSel(0);
+
+	m_combo4thLanguage.AddString(L"--None--");
+	m_combo4thLanguage.AddString(L"English");
+	m_combo4thLanguage.AddString(L"Chinese");
+	m_combo4thLanguage.AddString(L"Korean");
+	m_combo4thLanguage.AddString(L"Japanese");
+	m_combo4thLanguage.SetCurSel(0);
+
+	UpdateData(FALSE);
 }
 
 
@@ -375,6 +413,8 @@ void CFormProperties::OnBnClickedBnDelAlllinbes()
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->DeleteAllLines();
+
+
 //	pImgView->DeleteAllOCRRes();
 }
 
@@ -650,4 +690,64 @@ void CFormProperties::OnEnChangeEditKeywordSearch()
 	// with the ENM_CHANGE flag ORed into the mask.
 
 	// TODO:  Add your control notification handler code here
+}
+
+
+void CFormProperties::OnCbnSelchangeCombo4thLanguage()
+{
+	// TODO: Add your control notification handler code here
+	int lang = m_combo4thLanguage.GetCurSel() - 1;
+	_LANGUAGE_TYPE ltype = __LANG_NONE;
+	switch (lang) {
+	case 0:			ltype = __ENG;		break;
+	case 1:			ltype = __CHI;		break;
+	case 2:			ltype = __KOR;		break;
+	case 3:			ltype = __JAP;		break;
+	}
+	SINGLETON_DataMng::GetInstance()->SetOCRDBOrder(3, ltype);
+}
+
+
+void CFormProperties::OnCbnSelchangeCombo3rdLanguage()
+{
+	// TODO: Add your control notification handler code here
+	int lang = m_combo3rdLanguage.GetCurSel() - 1;
+	_LANGUAGE_TYPE ltype = __LANG_NONE;
+	switch (lang) {
+	case 0:			ltype = __ENG;		break;
+	case 1:			ltype = __CHI;		break;
+	case 2:			ltype = __KOR;		break;
+	case 3:			ltype = __JAP;		break;
+	}
+	SINGLETON_DataMng::GetInstance()->SetOCRDBOrder(2, ltype);
+}
+
+
+void CFormProperties::OnCbnSelchangeCombo2ndLanguage()
+{
+	// TODO: Add your control notification handler code here
+	int lang = m_combo2ndLanguage.GetCurSel() - 1;
+	_LANGUAGE_TYPE ltype = __LANG_NONE;
+	switch (lang) {
+	case 0:			ltype = __ENG;		break;
+	case 1:			ltype = __CHI;		break;
+	case 2:			ltype = __KOR;		break;
+	case 3:			ltype = __JAP;		break;
+	}
+	SINGLETON_DataMng::GetInstance()->SetOCRDBOrder(1, ltype);
+}
+
+
+void CFormProperties::OnCbnSelchangeCombo1stLanguage()
+{
+	// TODO: Add your control notification handler code here
+	int lang = m_combo1stLanguage.GetCurSel()-1;
+	_LANGUAGE_TYPE ltype = __LANG_NONE;
+	switch (lang) {
+	case 0:			ltype = __ENG;		break;
+	case 1:			ltype = __CHI;		break;
+	case 2:			ltype = __KOR;		break;
+	case 3:			ltype = __JAP;		break;
+	}
+	SINGLETON_DataMng::GetInstance()->SetOCRDBOrder(0, ltype);	
 }

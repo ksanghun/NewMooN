@@ -23,8 +23,9 @@ struct stMatchInfo
 	_CUTINFO cInfo;
 
 	// if exist //
-	int lineid;
-	int objid;
+	//int lineid;
+	//int objid;
+	int uuid;
 //	cv::Mat cutImg;
 };
 
@@ -34,6 +35,7 @@ struct stParapgraphInfo
 	float deSkewAngle;
 	bool IsDeskewed;
 	bool IsVerti;
+	bool IsCNSed;
 
 	std::vector<_stOCRResult> vecTextBox;
 
@@ -42,6 +44,7 @@ struct stParapgraphInfo
 		deSkewAngle = 0.0f;
 		IsDeskewed = false;
 		IsVerti = false;
+		IsCNSed = false;
 	};	
 };
 
@@ -82,6 +85,8 @@ public:
 	void RemoveNoise(cv::Rect rect);
 	void UnDoDeSkewImg(int pid);
 	void UpdateTexture(cv::Mat& texImg);
+	void GetIDbyUUID(unsigned int uuid, int&lineid, int&objid);
+	unsigned int GetUUIDbyLineObjId(int lineid, int objid);
 
 	bool IsNear() { return m_bIsNear; }
 
@@ -119,7 +124,7 @@ public:
 	void DrawMatchItem();
 	void DrawForPicking();
 	void DrawMatchItemForPick();
-	void DrawParagraph(int selid);
+	void DrawParagraph(int selid, bool IsMergeMode);
 	void DrawOCRResForPick();
 	void DrawParagraphForPick();
 	void DrawSelectedParagraph(int selid);
@@ -142,11 +147,12 @@ public:
 	void DeleteOCRResByRect(cv::Rect rect);
 	void CleanUpOCRres();
 	cv::Rect GetSelParaRect(int selid);
-	bool DeleteSelOCRRes(int lid, int selid);
+	unsigned int DeleteSelOCRRes(int lid, int selid);
 	void ConfirmOCRRes(int lid, int selid);
 	void UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid);
 	void UpdateOCRResStatus(int lid, int selid, bool IsUpdate, int _type);
-
+	void UpdateLineStatus(int _id, bool IsCNS);
+	
 	// OCR //
 	std::vector<stParapgraphInfo>& GetVecParagraph() { return m_paragraph; }
 //	std::vector<_stOCRResult>& GetVecOCRResult() { return m_ocrResult; }

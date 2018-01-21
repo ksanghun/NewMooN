@@ -64,6 +64,9 @@ CMNView::CMNView()
 	m_bIsAllOCR = false;
 	m_bIsShowParagraph = true;
 
+	m_spliteDirection = _NONE_DIR;
+	m_spliteType = _SPLIT_TEXT;
+	mtSetPoint3D(&m_vSplitPos, 0.0f, 0.0f, 0.0f);
 }
 
 
@@ -170,7 +173,7 @@ void CMNView::Render()
 	if (m_bIsMultiSelectionhMode) {
 		mtSetPoint3D(&rectColor, 0.99f, 0.5f, 0.1f);
 	}
-	DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
+	
 
 
 	if (m_bIsShowParagraph) {
@@ -181,6 +184,8 @@ void CMNView::Render()
 		if (m_pSelectPageForCNS) {
 			m_pSelectPageForCNS->DrawSelectedParagraph(0);
 			DrawOCRRes();
+			DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
+			DrawSplitLine(1.0f, 0.0f, 0.0f, 1.0f);
 		}
 	//	glCallList(m_glListIdForDrawOCRRes);
 	}
@@ -205,6 +210,43 @@ void CMNView::DrawCNSRect(float r, float g, float b, float a)
 	glLineWidth(1);
 }
 
+void CMNView::DrawSplitLine(float r, float g, float b, float a)
+{
+	float fLength = 99999.0f;
+	if (m_spliteDirection == _HORI_DIR) {		
+		glEnable(GL_LINE_STIPPLE);
+		glLineStipple(2, 0xAAAA);
+
+		glLineWidth(2);
+		glDisable(GL_DEPTH_TEST);
+		glColor4f(r, g, b, a);
+		glBegin(GL_LINES);
+		glVertex3f(-fLength, m_vSplitPos.y, m_vSplitPos.z);
+		glVertex3f(fLength, m_vSplitPos.y, m_vSplitPos.z);
+		glEnd();
+		glEnable(GL_DEPTH_TEST);
+		glLineWidth(1);
+
+		glDisable(GL_LINE_STIPPLE);
+	}
+	else if (m_spliteDirection == _VERTI_DIR) {
+		glEnable(GL_LINE_STIPPLE);
+		glLineStipple(2, 0xAAAA);
+
+		glLineWidth(2);
+		glDisable(GL_DEPTH_TEST);
+		glColor4f(r, g, b, a);
+		glBegin(GL_LINES);
+		glVertex3f(m_vSplitPos.x,-fLength, m_vSplitPos.z);
+		glVertex3f(m_vSplitPos.x, fLength, m_vSplitPos.z);
+		glEnd();
+		glEnable(GL_DEPTH_TEST);
+		glLineWidth(1);
+
+		glDisable(GL_LINE_STIPPLE);
+	}
+}
+
 void CMNView::Render2D()
 {
 
@@ -224,7 +266,7 @@ void CMNView::DrawBGPageAni()
 			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 			//if((iter != m_mapSelectionInfo.end())/* && (iter->second.vecTextId.size() >0)*/)
 			for (; iter != m_mapSelectionInfo.end(); iter++) {
-				vecImg[i]->DrawParagraph(iter->second.lineid);
+				vecImg[i]->DrawParagraph(iter->second.lineid, static_cast<bool>(m_spliteType));
 			}
 		}
 		else {
@@ -246,7 +288,7 @@ void CMNView::DrawBGPage()
 
 			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 			if (iter != m_mapSelectionInfo.end())
-				vecImg[i]->DrawParagraph(iter->second.lineid);
+				vecImg[i]->DrawParagraph(iter->second.lineid, static_cast<bool>(m_spliteType));
 		}
 		else {
 			vecImg[i]->DrawSDBItem();
@@ -259,31 +301,163 @@ void CMNView::DrawBGPage()
 }
 
 
+void CMNView::DoSplitTextBox()
+{
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	if (m_pSelectPageForCNS) {
+
+		if ((m_mapSelectionInfo.size() == 1) && (m_mapSelectionInfo.begin()->second.vecTextId.size() == 1)) {
+
+			if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
+				_stOCRResult res = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
+
+				// Convert Coordinate and find vertical positon for spliting //
+				POINT3D tmpPos = m_vSplitPos;
+				tmpPos.x += 8;
+				tmpPos.y -= 8;
+				RECT2D selRect = m_pSelectPageForCNS->ConvertVec3DtoImgateCoord(m_vSplitPos, tmpPos);
+
+				cv::Rect r1 = res.rect, r2 = res.rect;
+				if (m_spliteDirection == _VERTI_DIR) {					
+					int diff = selRect.x1 - res.rect.x;
+					if ((diff > 0) && (diff < res.rect.width)) {
+						r1.width = diff;
+						r2.x += diff;
+						r2.width = res.rect.width - diff;
+
+						m_pSelectPageForCNS->DeleteSelOCRRes(m_selParaId, m_selOCRId);
+						AddNewTextBox(r1);
+						AddNewTextBox(r2);
+						pM->AddOutputString(L"A selected text box was divided by two.", true);
+
+					}
+				}
+				else if (m_spliteDirection == _HORI_DIR) {
+					int diff = selRect.y1 - res.rect.y;
+					if ((diff > 0) && (diff < res.rect.height)) {
+						r1.height = diff;
+
+						r2.y += diff;
+						r2.height = res.rect.height - diff;
+
+						m_pSelectPageForCNS->DeleteSelOCRRes(m_selParaId, m_selOCRId);
+						AddNewTextBox(r1);
+						AddNewTextBox(r2);
+						pM->AddOutputString(L"A selected text box was divided by two.", true);
+					}
+				}
+
+				m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+				m_pSelectPageForCNS->SetSelMatchItem(-1);
+				m_selOCRIdforMouseHover = -1;
+				m_selParaIdforMouseHover = -1;
+				m_selParaId = -1;
+				m_selOCRId = -1;
+			}
+		}
+		else {
+			pM->AddOutputString(L"Can't splite multiple selections. Select a single box.", true);
+		}
+	}
+}
+void CMNView::DoSplitLineBox()
+{
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	if (m_pSelectPageForCNS) {
+
+		if ((m_mapSelectionInfo.size() == 1)) {
+
+			if ((m_selParaId >= 0)) {
+				cv::Rect rect  = m_pSelectPageForCNS->GetSelParaRect(m_selParaId);
+				// Convert Coordinate and find vertical positon for spliting //
+				POINT3D tmpPos = m_vSplitPos;
+				tmpPos.x += 8;
+				tmpPos.y -= 8;
+				RECT2D selRect = m_pSelectPageForCNS->ConvertVec3DtoImgateCoord(m_vSplitPos, tmpPos);
+
+				cv::Rect r1 = rect, r2 = rect;
+				if (m_spliteDirection == _VERTI_DIR) {
+					int diff = selRect.x1 - rect.x;
+					if ((diff > 0) && (diff < rect.width)) {
+						r1.width = diff;
+						r2.x += diff;
+						r2.width = rect.width - diff;
+
+						m_pSelectPageForCNS->DeleteSelPara(m_selParaId);
+						AddNewLineBox(r1);
+						AddNewLineBox(r2);
+
+						pM->AddOutputString(L"A selected line box was divided by two.", true);
+
+					}
+				}
+				else if (m_spliteDirection == _HORI_DIR) {
+					int diff = selRect.y1 - rect.y;
+					if ((diff > 0) && (diff < rect.height)) {
+						r1.height = diff;
+
+						r2.y += diff;
+						r2.height = rect.height - diff;
+
+						m_pSelectPageForCNS->DeleteSelPara(m_selParaId);
+						AddNewLineBox(r1);
+						AddNewLineBox(r2);
+						pM->AddOutputString(L"A selected line box was divided by two.", true);
+					}
+				}
+
+				m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+				m_pSelectPageForCNS->SetSelMatchItem(-1);
+				m_selOCRIdforMouseHover = -1;
+				m_selParaIdforMouseHover = -1;
+				m_selParaId = -1;
+				m_selOCRId = -1;
+			}
+		}
+		else {
+			pM->AddOutputString(L"Can't splite multiple selections. Select a single box.", true);
+		}
+	}
+}
+
 void CMNView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 
-
-	mtSetPoint3D(&m_CNSRectEnd, 0.0f, 0.0f, MAX_CAM_HIGHTLEVEL * 3);
-	m_CNSRectStart = m_CNSRectEnd;
-	//=======================//
-
-	if (!m_bIsMultiSelectionhMode) {
-		SelectObject3D(point.x, point.y, 2, 2, 0);
+	if (m_spliteDirection > _NONE_DIR) {
+		// Do Split ==========================//
+		if (m_spliteType == _SPLIT_TEXT) {
+			DoSplitTextBox();
+		}
+		else if (m_spliteType == _SPLIT_LINE) {
+			DoSplitLineBox();
+		}
+		//=====================================//
+		m_spliteDirection = _NONE_DIR;
+		m_spliteType = _SPLIT_TEXT;
 	}
-	m_stratPnt = point;
 
-	if ((m_bIsCutNSearchMode) || (m_bIsMultiSelectionhMode)){
-		m_cameraPri.InsetsectRayToPlane(m_PN, m_PO, point.x, point.y, m_CNSRectStart);
-		m_CNSRectEnd = m_CNSRectStart;
-	}
 	else {
-		m_mouseMode = 2;
-		IDragMap(point.x, point.y, 0);
-	}
+		mtSetPoint3D(&m_CNSRectEnd, 0.0f, 0.0f, MAX_CAM_HIGHTLEVEL * 3);
+		m_CNSRectStart = m_CNSRectEnd;
+		//=======================//
 
-	SetCapture();
+		if (!m_bIsMultiSelectionhMode) {
+			SelectObject3D(point.x, point.y, 2, 2, 0);
+		}
+		m_stratPnt = point;
+
+		if ((m_bIsCutNSearchMode) || (m_bIsMultiSelectionhMode)) {
+			m_cameraPri.InsetsectRayToPlane(m_PN, m_PO, point.x, point.y, m_CNSRectStart);
+			m_CNSRectEnd = m_CNSRectStart;
+		}
+		else {
+			m_mouseMode = 2;
+			IDragMap(point.x, point.y, 0);
+		}
+		SetCapture();
+	}
 	COGLWnd::OnLButtonDown(nFlags, point);
 }
 
@@ -683,6 +857,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	//=============================================//
 	hits = glRenderMode(GL_RENDER);
 	int lineid = -1, textid = -1;
+	unsigned int uuid = -1;
 
 	if (hits > 0)
 	{		
@@ -726,12 +901,18 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 			}
 			else if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)){		// Word selection
-				selid -= _PICK_WORD;
-				lineid = selid / 10000;
-				textid = selid % 10000;
+				uuid = static_cast<unsigned int>(selid - _PICK_WORD);
+
+				//lineid = selid / 10000;
+				//textid = selid % 10000;
 			//	selid = selid - _PICK_WORD;
-				m_selOCRId = textid;
+			//	m_selOCRId = textid;
 				if (m_pSelectPageForCNS) {
+
+					m_pSelectPageForCNS->GetIDbyUUID(uuid, lineid, textid);
+					m_selParaId = lineid;
+					m_selOCRId = textid;
+
 				//	_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
 					_stOCRResult ocrRes = m_pSelectPageForCNS->GetOCRResult(lineid, textid);
 					pM->SetOCRResInfo(ocrRes.strCode, ocrRes.fConfidence, ocrRes.type);
@@ -772,9 +953,10 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 	// Select Item on the list view //
 	std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
-	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
-		int id = m_selParaId * 10000 + m_selOCRId;
-		pM->SelectListItemById(id);
+//	if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
+	if(uuid>0){
+//		int id = m_selParaId * 10000 + m_selOCRId;
+		pM->SelectListItemById(uuid);
 	}
 	//if(iter != m_mapSelectionInfo.end()){
 	//	if (iter->second.vecTextId.size() > 0) {
@@ -827,6 +1009,7 @@ void CMNView::DrawOCRForPicking()
 void CMNView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
+	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 	if (GetCapture()) {
 		if ((m_bIsCutNSearchMode)|| (m_bIsMultiSelectionhMode)){
 			m_cameraPri.InsetsectRayToPlane(m_PN, m_PO, point.x, point.y, m_CNSRectEnd);
@@ -850,6 +1033,8 @@ void CMNView::OnMouseMove(UINT nFlags, CPoint point)
 	}
 	else {
 		SelectObject3DForMouseOver(point.x, point.y,2,2, 0);
+		m_cameraPri.InsetsectRayToPlane(m_PN, m_PO, point.x, point.y, m_vSplitPos);
+		
 	}
 	COGLWnd::OnMouseMove(nFlags, point);
 }
@@ -898,22 +1083,29 @@ RECT2D CMNView::GetSelectedAreaForCNS()
 void CMNView::DoOCR()
 {
 	if (m_extractionSetting.IsVerti) {
-		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_AUTO_OSD);
-		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_AUTO_OSD);
-
-		if (m_extractionSetting.isKor) {
-			m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		}
+		//m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
+		//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_AUTO_OSD);
+		//m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_AUTO_OSD);
+		//if (m_extractionSetting.isKor) {
+		//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+		//}
+		m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_BLOCK);
+		m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_AUTO_OSD);
+		m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_AUTO_OSD);
+		m_OCRMng.SetOCRDetectMode(__JAP, tesseract::PSM_AUTO_OSD);
 	}
 	else {
-		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
-		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
+		m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_BLOCK);
+		m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_BLOCK);
+		m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_BLOCK);
+		m_OCRMng.SetOCRDetectMode(__JAP, tesseract::PSM_SINGLE_BLOCK);
+		//m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
+		//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+		//m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
 
-		if (m_extractionSetting.isKor) {
-			m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		}
+		//if (m_extractionSetting.isKor) {
+		//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+		//}
 	}
 
 	
@@ -989,8 +1181,9 @@ bool CMNView::DoSearch()
 						mInfo.searchId = m_cnsSearchId;
 						mInfo.cInfo = m_cutInfo;
 						mInfo.strCode = "-";
-						mInfo.lineid = -1;
-						mInfo.objid = -1;
+						//mInfo.lineid = -1;
+						//mInfo.objid = -1;
+						mInfo.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
 
 
 						m_resColor.a = ((fD)*m_colorAccScale)*0.5f;
@@ -1192,7 +1385,7 @@ void CMNView::DoExtractBoundaryAuto()
 				IsVerti = true;
 			}
 
-			ExtractBox(srcImg, vecBox, IsVerti, __ENG);
+			ExtractLineBox(srcImg, vecBox, IsVerti, __ENG);
 
 			for (size_t j = 0; j < vecBox.size(); j++) {
 				vecBox[j].textbox.x += 4;
@@ -1456,30 +1649,73 @@ void CMNView::MoveNextDown()
 
 void CMNView::DeleteSelParagraph()
 {
+//	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	if((m_pSelectPageForCNS)){
 		std::map<int, _stLineTextSelectionInfo>::iterator iter =  m_mapSelectionInfo.begin();
 
+		std::vector<int> vecSort;
 		for (; iter != m_mapSelectionInfo.end(); iter++) {
-			m_pSelectPageForCNS->DeleteSelPara(iter->second.lineid);
+			vecSort.push_back(iter->second.lineid);
+		//	m_pSelectPageForCNS->DeleteSelPara(iter->second.lineid);
 			iter->second.vecTextId.swap(std::vector<int>());
 		}
+
+		// sort selected id //
+		for (auto i = 0; i < vecSort.size() - 1; i++) {
+			for (auto j = i + 1; j < vecSort.size(); j++) {
+				if (vecSort[i] < vecSort[j]) {
+					int tmp = vecSort[i];
+					vecSort[i] = vecSort[j];
+					vecSort[j] = tmp;
+				}
+			}
+		}
+
+		for (auto i = 0; i < vecSort.size(); i++) {
+			m_pSelectPageForCNS->DeleteSelPara(vecSort[i]);
+		}
+
+
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		m_selOCRIdforMouseHover = -1;
+		m_selParaIdforMouseHover = -1;
 	}
 }
 
 bool CMNView::DeleteSelOCRRes()
 {
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	bool res = false;
 	if ((m_pSelectPageForCNS)) {
 		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 		for (; iter != m_mapSelectionInfo.end(); iter++) {
-			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
-				res = m_pSelectPageForCNS->DeleteSelOCRRes(iter->second.lineid, iter->second.vecTextId[i]);
+
+			// Sort select ID decending //
+			std::vector<int> vecSort = iter->second.vecTextId;
+			for (auto i = 0; i < vecSort.size()-1; i++) {	
+				for (auto j = i+1; j < vecSort.size(); j++) {
+					if (vecSort[i] < vecSort[j]) {
+						int tmp = vecSort[i];
+						vecSort[i] = vecSort[j];
+						vecSort[j] = tmp;
+					}
+				}
+			}
+			//====================//
+
+			for (auto i = 0; i < vecSort.size(); i++) {
+				unsigned int uuid = m_pSelectPageForCNS->DeleteSelOCRRes(iter->second.lineid, vecSort[i]);
+				// Update list control //
+				//int id = iter->second.lineid * 10000 + iter->second.vecTextId[i];
+				pM->DeleteMatchList(uuid);
 			}
 
 			iter->second.vecTextId.swap(std::vector<int>());
 		}
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		m_pSelectPageForCNS->SetSelMatchItem(-1);
+		m_selOCRIdforMouseHover = -1;
+		m_selParaIdforMouseHover = -1;
 	//	m_selOCRId = -1;
 	}
 
@@ -1524,6 +1760,7 @@ void CMNView::UpdateOCRCode(CString _strCode)
 
 void CMNView::DeleteAllLines()
 {
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	if ((m_pSelectPageForCNS)) {
 		m_pSelectPageForCNS->ClearParagraph();
 //		m_selParaId = -1;
@@ -1532,6 +1769,10 @@ void CMNView::DeleteAllLines()
 			iter->second.vecTextId.swap(std::vector<int>()); 
 		}
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+
+		SINGLETON_DataMng::GetInstance()->ResetResult();
+		pM->ClearAllResults();
+
 	}
 }
 
@@ -1545,23 +1786,26 @@ void CMNView::DeleteAllOCRRes()
 			iter->second.vecTextId.swap(std::vector<int>());
 		}
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		m_selOCRIdforMouseHover = -1;
+		m_selParaIdforMouseHover = -1;
 	}
 }
 
-void CMNView::AddOCRRes()
+void CMNView::AddNewTextBox(cv::Rect rect)
 {
 	USES_CONVERSION;
-	RECT2D rect = GetSelectedAreaForCNS();
+//	RECT2D rect = GetSelectedAreaForCNS();
 	if ((m_pSelectPageForCNS)) {
 		if ((rect.width > 0) && (rect.height > 0)) {
 
 			_stOCRResult ocrres;
 			ocrres.fConfidence = 0.0f;
 			ocrres.type = 0;
-			ocrres.rect.x = rect.x1;
-			ocrres.rect.y = rect.y1;
-			ocrres.rect.width = rect.width;
-			ocrres.rect.height = rect.height;
+			//ocrres.rect.x = rect.x1;
+			//ocrres.rect.y = rect.y1;
+			ocrres.rect = rect;
+			//ocrres.rect.width = rect.width;
+			//ocrres.rect.height = rect.height;
 			memset(&ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			wsprintf(ocrres.strCode, L"");
 
@@ -1574,48 +1818,62 @@ void CMNView::AddOCRRes()
 }
 
 
-void CMNView::AddParagraph()
+void CMNView::AddNewLineBox(cv::Rect rect)
 {
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
-	RECT2D rect = GetSelectedAreaForCNS();
+//	RECT2D rect = GetSelectedAreaForCNS();
 	if ((m_pSelectPageForCNS)) {
 		if ((rect.width > 0) && (rect.height > 0)) {
 
-			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();
+			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
 			if (srcImg.ptr()) {
+				
+				cv::Mat para = srcImg(rect);
+				cv::bitwise_not(para, para);
+				std::vector<_extractBox> vecLines;
+				ExtractLineBox(para, vecLines, m_extractionSetting.IsVerti, __ENG);
 
-				cv::Rect r;
-				r.x = rect.x1;
-				r.y = rect.y1;
-				r.width = rect.width;
-				r.height = rect.height;
+				for (auto j = 0; j < vecLines.size(); j++) {
+					// Calculate Deskew //
+					cv::Mat imgLine = para(vecLines[j].textbox);
+					float deskew = m_Extractor.DeSkewImg(imgLine);
 
-				cv::Mat para = srcImg(r);
+					vecLines[j].textbox.x += rect.x;
+					vecLines[j].textbox.y += rect.y;
+
+					bool IsAlphabetic = false;
+					if (m_extractionSetting.isEng)	IsAlphabetic = true;
+					m_pSelectPageForCNS->AddParagraph(m_Extractor, imgLine, vecLines[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+				}			
+				para.release();
+			}
+		}
+	}
+}
+
+void CMNView::AddLineBox(cv::Rect rect)
+{
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
+	//	RECT2D rect = GetSelectedAreaForCNS();
+	if ((m_pSelectPageForCNS)) {
+		if ((rect.width > 0) && (rect.height > 0)) {
+
+			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
+			if (srcImg.ptr()) {
+				cv::bitwise_not(srcImg, srcImg);
+				//cv::Rect r;
+				//r.x = rect.x1;
+				//r.y = rect.y1;
+				//r.width = rect.width;
+				//r.height = rect.height;
+
+				cv::Mat para = srcImg(rect);
 				float deskew = m_Extractor.DeSkewImg(para);
 
 				bool IsAlphabetic = false;
 				if (m_extractionSetting.isEng)	IsAlphabetic = true;
-				m_pSelectPageForCNS->AddParagraph(m_Extractor, para, r, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+				m_pSelectPageForCNS->AddParagraph(m_Extractor, para, rect, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
 
-			//	cv::Mat resizeImg;
-			//	cv::resize(para, resizeImg, cv::Size(para.cols*2, para.rows*2));
-			//	cv::imshow("AddPara1", resizeImg);
-			////	cv::adaptiveThreshold(para, para, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY_INV, 13, 1);
-			////	cv::threshold(resizeImg, resizeImg, 150, 255, cv::THRESH_OTSU);
-			//	//cv::bitwise_not(para, para);
-
-			//	
-
-			//	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
-			//		cv::Size(3,3),
-			//		cv::Point(-1, -1));
-			//	cv::erode(resizeImg, resizeImg, element);
-
-			//	cv::resize(resizeImg, para, cv::Size(para.cols, para.rows));
-
-			//	cv::imshow("AddPara2", resizeImg);
-			//	cv::threshold(para, para, 200, 255, cv::THRESH_OTSU);
-			//	cv::imshow("AddPara3", para);
 				para.release();
 			}
 		}
@@ -1660,7 +1918,7 @@ void CMNView::UndoDeskewParagraph()
 	}
 }
 
-void CMNView::ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang)
+void CMNView::ExtractLineBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang)
 {
 	if (img.ptr()) {
 	//	cv::threshold(para, para, 125, 255, cv::THRESH_OTSU);
@@ -1680,7 +1938,8 @@ void CMNView::ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool Is
 		}
 
 		if (IsVerti) {
-			m_Extractor.Extraction(img, -2, fsize * 2, vecBox);
+		//	m_Extractor.Extraction(img, -2, fsize * 2, vecBox);
+			m_Extractor.Extraction(img, -2, img.cols*5, vecBox);
 			for (auto i = 0; i < vecBox.size(); i++) {
 				if (vecBox[i].textbox.width > 4) {
 					vecBox[i].textbox.x += 2;
@@ -1689,7 +1948,8 @@ void CMNView::ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool Is
 			}
 		}
 		else {
-			m_Extractor.Extraction(img, fsize * 2, -1, vecBox);
+		//	m_Extractor.Extraction(img, fsize * 2, -1, vecBox);
+			m_Extractor.Extraction(img, img.rows*5, -1, vecBox);
 		}
 		
 	}
@@ -1737,7 +1997,7 @@ void CMNView::ReExtractParagraph()
 						//int fsize = (int)m_extractionSetting.engSize;
 						//// Detect text block //
 					std::vector<_extractBox> vecLines;
-					ExtractBox(para, vecLines, m_extractionSetting.IsVerti, __ENG);
+					ExtractLineBox(para, vecLines, m_extractionSetting.IsVerti, __ENG);
 					//_ALIGHN_TYPE align;
 					//if (m_extractionSetting.nAlign == 0) {
 					//	m_Extractor.Extraction(para, fsize * 2, -1, vecLines, _ALPHABETIC, _UNKNOWN_ALIGN);
@@ -1824,7 +2084,7 @@ void CMNView::DrawOCRRes()
 						else {
 							mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
 						}
-						gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
+						//gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
 
 						//	mtSetPoint3D(&tColor, 1.0f, 0.0f, 0.0f);						
 
@@ -1874,7 +2134,7 @@ void CMNView::DrawOCRRes()
 						}
 						gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
 
-						glColor4f(0.0f, 1.0f, 0.0f, 0.7f);
+						glColor4f(0.2f, 0.3f, 0.99f, 0.5f);
 						glBegin(GL_LINE_STRIP);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
@@ -1887,6 +2147,8 @@ void CMNView::DrawOCRRes()
 				//	if ((j == m_selOCRId) && (i == m_selParaId)) {
 					if (IsTextBoxSelected(i, j)){
 						glColor4f(0.0f, 1.0f, 0.0f, 0.9f);
+						if((m_spliteDirection != _NONE_DIR) && (m_spliteType == _SPLIT_TEXT))
+							glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
 						glBegin(GL_LINE_STRIP);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
 						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
@@ -1927,7 +2189,8 @@ void CMNView::DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, s
 		if ((ocrRes[k].fConfidence < 0.70f) && (ocrRes[k].type < 100)) {
 			cv::Mat imgword = img(ocrRes[k].rect).clone();
 			std::vector<_stOCRResult> ocrTmp;
-			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
+			//float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, langType);
+			float averConf = m_OCRMng.extractWithOCR(imgword, ocrTmp, tess, level, fScale, langType);
 		
 			if ((averConf > ocrRes[k].fConfidence*1.2f) && (averConf > 0.6f)) {
 		//	if ((averConf > ocrRes[k].fConfidence*1.2f)){// && (averConf > 0.5f)) {
@@ -2026,9 +2289,11 @@ void CMNView::TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect)
 					cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
 			//		cv::imshow("test", imgword);
 
-					m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+			//		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+					m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_WORD);
 					std::vector<_stOCRResult> ocrTmp;
-					m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_SYMBOL, 1.0f, __ENG);
+			//		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_SYMBOL, 1.0f, __ENG);
+					m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetTess(__ENG), tesseract::RIL_SYMBOL, 1.0f, __ENG);
 
 					// Update OCR Res //
 					if (ocrTmp.size() >= 0) {
@@ -2182,17 +2447,52 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 		if (r.width > img.cols) r.width = img.cols;
 		if (r.height > img.rows) r.height = img.rows;
 
+		_LANGUAGE_TYPE* pOrder = SINGLETON_DataMng::GetInstance()->GetOCROrder();
+		for (int i = 0; i < _NUM_LANGUAGE_TYPE; i++) {
+			if (pOrder[i] != __LANG_NONE) {
 
+				if (ocrRes.size() > 0) {		// First OCR //
+					m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_WORD);
+					if (pOrder[i] == __ENG) {		// Alphabetic //
+						DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_WORD, fScale, pOrder[i]);
+					}
+					else {
+						DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_SYMBOL, fScale, pOrder[i]);
+					}					
+				}
+				else {
+					if (m_extractionSetting.IsVerti) {
+						m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+					}
+					else {
+						m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_BLOCK);
+					}
+
+					if (pOrder[i] == __ENG) {		// Alphabetic //
+						m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_WORD, fScale, pOrder[i]);
+					}
+					else {
+						m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_SYMBOL, fScale, pOrder[i]);
+					}					
+				}
+			}
+		}
+
+/**
 		//================Start With English =============================//
 		if (m_extractionSetting.isEng) {
 			fScale = 32.0f / (float)m_extractionSetting.engSize;
 			if (ocrRes.size() > 0) {
-				m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
-				DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_WORD, fScale, __ENG);
+			//	m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+				m_OCRMng.SetOCRDetectMode(__ENG,tesseract::PSM_SINGLE_WORD);
+			//	DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_WORD, fScale, __ENG);
+				DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetTess(__CHI), tesseract::RIL_WORD, fScale, __ENG);
 			}
 			else {
-				m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-				m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
+			//	m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
+				m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_BLOCK);
+			//	m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);				
+				m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetTess(__ENG), tesseract::RIL_WORD, fScale, __ENG);
 			}
 		}
 
@@ -2201,17 +2501,22 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 		if (m_extractionSetting.isKor) {
 			fScale = 32.0f / (float)m_extractionSetting.korSize;
 			if (ocrRes.size() > 0) {
-				m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_WORD);
-				DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+			//	m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_WORD);
+				m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_WORD);
+			//	DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+				DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetTess(__KOR), tesseract::RIL_SYMBOL, fScale, __KOR);
 			}
 			else {
 				if (m_extractionSetting.IsVerti) {
-					m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+				//	m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+					m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
 				}
 				else {
-					m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
+				//	m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
+					m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_BLOCK);
 				}
-				m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+				//m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
+				m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetTess(__KOR), tesseract::RIL_SYMBOL, fScale, __KOR);
 			}
 		}
 
@@ -2219,25 +2524,30 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 		if (m_extractionSetting.isChi) {
 			fScale = 32.0f / (float)m_extractionSetting.chiSize;
 			if (ocrRes.size() > 0) {
-				m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_WORD);
-				DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+			//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_WORD);
+				m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_WORD);
+			//	DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+				DoOCinResults(img, rect, pPage, ocrRes, m_OCRMng.GetTess(__CHI), tesseract::RIL_SYMBOL, fScale, __CHI);
 			}
 			else {
 				if (m_extractionSetting.IsVerti) {
-					m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+				//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+					m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
 				}
 				else {
-					m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+				//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+					m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_BLOCK);
 				}
-				m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+				//m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+				m_OCRMng.extractWithOCR(img, ocrRes, m_OCRMng.GetTess(__CHI), tesseract::RIL_SYMBOL, fScale, __CHI);
 			}
 		}
 
 		// COR Correctness //
 		DoOCCorrection(img, rect, pPage, ocrRes);
-
-
-
+*/
+	// COR Correctness //
+		DoOCCorrection(img, rect, pPage, ocrRes);
 		// Add Results //
 		for (int k = 0; k < ocrRes.size(); k++) {
 			if (ocrRes[k].type < 100) {
@@ -2250,15 +2560,6 @@ void CMNView::DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 			}
 		}
 //	}
-
-
-
-
-
-
-
-
-
 
 //	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 //	std::vector<_stOCRResult> ocrRes;
@@ -2667,54 +2968,65 @@ void CMNView::DoExtractBoundaryForSelected()
 	m_loadedImgCnt = 1;
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 	if (m_pSelectPageForCNS) {
-		if (m_pSelectPageForCNS->GetVecParagraph().size() == 0) {
+		int nMargin = 4;
+		cv::Rect mRect(nMargin, nMargin, m_pSelectPageForCNS->GetSrcPageGrayImg().cols - nMargin * 2, m_pSelectPageForCNS->GetSrcPageGrayImg().rows - nMargin * 2);
+		//CString strpath = vecImg[i]->GetPath();
+		cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg()(mRect).clone();
+		std::vector<stParapgraphInfo> lines = m_pSelectPageForCNS->GetVecParagraph();
+		for (auto i = 0; i < lines.size(); i++) {
+			cv::Rect r = lines[i].rect;			
+			r.x = (r.x - 4) < 0 ? 0 : (r.x - 4);
+			r.y = (r.y - 4) < 0 ? 0 : (r.y - 4);
+			srcImg(r).setTo(cv::Scalar(255));
+		}
+		//if (m_pSelectPageForCNS->GetVecParagraph().size() > 0) {
+		//	// Fill previous segmented area with white color //
+		//}
+		
+		//cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
+		if (srcImg.ptr()) {
 
+			//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
+			//cv::threshold(srcImg, srcImg, 128, 255, cv::THRESH_OTSU);
+			////	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
+			cv::bitwise_not(srcImg, srcImg);
+			int fsize = (int)m_extractionSetting.engSize;
 
-			int nMargin = 4;
-			cv::Rect mRect(nMargin, nMargin, m_pSelectPageForCNS->GetSrcPageGrayImg().cols - nMargin * 2, m_pSelectPageForCNS->GetSrcPageGrayImg().rows - nMargin * 2);
+			// Detect text block //
+			//_ALIGHN_TYPE align;
+			std::vector<_extractBox> vecBox;
+			ExtractLineBox(srcImg, vecBox, m_extractionSetting.IsVerti, __ENG);
 
-			//CString strpath = vecImg[i]->GetPath();
-			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg()(mRect).clone();
-			//cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
-			if (srcImg.ptr()) {
-
-				//	cv::GaussianBlur(srcImg, srcImg, cv::Size(7, 7), 0);
-				//cv::threshold(srcImg, srcImg, 128, 255, cv::THRESH_OTSU);
-				////	cv::threshold(srcImg, b2, 0, 255, CV_THRESH_BINARY + cv::THRESH_OTSU);
-				cv::bitwise_not(srcImg, srcImg);
-				int fsize = (int)m_extractionSetting.engSize;
-
-				// Detect text block //
-				//_ALIGHN_TYPE align;
-				std::vector<_extractBox> vecBox;
-				ExtractBox(srcImg, vecBox, m_extractionSetting.IsVerti, __ENG);
-
-				for (size_t j = 0; j < vecBox.size(); j++) {
-					vecBox[j].textbox.x += 4;
-					vecBox[j].textbox.y += 4;
-				}
-				srcImg.release();
-
-				
-				cv::Mat srcImgforLine = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
-				cv::bitwise_not(srcImgforLine, srcImgforLine);
-				for (size_t j = 0; j < vecBox.size(); j++) {
-					// Calculate Deskew //
-					//m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
-					cv::Mat para = srcImgforLine(vecBox[j].textbox);
-					//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
-
-					float deskew = m_Extractor.DeSkewImg(para);
-
-					bool IsAlphabetic = false;
-					if (m_extractionSetting.isEng)	IsAlphabetic = true;
-					m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
-				}
-				vecBox.swap(std::vector<_extractBox>());
-				srcImgforLine.release();
+			for (size_t j = 0; j < vecBox.size(); j++) {
+				vecBox[j].textbox.x += 4;
+				vecBox[j].textbox.y += 4;
 			}
+			srcImg.release();
+
+
+			cv::Mat srcImgforLine = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
+			cv::bitwise_not(srcImgforLine, srcImgforLine);
+			for (size_t j = 0; j < vecBox.size(); j++) {
+
+				if ((vecBox[j].textbox.width < 32) || (vecBox[j].textbox.height < 32))
+					continue;
+
+				// Calculate Deskew //
+				//m_Extractor.verifyImgSize(vecBox[j].textbox, srcImg.cols, srcImg.rows);
+				cv::Mat para = srcImgforLine(vecBox[j].textbox);
+				//_ALIGHN_TYPE align = m_Extractor.AllHoriVertLines(para);
+
+				float deskew = m_Extractor.DeSkewImg(para);
+
+				bool IsAlphabetic = false;
+				if (m_extractionSetting.isEng)	IsAlphabetic = true;
+				m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecBox[j].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+			}
+			vecBox.swap(std::vector<_extractBox>());
+			srcImgforLine.release();
 		}
 	}
+	
 	m_addImgCnt = 1;
 }
 
@@ -2724,10 +3036,17 @@ void CMNView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	// TODO: Add your message handler code here
 //	if (m_selOCRId >= 0) {
+
+	if (m_spliteDirection == _NONE_DIR) {
 		CMenu menu;
 		menu.LoadMenuW(IDR_MENU_OCR);
 		CMenu* pMenu = menu.GetSubMenu(0);
 		pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, AfxGetMainWnd());
+	}
+	else {
+		m_spliteDirection = _NONE_DIR;
+		m_spliteType = _SPLIT_TEXT;
+	}
 
 
 //		theApp.GetContextMenuManager()->ShowPopupMenu(IDR_MENU_OCR, point.x, point.y, this, TRUE);
@@ -2739,6 +3058,9 @@ void CMNView::OnRButtonDown(UINT nFlags, CPoint point)
 	// TODO: Add your message handler code here and/or call default
 	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 		
+	//if (m_spliteDirection >= 0) {
+	//	m_spliteDirection = -1;
+	//}
 
 //	m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 //	SelectObject3D(point.x, point.y, 2, 2, 0);	
@@ -2796,23 +3118,15 @@ int CMNView::SelectObject3DForMouseOver(int x, int y, int rect_width, int rect_h
 	hits = glRenderMode(GL_RENDER);
 	if (hits > 0)
 	{
-		int lineid = 0, objid = 0;;
+		unsigned int uuid = 0;
 		for (int i = 0; i < hits; i++) {
-			int selid = selectBuff[i * 4 + 3];
-
-			
-
-			if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)) {		// Word selection
-				selid -= _PICK_WORD;
-				lineid = selid / 10000;
-				objid = selid % 10000;
-
-				m_selOCRIdforMouseHover = objid;
-				m_selParaIdforMouseHover = lineid;
+			int selid = selectBuff[i * 4 + 3]; 
+			if (m_pSelectPageForCNS) {
+				if ((selid >= _PICK_WORD) && (selid < _PICK_MATCH)) {		// Word selection
+					uuid = selid - _PICK_WORD;
+					m_pSelectPageForCNS->GetIDbyUUID(uuid, m_selParaIdforMouseHover, m_selOCRIdforMouseHover);
+				}
 			}
-			//else if ((selid >= _PICK_PARA) && (selid < _PICK_WORD)) {		// Text block selectoin
-			//	m_selParaIdforMouseHover = selid - _PICK_PARA;
-			//}
 		}
 	}
 
@@ -2838,7 +3152,6 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 		}
 
 		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
-	//	_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selParaId, m_selOCRId);
 		_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(selline, seltext);
 
 		cv::Rect r = ocrres.rect;
@@ -2852,59 +3165,36 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 
 		std::vector<_stOCRResult> ocrTmp;
 		float fScale = 1.0f;
-		switch (langType) {
-		case __CHI:
+
+		if (langType != __LANG_NONE) {
 			if (searchType == 0) {
-				m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+				if (langType == __ENG) {
+					m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_WORD);
+				}
+				else {
+					m_OCRMng.SetOCRDetectMode(langType, tesseract::PSM_SINGLE_CHAR);
+				}
 			}
 			else {
 				if (m_extractionSetting.IsVerti) {
-					m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+					m_OCRMng.SetOCRDetectMode(langType, tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
 				}
 				else {
-					m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
+					m_OCRMng.SetOCRDetectMode(langType, tesseract::PSM_SINGLE_BLOCK);
 				}
-			}			
-			fScale = (float)m_extractionSetting.chiSize / 32.0f;
-			m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
+			}
+			//fScale = (float)m_extractionSetting.chiSize / 32.0f;
+			if (langType == __ENG) {
+				m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetTess(langType), tesseract::RIL_WORD, fScale, langType);
+			}
+			else {
+				m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetTess(langType), tesseract::RIL_SYMBOL, fScale, langType);
+			}
 			for (int i = 0; i < ocrTmp.size(); i++) {
-				ocrTmp[i].type = __CHI;
+				ocrTmp[i].type = langType;
 			}
-			break;
-		case __KOR:
-			fScale = (float)m_extractionSetting.chiSize / 32.0f;
-			if (searchType == 0) {
-				m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
-				m_OCRMng.extractWithOCRSingle(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
-			}
-			else {
-				if (m_extractionSetting.IsVerti) {
-					m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
-				}
-				else {
-					m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
-				}
-				m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
-			}		
-			for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __KOR;
-			break;
-		case __ENG:
-			if (searchType == 0) {
-				m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
-			}
-			else {
-				if (m_extractionSetting.IsVerti) {
-					m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
-				}
-				else {
-					m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-				}
-			}
-			fScale = (float)m_extractionSetting.chiSize / 32.0f;
-			m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
-			for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __ENG;
-			break;
-		default:   // From DB
+		}
+		else {
 			ocrres.fConfidence = 0.1f;
 			ocrres.rect.x = 0;
 			ocrres.rect.y = 0;
@@ -2912,9 +3202,78 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 			//ocrres.rect.height += 2;
 			ocrTmp.push_back(ocrres);
 			DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
-			break;
-	
 		}
+
+
+
+
+
+
+
+		//switch (langType) {
+		//case __CHI:
+		//	if (searchType == 0) {
+		//		m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_CHAR);
+		//	}
+		//	else {
+		//		if (m_extractionSetting.IsVerti) {
+		//			m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+		//		}
+		//		else {
+		//			m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_BLOCK);
+		//		}
+		//	}			
+		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//	m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetTess(__CHI), tesseract::RIL_SYMBOL, fScale, __CHI);
+		//	for (int i = 0; i < ocrTmp.size(); i++) {
+		//		ocrTmp[i].type = __CHI;
+		//	}
+		//	break;
+		//case __KOR:
+		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//	if (searchType == 0) {
+		//		m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_CHAR);
+		//		m_OCRMng.extractWithOCRSingle(imgword, ocrTmp, m_OCRMng.GetTess(__KOR), tesseract::RIL_SYMBOL, fScale, __KOR);
+		//	}
+		//	else {
+		//		if (m_extractionSetting.IsVerti) {
+		//			m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+		//		}
+		//		else {
+		//			m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_BLOCK);
+		//		}
+		//		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetTess(__KOR), tesseract::RIL_SYMBOL, fScale, __KOR);
+		//	}		
+		//	for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __KOR;
+		//	break;
+		//case __ENG:
+		//	if (searchType == 0) {
+		//		m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_WORD);
+		//	}
+		//	else {
+		//		if (m_extractionSetting.IsVerti) {
+		//			m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
+		//		}
+		//		else {
+		//			m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_BLOCK);
+		//		}
+		//	}
+		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
+		//	//m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
+		//	m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetTess(__ENG), tesseract::RIL_WORD, fScale, __ENG);
+		//	for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __ENG;
+		//	break;
+		//default:   // From DB
+		//	ocrres.fConfidence = 0.1f;
+		//	ocrres.rect.x = 0;
+		//	ocrres.rect.y = 0;
+		//	//ocrres.rect.width += 2;
+		//	//ocrres.rect.height += 2;
+		//	ocrTmp.push_back(ocrres);
+		//	DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
+		//	break;
+	
+		//}
 
 		// OCR Correction //
 		//DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
@@ -3087,7 +3446,8 @@ void CMNView::ProcCNSSegments()
 	//pM->AddMatchResult();
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 
-	pM->AddMatchResultCNS();
+//	pM->AddMatchResultCNS();
+	pM->ClearAllResults();
 	CWinThread* pl;
 	pl = AfxBeginThread(ThreadCNSSegments, this);
 	SetTimer(_DO_CNS_SEGMENTS, 100, NULL);
@@ -3311,170 +3671,172 @@ bool CMNView::DoCNSSegments()
 }
 
 
-
-
-
-
-
 _stOCRResult CMNView::GetCORResult(cv::Mat& cutImg)
 {
-	//if (m_pSelectPageForCNS) {
-	//	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
-	//	_stOCRResult ocrres = m_pSelectPageForCNS->GetOCRResult(m_selOCRId);
-
-	//	cv::Rect r = ocrres.rect;
-	//	//r.x -= 1;
-	//	//r.y -= 1;
-	//	//r.width += 2;
-	//	//r.height += 2;
-
-	//	cv::Mat imgword = m_pSelectPageForCNS->GetSrcPageGrayImg()(r).clone();
-	//	//cv::imshow("cword", imgword);
 	_stOCRResult ocrres;
-	ocrres.init();
+	ocrres.init();	
 	
-	
+	// Seach DB First //
 	SINGLETON_DataMng::GetInstance()->MatchingFromDB(cutImg, ocrres);
 	if (ocrres.fConfidence > 0.9f) {
 		return ocrres;
 	}
 
-	if (m_extractionSetting.isChi) {
-		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, 1.0f, __CHI);
-		if (ocrtmp.fConfidence > 0.9f) {
-			return ocrtmp;
-		}
-		else {
-			if (ocrtmp.fConfidence > ocrres.fConfidence) {
-				ocrres = ocrtmp;
+	// Search OCR //
+	_LANGUAGE_TYPE* pOrder = SINGLETON_DataMng::GetInstance()->GetOCROrder();
+	for (int i = 0; i < _NUM_LANGUAGE_TYPE; i++) {
+		if (pOrder[i] != __LANG_NONE) {
+			_stOCRResult ocrtmp;
+			if (pOrder[i] == __ENG) {
+				m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_WORD);
+				ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(__ENG), tesseract::RIL_WORD, 1.0f, pOrder[i]);
+			}
+			else {
+				m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_CHAR);
+				ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_SYMBOL, 1.0f, pOrder[i]);
+			}	
+						
+			if (ocrtmp.fConfidence > 0.9f) {
+				return ocrtmp;
+			}
+			else {
+				if (ocrtmp.fConfidence > ocrres.fConfidence) {
+					ocrres = ocrtmp;
+				}
 			}
 		}
 	}
 
-	if (m_extractionSetting.isKor) {
-		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
-		_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, 1.0f, __KOR);
-		if (ocrtmp.fConfidence > 0.9f) {
-			return ocrtmp;
-		}
-		else {
-			if (ocrtmp.fConfidence > ocrres.fConfidence) {
-				ocrres = ocrtmp;
-			}
-		}
-	}
-
-	if (m_extractionSetting.isEng) {
-		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
-		_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, 1.0f, __ENG);
-		if (ocrtmp.fConfidence > 0.9f) {
-			return ocrtmp;
-		}
-		else {
-			if (ocrtmp.fConfidence > ocrres.fConfidence) {
-				ocrres = ocrtmp;
-			}
-		}
-	}
-
-	return ocrres;
-
-
-		
-		//float fScale = 1.0f;
-		//switch (langType) {
-		//case __CHI:
-		//	if (searchType == 0) {
-		//		m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		//	}
-		//	else {
-		//		if (m_extractionSetting.IsVerti) {
-		//			m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
-		//		}
-		//		else {
-		//			m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
-		//		}
-		//	}
-		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
-		//	m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
-		//	for (int i = 0; i < ocrTmp.size(); i++) {
-		//		ocrTmp[i].type = __CHI;
-		//	}
-		//	break;
-		//case __KOR:
-		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
-		//	if (searchType == 0) {
-		//		m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
-		//		m_OCRMng.extractWithOCRSingle(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
-		//	}
-		//	else {
-		//		if (m_extractionSetting.IsVerti) {
-		//			m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
-		//		}
-		//		else {
-		//			m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
-		//		}
-		//		m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, fScale, __KOR);
-		//	}
-		//	for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __KOR;
-		//	break;
-		//case __ENG:
-		//	if (searchType == 0) {
-		//		m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
-		//	}
-		//	else {
-		//		if (m_extractionSetting.IsVerti) {
-		//			m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK_VERT_TEXT);
-		//		}
-		//		else {
-		//			m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-		//		}
-		//	}
-		//	fScale = (float)m_extractionSetting.chiSize / 32.0f;
-		//	m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, fScale, __ENG);
-		//	for (int i = 0; i < ocrTmp.size(); i++) ocrTmp[i].type = __ENG;
-		//	break;
-		//default:
-		//	ocrres.fConfidence = 0.1f;
-		//	ocrres.rect.x = 0;
-		//	ocrres.rect.y = 0;
-		//	//ocrres.rect.width += 2;
-		//	//ocrres.rect.height += 2;
-		//	ocrTmp.push_back(ocrres);
-		//	DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
-		//	break;
-
-		//}
-
-		// OCR Correction //
-		//DoOCCorrection(imgword, r, m_pSelectPageForCNS, ocrTmp);
-
-
-		//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		//std::vector<_stOCRResult> ocrTmp;
-		//float fScale = (float)m_extractionSetting.chiSize / 32.0f;
-		//m_OCRMng.extractWithOCR(imgword, ocrTmp, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, fScale, __CHI);
-
-		// Update OCR Res //
-	//	if (ocrTmp.size() >= 0) {
-	//		m_pSelectPageForCNS->DeleteSelOCRRes(m_selOCRId);
-	//		for (int i = 0; i < ocrTmp.size(); i++) {
-	//			if (ocrTmp[i].type < 100) {
-	//				ocrTmp[i].rect.x += r.x;
-	//				ocrTmp[i].rect.y += r.y;
-	//				m_pSelectPageForCNS->AddOCRResult(ocrTmp[i]);
-	//			}
+	//if (m_extractionSetting.isChi) {
+	////	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
+	//	m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_CHAR);
+	////	_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetChiTess(), tesseract::RIL_SYMBOL, 1.0f, __CHI);
+	//	_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(__CHI), tesseract::RIL_SYMBOL, 1.0f, __CHI);
+	//	if (ocrtmp.fConfidence > 0.9f) {
+	//		return ocrtmp;
+	//	}
+	//	else {
+	//		if (ocrtmp.fConfidence > ocrres.fConfidence) {
+	//			ocrres = ocrtmp;
 	//		}
-	//		m_selOCRId = -1;
 	//	}
 	//}
+
+	//if (m_extractionSetting.isKor) {
+	////	m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_CHAR);
+	//	m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_CHAR);
+	////	_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetKorTess(), tesseract::RIL_SYMBOL, 1.0f, __KOR);
+	//	_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(__KOR), tesseract::RIL_SYMBOL, 1.0f, __KOR);
+	//	if (ocrtmp.fConfidence > 0.9f) {
+	//		return ocrtmp;
+	//	}
+	//	else {
+	//		if (ocrtmp.fConfidence > ocrres.fConfidence) {
+	//			ocrres = ocrtmp;
+	//		}
+	//	}
+	//}
+
+	//if (m_extractionSetting.isEng) {
+	////	m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_WORD);
+	//	m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_WORD);
+	////	_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetEngTess(), tesseract::RIL_WORD, 1.0f, __ENG);
+	//	_stOCRResult ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(__ENG), tesseract::RIL_WORD, 1.0f, __ENG);
+	//	if (ocrtmp.fConfidence > 0.9f) {
+	//		return ocrtmp;
+	//	}
+	//	else {
+	//		if (ocrtmp.fConfidence > ocrres.fConfidence) {
+	//			ocrres = ocrtmp;
+	//		}
+	//	}
+	//}
+
+	return ocrres;
 }
 
+void CMNView::MergeSelectedTextBox()
+{
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	if ((m_pSelectPageForCNS)) {
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
 
+			// Calculate Merger box //
+			cv::Rect mergeRect;
+			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+				_stOCRResult res = m_pSelectPageForCNS->GetOCRResult(iter->second.lineid, iter->second.vecTextId[i]);
+				if (i == 0)	mergeRect = res.rect;
+				else		mergeRect = mergeRect | res.rect;
+			}
 
+			// sorting selected id //
+			std::vector<int> vecSort = iter->second.vecTextId;
+			for (auto i = 0; i < vecSort.size() - 1; i++) {
+				for (auto j = i + 1; j < vecSort.size(); j++) {
+					if (vecSort[i] < vecSort[j]) {
+						int tmp = vecSort[i];
+						vecSort[i] = vecSort[j];
+						vecSort[j] = tmp;
+					}
+				}
+			}
 
+			// Delere item on the list //
+			for (auto i = 0; i < vecSort.size(); i++) {
+				unsigned int uuid = m_pSelectPageForCNS->DeleteSelOCRRes(iter->second.lineid, vecSort[i]);
+				pM->DeleteMatchList(uuid);		
+			}
 
+			// Add a merge box as a new box //
+			AddNewTextBox(mergeRect);
+		}
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		m_pSelectPageForCNS->SetSelMatchItem(-1);
+	}
+}
+
+void CMNView::MergeSelectedLineBox()
+{
+	if ((m_pSelectPageForCNS)) {
+		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
+
+		std::vector<int> vecSort;
+		
+		for (; iter != m_mapSelectionInfo.end(); iter++) {
+			vecSort.push_back(iter->first);			
+		}
+			
+		// sorting selected id //
+		for (auto i = 0; i < vecSort.size() - 1; i++) {
+			for (auto j = i + 1; j < vecSort.size(); j++) {
+				if (vecSort[i] < vecSort[j]) {
+					int tmp = vecSort[i];
+					vecSort[i] = vecSort[j];
+					vecSort[j] = tmp;
+				}
+			}
+		}
+
+		// Delere item on the list //
+		cv::Rect mergeRect;
+		for (auto i = 0; i < vecSort.size(); i++) {
+			if (i == 0) {
+				mergeRect = m_pSelectPageForCNS->GetSelParaRect(vecSort[i]);
+			}
+			else {
+				mergeRect = mergeRect | m_pSelectPageForCNS->GetSelParaRect(vecSort[i]);
+			}
+			m_pSelectPageForCNS->DeleteSelPara(vecSort[i]);
+		}
+
+			// Add a merge box as a new box //
+		AddNewLineBox(mergeRect);
+
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+		m_pSelectPageForCNS->SetSelMatchItem(-1);
+	}
+}
 
 
 

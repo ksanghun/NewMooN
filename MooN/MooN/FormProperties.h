@@ -107,6 +107,14 @@ public:
 	afx_msg void OnNMCustomdrawSliderDbth(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBnMatchFromDb();
 	afx_msg void OnEnChangeEditKeywordSearch();
+	CComboBox m_combo1stLanguage;
+	CComboBox m_combo2ndLanguage;
+	CComboBox m_combo3rdLanguage;
+	CComboBox m_combo4thLanguage;
+	afx_msg void OnCbnSelchangeCombo4thLanguage();
+	afx_msg void OnCbnSelchangeCombo3rdLanguage();
+	afx_msg void OnCbnSelchangeCombo2ndLanguage();
+	afx_msg void OnCbnSelchangeCombo1stLanguage();
 };
 
 

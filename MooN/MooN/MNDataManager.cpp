@@ -51,8 +51,11 @@ CMNDataManager::CMNDataManager()
 
 	m_totalCNSCnt = 0;
 	m_totalCNSGruop = 0;
-}
 
+	for (int i = 0; i < _NUM_LANGUAGE_TYPE; i++) {
+		m_ocrDBOrder[i] = __LANG_NONE;
+	}
+}
 
 CMNDataManager::~CMNDataManager()
 {	
@@ -85,6 +88,16 @@ CMNDataManager::~CMNDataManager()
 			delete m_refImgClass[i].vecStr[j];
 		}
 	}	
+}
+
+void CMNDataManager::SetOCRDBOrder(int _id, _LANGUAGE_TYPE _lang)
+{
+	m_ocrDBOrder[_id] = _lang;
+}
+
+unsigned int CMNDataManager::GetUUID()
+{
+	return m_obj_uuid++;
 }
 
 void CMNDataManager::Save()
@@ -392,6 +405,8 @@ float CMNDataManager::GetAniAcceration(int idx)
 		return 0.0f;
 }
 
+
+
 void CMNDataManager::UpdatePageStatus(POINT3D camPos)
 {
 	// Distance between cam and pages//
@@ -592,13 +607,14 @@ void CMNDataManager::SetMatchingResults()
 					// Add Results==========================================//
 					matchRes.id_page = i;
 					matchRes.id_match = j;
+					matchRes.uuid = matches[j].uuid;
 
-					if (matches[j].lineid < 0) {
-						matchRes.id_line_textbox = -1;
-					}
-					else {
-						matchRes.id_line_textbox = matches[j].lineid * 10000 + matches[j].objid;
-					}
+					//if (matches[j].lineid < 0) {
+					//	matchRes.id_line_textbox = -1;
+					//}
+					//else {
+					//	matchRes.id_line_textbox = matches[j].lineid * 10000 + matches[j].objid;
+					//}
 
 
 					matchRes.IsOnList = false;
@@ -2357,6 +2373,9 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		cv::Mat srcImg = m_vecImgData[i]->GetSrcPageGrayImg();
 		if (srcImg.ptr()) {
 			for (auto k = 0; k < vecLine.size(); k++) {
+				//if (vecLine[k].IsCNSed == true) continue;
+				//m_vecImgData[i]->UpdateLineStatus(k, true);
+
 //				for (auto j = 0; j < ocrRes.size(); j++) {
 				for (auto j = 0; j < vecLine[k].vecTextBox.size(); j++) {
 					_stCNSResult cns;
@@ -2367,6 +2386,7 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 					cns.lineid = k;
 
 					cns.rect = vecLine[k].vecTextBox[j].rect;
+					cns.uuid = vecLine[k].vecTextBox[j].uuid;
 					//	cv::Rect nRect = SINGLETON_DataMng::GetInstance()->GetNomalizedWordSize(ocrRes[j].rect);
 					//	cv::Rect nRect = GetNomalizedSize(ocrRes[j].rect);	
 					cv::Rect nRect;
@@ -2472,7 +2492,7 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 
 		stMatchInfo mInfo;
 		mtSetPoint3D(&mInfo.pos, vecCnSResults[i].rect.x, vecCnSResults[i].rect.y, 0.0f);
-		mInfo.accuracy = vecCnSResults[i].fConfi * 100;
+//		mInfo.accuracy = vecCnSResults[i].fConfi * 100;
 		mInfo.strAccracy.Format(L"%d", (int)(vecCnSResults[i].fConfi));
 		mInfo.rect = vecCnSResults[i].rect;
 		mInfo.searchId = vecCnSResults[i].searchid;
@@ -2481,9 +2501,11 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		// Get character code value from both OCR and DB, DB first.
 		_stOCRResult ocrres = pViewImage->GetCORResult(vecCnSResults[i].cutimg);
 
+		mInfo.accuracy = ocrres.fConfidence * 100;
 		mInfo.strCode = ocrres.strCode;
-		mInfo.lineid = vecCnSResults[i].lineid;
-		mInfo.objid = vecCnSResults[i].objid;
+		//mInfo.lineid = vecCnSResults[i].lineid;
+		//mInfo.objid = vecCnSResults[i].objid;
+		mInfo.uuid = vecCnSResults[i].uuid;
 		
 		mInfo.color.r = 100;
 		mInfo.color.g = 255;

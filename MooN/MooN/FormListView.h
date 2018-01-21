@@ -18,6 +18,7 @@ public:
 
 	void ResizeListColSize(int _maxwidth);
 	void SelItemByLineTextBoxID(int _id);
+	void DeleteItemByLineTextBoxID(int _id);
 public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_FORMLISTVIEW };
@@ -54,8 +55,10 @@ public:
 	void AddRecord_CNSAll();
 
 	afx_msg void OnBnClickedBnAddToOcr();
-	afx_msg void OnBnClickedCheckAutofill();
+//	afx_msg void OnBnClickedCheckAutofill();
 	BOOL m_bIsAutoFill;
+
+
 };
 
 

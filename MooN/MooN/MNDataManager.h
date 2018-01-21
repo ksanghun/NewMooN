@@ -48,7 +48,7 @@ struct stMatchResult
 	unsigned int id_page;
 	unsigned int id_match;
 
-	int id_line_textbox;	
+	int uuid;	
 
 	bool IsOnList;
 	//=================//
@@ -88,6 +88,7 @@ public:
 	void Test();
 	void Save();
 	POINT3D GetColor(float fvalue);
+	unsigned int GetUUID();
 
 	void ClearAllImages();
 	bool LoadImageData(CString strPath, cv::Mat& pimg, bool IsGray);
@@ -158,6 +159,9 @@ public:
 	bool FindVerticalEage(cv::Mat &srcImg, cv::Rect& cutRect, int type, int direction, cv::Rect& oriRect);
 
 	bool IsSupportFormat(CString strPath);
+	void SetOCRDBOrder(int _id, _LANGUAGE_TYPE _lang);
+	_LANGUAGE_TYPE* GetOCROrder() { return m_ocrDBOrder; }
+
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -211,6 +215,10 @@ private:
 
 	std::vector<cv::Point> points;
 
-};
 
+	_LANGUAGE_TYPE m_ocrDBOrder[_NUM_LANGUAGE_TYPE];
+	
+
+};
+static unsigned int m_obj_uuid = 1;
 typedef CMNSingleton<CMNDataManager> SINGLETON_DataMng;

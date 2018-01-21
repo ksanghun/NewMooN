@@ -90,6 +90,7 @@
 #define IDD_FROMPROPERTIES              313
 #define IDR_MENU_OCR                    316
 #define IDD_DIG_SAVEFILES               317
+#define IDR_POPUP_LIST                  320
 #define IDC_EDIT_SRCPATH                1000
 #define IDC_EDIT2                       1001
 #define IDC_EDIT_LOGPATH                1001
@@ -113,9 +114,7 @@
 #define IDC_RADIO_HORIZON               1011
 #define IDC_RADIO_VERT                  1012
 #define IDC_EDIT_ENG_SIZE               1013
-#define IDC_SLIDER2                     1013
 #define IDC_EDIT_KOR_SIZE               1014
-#define IDC_EDIT4                       1014
 #define IDC_EDIT_CHI_SIZE               1015
 #define IDC_EDIT6                       1016
 #define IDC_EDIT_DESKEW                 1016
@@ -139,7 +138,6 @@
 #define IDC_EDIT3                       1029
 #define IDC_EDIT_KEYWORD_SEARCH         1029
 #define IDC_BN_KEYWORD_SEARCH           1030
-#define IDC_EDIT_KEYWORD_SEARCH2        1030
 #define IDC_BN_RUNOCR                   1031
 #define IDC_CHECK_LINEBIOX              1032
 #define IDC_BN_WORD_CONFIRM             1033
@@ -153,6 +151,11 @@
 #define IDC_SLIDER_DBTH                 1041
 #define IDC_EDIT_DBTH                   1042
 #define IDC_BN_MATCH_FROM_DB            1043
+#define IDC_COMBO_1ST_LANGUAGE          1047
+#define IDC_COMBO_2ND_LANGUAGE          1048
+#define IDC_COMBO_3RD_LANGUAGE          1049
+#define IDC_COMBO4                      1050
+#define IDC_COMBO_4TH_LANGUAGE          1050
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -236,14 +239,25 @@
 #define ID_RECOGNIZETEXT_CHARACTER      32850
 #define ID_RECOGNIZETEXT_COMPOUND       32851
 #define ID_RECOGNIZETEXT_CHARACTER32852 32852
+#define ID_OPTIONS_AUTOFILLON           32853
+#define ID_OPTIONS_AUTOFILLOFF          32854
+#define ID_OPTIONS_TRAININGALL          32855
+#define ID_OPTIONS_TRAININGSELECTION    32856
+#define ID_OCR_MERGE_BOX                32857
+#define ID_SPLITETEXTBOX_VERTICALLY     32858
+#define ID_SPLITETEXTBOX_HORIZONTALL    32859
+#define ID_OCR_MERGELINERECT            32860
+#define ID_OCR_MERGELINEBOX             32861
+#define ID_SPLITLINEBOX_VERTICALLY      32862
+#define ID_SPLITLINEBOX_HORIZONTALY     32863
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        320
-#define _APS_NEXT_COMMAND_VALUE         32853
-#define _APS_NEXT_CONTROL_VALUE         1049
+#define _APS_NEXT_RESOURCE_VALUE        321
+#define _APS_NEXT_COMMAND_VALUE         32864
+#define _APS_NEXT_CONTROL_VALUE         1048
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

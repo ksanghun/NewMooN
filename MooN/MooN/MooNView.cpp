@@ -371,7 +371,7 @@ void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 	CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(pageid);
 	if (pPage) {
 		_stOCRResult ocrRes;
-		ocrRes.type = _CNS;  
+		ocrRes.type = __CNS;  
 
 		if (pPage->GetRectByMatchID(matchid, ocrRes.rect, ocrRes.fConfidence)) {
 

@@ -3,6 +3,7 @@
 #include "MNPageObject.h"
 #include "MNDataManager.h"
 #include "Extractor.h"
+#include "MainFrm.h"
 
 
 CMNPageObject::CMNPageObject()
@@ -412,7 +413,7 @@ void CMNPageObject::DrawThumbNail(float fAlpha)
 	glEnd();
 
 	if (m_bIsSearching) {
-		glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
+		glColor4f(1.0f, 1.0f, 0.0f, 0.3f);
 		glBegin(GL_QUADS);
 		glVertex3f(m_vertexBg[0].x, m_vertexBg[0].y, m_vertexBg[0].z);
 		glVertex3f(m_vertexBg[1].x, m_vertexBg[1].y, m_vertexBg[1].z);
@@ -480,7 +481,7 @@ float CMNPageObject::SetSelectionPosition(int nSlot, float xOffset, float yOffse
 void CMNPageObject::SetSelection(bool _isSel)
 {
 	if (_isSel == true) {
-		mtSetPoint3D(&m_vBgColor, 0.99f, 0.0f, 0.0f);
+		mtSetPoint3D(&m_vBgColor, 0.99f, 0.99f, 0.0f);
 	}
 	else {
 		mtSetPoint3D(&m_vBgColor, 0.3f, 0.7f, 0.9f);
@@ -492,6 +493,30 @@ void CMNPageObject::SetSelMatchItem(int _selid)
 { 
 	m_selMatchItemId = _selid; 
 }
+
+void CMNPageObject::GetIDbyUUID(unsigned int uuid, int&lineid, int&objid)
+{
+	for (auto j = 0; j < m_paragraph.size(); j++) {
+		for (auto i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
+
+			if (m_paragraph[j].vecTextBox[i].uuid == uuid) {
+				lineid = j;
+				objid = i;
+				return;
+			}
+		}
+	}
+}
+
+unsigned int CMNPageObject::GetUUIDbyLineObjId(int lineid, int objid)
+{
+	if ((lineid < m_paragraph.size()) && (objid < m_paragraph[lineid].vecTextBox.size())) {
+		return m_paragraph[lineid].vecTextBox[objid].uuid;
+	}
+	return 0;
+}
+
+
 
 void CMNPageObject::DrawOCRResForPick()
 {
@@ -505,11 +530,12 @@ void CMNPageObject::DrawOCRResForPick()
 		glScalef(m_fXScale, m_fYScale, 1.0f);
 		glTranslatef(-m_nImgWidth*0.5f, -m_nImgHeight*0.5f, 0.0f);
 
-		int pid = j * 10000 + _PICK_WORD; // !!
+//		int pid = j * 10000 + _PICK_WORD; // !!
 
 		for (auto i = 0; i < m_paragraph[j].vecTextBox.size(); i++) {
 			glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
-			glPushName(pid + i);
+//			glPushName(pid + i);
+			glPushName(m_paragraph[j].vecTextBox[i].uuid + _PICK_WORD);
 			glBegin(GL_QUADS);
 			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x, m_nImgHeight - m_paragraph[j].vecTextBox[i].rect.y, 0.0f);
 			glVertex3f(m_paragraph[j].vecTextBox[i].rect.x, m_nImgHeight - (m_paragraph[j].vecTextBox[i].rect.y + m_paragraph[j].vecTextBox[i].rect.height), 0.0f);
@@ -553,12 +579,12 @@ void CMNPageObject::DrawOCRResForPick()
 	//glPopMatrix();
 	//glLineWidth(1);
 }
-void CMNPageObject::DrawParagraph(int selid)
+void CMNPageObject::DrawParagraph(int selid, bool IsMergeMode)
 {
 	glPushMatrix();
 	glTranslatef(m_pos.x, m_pos.y, m_pos.z);
 
-	glLineWidth(2);
+	glLineWidth(4);
 	if (m_paragraph.size() > 0) {
 		// Draw detected position //
 		glColor4f(1.0f, 0.2f, 0.1f, 0.7f);
@@ -573,17 +599,19 @@ void CMNPageObject::DrawParagraph(int selid)
 			//	glColor4f(0.99f, 0.0f, 0.0f, 0.3f);
 			//	if (i == selid) {
 			int i = selid;
-					glColor4f(0.99f, 0.0f, 0.0f, 0.99f);
+			glColor4f(0.f, 0.99f, 0.0f, 0.99f);
+			if(IsMergeMode)
+				glColor4f(0.99f, 0.0f, 0.0f, 0.99f);
 
-					glLineStipple(2, 0xAAAA);
-					glBegin(GL_LINE_STRIP);
-					//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-					glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-					glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
-					glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
-					glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-					glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
-					glEnd();
+			glLineStipple(2, 0xAAAA);
+			glBegin(GL_LINE_STRIP);
+			//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+			glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - (m_paragraph[i].rect.y + m_paragraph[i].rect.height), 0.0f);
+			glVertex3f(m_paragraph[i].rect.x + m_paragraph[i].rect.width, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glVertex3f(m_paragraph[i].rect.x, m_nImgHeight - m_paragraph[i].rect.y, 0.0f);
+			glEnd();
 		//		}
 
 		//	}
@@ -690,17 +718,17 @@ void CMNPageObject::DrawMatchItem()
 				glEnd();
 			}
 
-			if (m_matched_pos[i].lineid < 0) {
-				glColor4f(m_matched_pos[i].color.r, m_matched_pos[i].color.g, m_matched_pos[i].color.b, 0.5f);
-				glBegin(GL_LINE_STRIP);
-				//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
-				glEnd();
-			}
+			//if (m_matched_pos[i].lineid < 0) {
+			//	glColor4f(m_matched_pos[i].color.r, m_matched_pos[i].color.g, m_matched_pos[i].color.b, 0.5f);
+			//	glBegin(GL_LINE_STRIP);
+			//	//glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
+			//	glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+			//	glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+			//	glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+			//	glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+			//	glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+			//	glEnd();
+			//}
 		}
 		glPopMatrix();
 	}
@@ -958,16 +986,16 @@ void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Re
 {
 	m_IsNeedToSave = true;
 	stParapgraphInfo para;
+	para.init();
 	para.deSkewAngle = deskew;
 	para.rect = rect;
 	para.IsVerti = IsVerti;
-	para.IsDeskewed = false;
+
 	m_paragraph.push_back(para);
 	int lineid = static_cast<int>(m_paragraph.size() - 1);
 
 	// Extract text boundary //
 	std::vector<_extractBox> vecBox;
-
 	if (IsVerti) {
 		extractor.ExtractionText(paraImg, 0, -4, vecBox, IsVerti);
 		//extractor.ExtractionText(paraImg, 8, 0, vecBox);
@@ -1112,9 +1140,15 @@ _stOCRResult CMNPageObject::GetOCRResult(int _lineid, int _id)
 
 void CMNPageObject::DeleteSelPara(int selid)
 {	
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	m_IsNeedToSave = true;
 	if ((selid < m_paragraph.size())&&(selid >=0)) {
-		DeleteOCRResByRect(m_paragraph[selid].rect);
+	//	DeleteOCRResByRect(m_paragraph[selid].rect);
+		for (auto i = 0; i < m_paragraph[selid].vecTextBox.size(); i++) {
+	//		int id = selid * 10000 + i;
+			pM->DeleteMatchList(m_paragraph[selid].vecTextBox[i].uuid);
+		}
+		m_paragraph[selid].vecTextBox.swap(std::vector<_stOCRResult>());
 		m_paragraph.erase(m_paragraph.begin() + selid);
 	}
 }
@@ -1155,16 +1189,17 @@ void CMNPageObject::CleanUpOCRres()
 }
 
 
-bool CMNPageObject::DeleteSelOCRRes(int lid, int selid)
+unsigned int CMNPageObject::DeleteSelOCRRes(int lid, int selid)
 {
 	m_IsNeedToSave = true;
+	unsigned int uuid = 0;
 //	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
 	if ((lid < m_paragraph.size()) && (selid < m_paragraph[lid].vecTextBox.size()) && (selid >= 0)) {
 //		m_ocrResult.erase(m_ocrResult.begin() + selid);
+		uuid = m_paragraph[lid].vecTextBox[selid].uuid;
 		m_paragraph[lid].vecTextBox.erase(m_paragraph[lid].vecTextBox.begin() + selid);
-		return true;
 	}
-	return false;
+	return uuid;
 }
 
 void CMNPageObject::ConfirmOCRRes(int lid, int selid)
@@ -1194,6 +1229,15 @@ void CMNPageObject::UpdateOCRResStatus(int lid, int selid, bool IsUpdate, int _t
 	//	m_ocrResult[selid].type = _type;
 	//}
 }
+
+
+void CMNPageObject::UpdateLineStatus(int _id, bool IsCNS)
+{
+	if ((_id >= 0) && (_id < m_paragraph.size())) {
+		m_paragraph[_id].IsCNSed = IsCNS;
+	}
+}
+
 
 void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid)
 {
@@ -1246,6 +1290,9 @@ void CMNPageObject::AddOCRResult(int lineid, _stOCRResult res)
 	int char_str_len = WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, NULL, 0, NULL, NULL);
 	WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, char_str, char_str_len, 0, 0);
 
+
+	res.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
+
 	if ((lineid < m_paragraph.size()) && (lineid >= 0)) {
 		m_paragraph[lineid].vecTextBox.push_back(std::move(res));
 	}
@@ -1253,7 +1300,7 @@ void CMNPageObject::AddOCRResult(int lineid, _stOCRResult res)
 
 		for (auto i = 0; i < m_paragraph.size(); i++) {
 			cv::Rect andRect_overlap = (m_paragraph[i].rect & res.rect);
-			if (andRect_overlap.area() >= res.rect.area()) {
+			if (andRect_overlap.area() >= (res.rect.area()*0.75f)) {
 				m_paragraph[i].vecTextBox.push_back(std::move(res));
 				break;
 			}
@@ -1295,16 +1342,16 @@ bool CMNPageObject::LoadPageInfo(unsigned short& width, unsigned short& height)
 		
 		for (int i = 0; i < pnum; i++) {
 			stParapgraphInfo data;
+			data.init();
 			fread(&data.rect, sizeof(cv::Rect), 1, fp);
 			fread(&data.IsVerti, sizeof(bool), 1, fp);
-			data.IsDeskewed = true;
-			data.deSkewAngle = 0.0f;
 
 			fread(&wnum, sizeof(int), 1, fp);
 
 			for (int j = 0; j < wnum; j++) {
 				_stOCRResult textbox;
 				fread(&textbox, sizeof(_stOCRResult), 1, fp);
+				textbox.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
 				data.vecTextBox.push_back(std::move(textbox));
 			}
 			m_paragraph.push_back(std::move(data));

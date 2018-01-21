@@ -89,3 +89,10 @@ void CDockFormView::SelItemByLineTextBoxID(int _id)
 		m_pMyFormView->SelItemByLineTextBoxID(_id);
 	}
 }
+
+void CDockFormView::DeleteItemByLineTextBoxID(int _id)
+{
+	if (m_pMyFormView) {
+		m_pMyFormView->DeleteItemByLineTextBoxID(_id);
+	}
+}

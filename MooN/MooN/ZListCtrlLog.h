@@ -1,5 +1,5 @@
 #pragma once
-
+#include "ZEdit.h"
 
 // CZListCtrlLog
 #define MSG_POST_SUBCLASS_LISTVIEW (WM_APP+50)
@@ -20,6 +20,7 @@ public:
 	void SetAutoFillOption(BOOL IsAutoFill) { m_bIsAutoFill = IsAutoFill; }
 
 	void SelItemByLineTextBoxID(int _id);
+	void DeleteItemByLineTextBoxID(int linetextid);
 
 // ColumnHeader Class============================//
 	class CCustomDrawHeaderCtrl : public CHeaderCtrl
@@ -58,7 +59,7 @@ protected:
 	virtual void PreSubclassWindow();
 	void UpdateCodeValue();
 
-	CEdit m_Edit;
+	CZEdit m_Edit;
 	int nItem, nSubItem;
 	int m_nCulNum, m_nRecordNum;
 

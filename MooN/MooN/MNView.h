@@ -6,6 +6,8 @@
 #include "Extractor.h"
 
 enum _PICKMODE { _PICK_SELECT = 0 };
+enum _SPLIT_DIR { _NONE_DIR=0,_VERTI_DIR, _HORI_DIR };
+enum _SPLIT_TYPE { _SPLIT_TEXT =0, _SPLIT_LINE};
 #define SEL_BUFF_SIZE 1024
 
 static UINT ThreadGenThumbnailImg(LPVOID lpParam);
@@ -87,6 +89,7 @@ public:
 	
 
 	void DrawCNSRect(float r, float g, float b, float a);
+	void DrawSplitLine(float r, float g, float b, float a);
 	void DrawBGPageAni();
 	void DrawBGPage();	
 	void DrawOCRRes();
@@ -119,12 +122,13 @@ public:
 	bool DeleteSelOCRRes();
 	void DeleteAllLines();
 	void DeleteAllOCRRes();
-	void AddOCRRes();
-	void AddParagraph();
+	void AddNewTextBox(cv::Rect rect);
+	void AddNewLineBox(cv::Rect rect);
+	void AddLineBox(cv::Rect rect);
 	void DeskewParagraph(float fAngle);
 	void UndoDeskewParagraph();
 	void ReExtractParagraph();
-	void ExtractBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang);
+	void ExtractLineBox(cv::Mat& img, std::vector<_extractBox>& vecBox, bool IsVerti, _LANGUAGE_TYPE lang);
 	void EncodePage();
 
 	void ConfirmOCRRes();
@@ -139,6 +143,12 @@ public:
 	void SetThreadEnd(bool IsEnd);// { m_bIsThreadEnd = IsEnd; }
 
 	_stOCRResult GetCORResult(cv::Mat& cutImg);
+
+
+	// editing selection box (line, text) //
+	void MergeSelectedTextBox();
+	void MergeSelectedLineBox();
+	void SetSplitBoxMode(_SPLIT_DIR _dir, _SPLIT_TYPE _type) { m_spliteDirection = _dir; m_spliteType = _type; }
 
 private:
 	CPoint m_mousedown;
@@ -206,6 +216,14 @@ private:
 
 	// Export DB //
 	CString m_strExportDBFoler;
+
+
+	// Edting Boundary Box //
+	_SPLIT_DIR m_spliteDirection; // 0 is vertical, 1 is horizontal //
+	_SPLIT_TYPE m_spliteType;  // 0: line, 1, text
+	POINT3D m_vSplitPos;
+	void DoSplitTextBox();
+	void DoSplitLineBox();
 
 public:
 	DECLARE_MESSAGE_MAP()

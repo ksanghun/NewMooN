@@ -325,25 +325,26 @@ void CZListCtrlLog::OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult)
 		//}
 
 		pNMCD->clrText = RGB(0, 0, 0);
-		if (sid != m_currDrawId) {
-			// change color//
-			m_currDrawId = sid;
-			m_colorid++;
-		}
+		//if (sid != m_currDrawId) {
+		//	// change color//
+		//	m_currDrawId = sid;
+		//	m_colorid++;
+		//}
 
 		if (m_colorid % 2 == 0) {
 			if (confi < 75) 		pNMCD->clrText = RGB(255, 0, 0);
 			else					pNMCD->clrText = RGB(0, 0, 0);
 
-			pNMCD->clrTextBk = RGB(200, 200, 200);
+		//	pNMCD->clrTextBk = RGB(200, 200, 200);
 		}
 		else {
 			if (confi < 75) 		pNMCD->clrText = RGB(255, 0, 0);
 			else					pNMCD->clrText = RGB(0, 0, 0);
 
-			pNMCD->clrTextBk = RGB(250, 250, 250);
+		//	pNMCD->clrTextBk = RGB(250, 250, 250);
 		}
 
+		pNMCD->clrTextBk = RGB(250, 250, 250);
 		
 
 
@@ -732,10 +733,10 @@ void CZListCtrlLog::OnLButtonDown(UINT nFlags, CPoint point)
 void CZListCtrlLog::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	// TODO: Add your message handler code here
-	//CMenu menu;
-	//menu.LoadMenuW(IDR_POPUP_MENU);
-	//CMenu* pMenu = menu.GetSubMenu(0);
-	//pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, AfxGetMainWnd());
+	CMenu menu;
+	menu.LoadMenuW(IDR_POPUP_LIST);
+	CMenu* pMenu = menu.GetSubMenu(0);
+	pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, AfxGetMainWnd());
 }
 
 
@@ -836,4 +837,18 @@ void CZListCtrlLog::SelItemByLineTextBoxID(int _id)
 	m_bMoveCamera = false;
 	SetItemState(m_selItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	
+}
+
+void CZListCtrlLog::DeleteItemByLineTextBoxID(int _id)
+{
+	m_currDrawId = 0;	m_colorid = 0;
+	SetItemState(m_selItem, 0, LVIS_FOCUSED | LVIS_SELECTED);
+	int cnt = GetItemCount();
+	for (int i = cnt-1; i >=0; i--) {
+		CString strId = GetItemText(i, 15);
+		int id = _ttoi(strId);
+		if (id == _id) {
+			DeleteItem(i);
+		}
+	}
 }

@@ -493,6 +493,7 @@ struct _stOCRResult {
 
 
 	bool IsMatched;
+	unsigned int uuid;
 //	unsigned short lineid;
 
 	void init() {
@@ -502,6 +503,7 @@ struct _stOCRResult {
 		memset(strCode, 0x00, sizeof(strCode));
 		bNeedToDB = false;
 		hcode_s = 5381;
+		uuid = 0;
 	};
 
 	void set(cv::Rect _r, float _fConfi, wchar_t* _code){
@@ -550,6 +552,7 @@ struct _stCNSResult {
 	cv::Rect rect;
 
 	float fConfi;
+	unsigned int uuid;
 };
 
 typedef std::vector<_stSDBWord> _stSDB;
