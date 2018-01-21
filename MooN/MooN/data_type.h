@@ -461,8 +461,8 @@ struct _CUTINFO{
 
 struct _stExtractionSetting {
 	bool isEng;
-	bool isChi;
-	bool isKor;
+	//bool isChi;
+	//bool isKor;
 //	int nAlign;
 	bool IsVerti;
 
@@ -473,8 +473,8 @@ struct _stExtractionSetting {
 	void init()
 	{
 		isEng = false;
-		isChi = false;
-		isKor = false;
+		//isChi = false;
+		//isKor = false;
 		IsVerti = true;
 
 		engSize = 1;

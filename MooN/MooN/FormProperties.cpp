@@ -15,9 +15,9 @@ IMPLEMENT_DYNCREATE(CFormProperties, CFormView)
 CFormProperties::CFormProperties()
 	: CFormView(IDD_FROMPROPERTIES)
 	, m_fEditTh(75.0f)
-	, m_bEnglish(FALSE)
-	, m_bChinese(TRUE)
-	, m_bKorean(TRUE)
+	//, m_bEnglish(FALSE)
+	//, m_bChinese(TRUE)
+	//, m_bKorean(TRUE)
 	//, m_nEngFontSize(32)
 	//, m_nChiFontSize(32)
 	//, m_nKorFontSize(32)
@@ -46,9 +46,9 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER1, m_sliderTh);
 	DDX_Text(pDX, IDC_MFCCOLORBUTTON1, m_colorTh);
 	DDX_Control(pDX, IDC_MFCCOLORBUTTON1, m_ctrlColorBtn);
-	DDX_Check(pDX, IDC_CHECK_ENG, m_bEnglish);
-	DDX_Check(pDX, IDC_CHECK_CHI, m_bChinese);
-	DDX_Check(pDX, IDC_CHECK_KOR, m_bKorean);
+	//DDX_Check(pDX, IDC_CHECK_ENG, m_bEnglish);
+	//DDX_Check(pDX, IDC_CHECK_CHI, m_bChinese);
+	//DDX_Check(pDX, IDC_CHECK_KOR, m_bKorean);
 	//DDX_Text(pDX, IDC_EDIT_ENG_SIZE, m_nEngFontSize);
 	//DDV_MinMaxUInt(pDX, m_nEngFontSize, 1, 1000);
 	//DDX_Text(pDX, IDC_EDIT_CHI_SIZE, m_nChiFontSize);
@@ -277,9 +277,9 @@ void CFormProperties::GetCurrSetting()
 	extractonInfo.engSize = 32;
 	extractonInfo.korSize = 32;
 
-	extractonInfo.isChi = m_bChinese;
-	extractonInfo.isEng = m_bEnglish;
-	extractonInfo.isKor = m_bKorean;
+	//extractonInfo.isChi = false;
+	//extractonInfo.isEng = false;
+	//extractonInfo.isKor = m_bKorean;
 
 	SINGLETON_DataMng::GetInstance()->SetExtractionSetting(extractonInfo);
 

@@ -53,9 +53,9 @@ public:
 	afx_msg void OnEnChangeEdit1();
 	afx_msg void OnNMCustomdrawSlider1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMGetCustomSplitRectMfccolorbutton1(NMHDR *pNMHDR, LRESULT *pResult);
-	BOOL m_bEnglish;
-	BOOL m_bChinese;
-	BOOL m_bKorean;
+	//BOOL m_bEnglish;
+	//BOOL m_bChinese;
+	//BOOL m_bKorean;
 	//UINT m_nEngFontSize;
 	//UINT m_nChiFontSize;
 	//UINT m_nKorFontSize;
