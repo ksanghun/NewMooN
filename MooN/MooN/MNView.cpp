@@ -107,6 +107,7 @@ void CMNView::InitGLview(int _nWidth, int _nHeight)
 	m_glListIdForDrawOCRRes = glGenLists(1);
 
 
+
 	// !! image to unique code value TEST ========================================//
 	//wchar_t newword = (unsigned short)(std::stoi("0100010101000101", nullptr, 2));
 	//CString str(newword);
@@ -184,6 +185,8 @@ void CMNView::Render()
 		if (m_pSelectPageForCNS) {
 			m_pSelectPageForCNS->DrawSelectedParagraph(0);
 			DrawOCRRes();
+			glCallList(m_glListIdForDrawOCRRes);
+		
 			DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
 			DrawSplitLine(1.0f, 0.0f, 0.0f, 1.0f);
 		}
@@ -627,6 +630,7 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			pM->AddOutputString(str, true);
 		}
 	//	DrawOCRRes();
+		MakeList_DrawOCRResText();
 	}
 
 	else if (nIDEvent == _DO_EXPORT_DB) {
@@ -691,6 +695,7 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			SINGLETON_DataMng::GetInstance()->SetMatchingResults();
 			pM->AddOutputString(SINGLETON_DataMng::GetInstance()->GetCNSResultInfo(), false);
 			pM->AddMatchResult();
+			MakeList_DrawOCRResText();
 		}
 	}
 	//else if (nIDEvent == _UPDATE_PAGE) {
@@ -870,6 +875,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 			if (selid < _PICK_PARA) {		// Page selection
 				m_pSelectPageForCNS = SINGLETON_DataMng::GetInstance()->GetPageByOrderID(selid);
+				MakeList_DrawOCRResText();
 				if (m_pSelectPageForCNS) {
 					m_pSelectPageForCNS->SetSelection(true);
 					m_pSelectPageForCNS->SetIsNear(true);
@@ -1806,6 +1812,7 @@ void CMNView::AddNewTextBox(cv::Rect rect)
 			ocrres.rect = rect;
 			//ocrres.rect.width = rect.width;
 			//ocrres.rect.height = rect.height;
+			ocrres.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
 			memset(&ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			wsprintf(ocrres.strCode, L"");
 
@@ -2028,6 +2035,51 @@ void CMNView::ReExtractParagraph()
 }
 
 
+void CMNView::MakeList_DrawOCRResText()
+{
+	glNewList(m_glListIdForDrawOCRRes, GL_COMPILE);
+	if (m_pSelectPageForCNS) {
+		if (m_pSelectPageForCNS->IsNear()) {
+
+			glPushMatrix();
+			glTranslatef(m_pSelectPageForCNS->GetPos().x, m_pSelectPageForCNS->GetPos().y, m_pSelectPageForCNS->GetPos().z);
+
+			glColor4f(0.0f, 0.99f, 0.1f, 0.9f);
+			glPushMatrix();
+			glScalef(m_pSelectPageForCNS->GetfXScale(), m_pSelectPageForCNS->GetfYScale(), 1.0f);
+			glTranslatef(-m_pSelectPageForCNS->GetImgWidth()*0.5f, -m_pSelectPageForCNS->GetImgHeight()*0.5f, 0.0f);
+
+			POINT3D tPos, tColor;
+			RECT2D rect;
+			//std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNS->GetVecOCRResult();
+			std::vector<stParapgraphInfo> vecline = m_pSelectPageForCNS->GetVecParagraph();
+
+			for (auto i = 0; i < vecline.size(); i++) {
+				for (int j = 0; j < vecline[i].vecTextBox.size(); j++) {
+					rect.set(vecline[i].vecTextBox[j].rect.x, vecline[i].vecTextBox[j].rect.x + vecline[i].vecTextBox[j].rect.width,
+						vecline[i].vecTextBox[j].rect.y, vecline[i].vecTextBox[j].rect.y + vecline[i].vecTextBox[j].rect.height);
+					// Draw Text //
+					glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
+					if (vecline[i].vecTextBox[j].fConfidence < m_dispConfi) {
+						glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+					}
+					if (m_extractionSetting.IsVerti) {
+						mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
+					}
+					else {
+						mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
+					}
+					gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
+				}
+			}
+			glPopMatrix();
+			glPopMatrix();
+		}
+	}
+	glEndList();
+}
+
+
 void CMNView::DrawOCRRes()
 {
 //	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
@@ -2125,7 +2177,7 @@ void CMNView::DrawOCRRes()
 					glLineWidth(4);
 					if ((j == m_selOCRIdforMouseHover)&&(i== m_selParaIdforMouseHover)) {
 
-					//	glColor4f(0.0f, 1.0f, 0.0f, 0.99f);
+						glColor4f(0.0f, 0.0f, 1.0f, 0.99f);
 						if (m_extractionSetting.IsVerti) {
 							mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
 						}
@@ -3303,6 +3355,9 @@ void CMNView::OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType)
 			m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		}
 	}
+
+
+	MakeList_DrawOCRResText();
 }
 
 void CMNView::ProcDoSearchBySelection()

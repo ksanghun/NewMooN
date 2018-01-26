@@ -175,7 +175,7 @@ private:
 
 
 	// For Search DB ======================================//
-	std::map<unsigned int, _stSDBWordTable> m_mapWordTable;
+//	std::map<unsigned int, _stSDBWordTable> m_mapWordTable;
 	std::map<unsigned int, CString> m_mapFilePathTable;
 
 	std::map<unsigned int, _stSDB> m_mapGlobalSDB;

@@ -857,7 +857,7 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
 {
 	DB_CHK res = SDB_ADD;
-	float addTh = 0.80f;
+	float addTh = 0.9f;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
@@ -985,12 +985,10 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 {
 	//wchar_t wstrcode [_MAX_WORD_SIZE];
 	//memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
-	//wsprintf(wstrcode, _strCode.GetBuffer());
-
+	//wsprintf(wstrcode, _strCode.GetBuffer()); 
 
 	//if (hcode == 5381) 
 	//	return;
-
 	if (wstrcode[0] == '\0')
 		return;
 	
@@ -1269,13 +1267,13 @@ void CMNDataManager::DeSkew(cv::Mat& img)
 void CMNDataManager::AddSDBTable(unsigned int hcode, wchar_t* strCode)
 {
 	// Update HashTable //
-	if (m_mapWordTable.find(hcode) == m_mapWordTable.end()) {
-		_stSDBWordTable htable;
-		memset(htable.str, 0x00, sizeof(wchar_t)*(_MAX_WORD_SIZE));
-		memcpy(htable.str, strCode, sizeof(wchar_t)*(_MAX_WORD_SIZE));
-		m_mapWordTable[hcode] = htable;
-		m_bIsUpdateTable = true;
-	}
+	//if (m_mapWordTable.find(hcode) == m_mapWordTable.end()) {
+	//	_stSDBWordTable htable;
+	//	memset(htable.str, 0x00, sizeof(wchar_t)*(_MAX_WORD_SIZE));
+	//	memcpy(htable.str, strCode, sizeof(wchar_t)*(_MAX_WORD_SIZE));
+	//	m_mapWordTable[hcode] = htable;
+	//	m_bIsUpdateTable = true;
+	//}
 
 	//// Add Filename code //
 	//if (m_mapWordTable.find(_pcode) == m_mapWordTable.end()) {
@@ -1299,30 +1297,30 @@ void CMNDataManager::AddSDBTable(unsigned int hcode, wchar_t* strCode)
 void CMNDataManager::LoadSDBFiles()
 {
 //	m_mapWordTable.clear();
-	m_mapWordTable.swap(std::map<unsigned int, _stSDBWordTable>());
-	
-	USES_CONVERSION;
-	CString strFile;
-	char* sz = 0;
-	
-	// Read InfoFile First //
-	strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
-	sz = T2A(strFile);
-	FILE* fp = 0;
-	fopen_s(&fp, sz, "rb");
-	if (fp) {
-		int num = 0, cLen = 0;
-		fread(&num, sizeof(int), 1, fp);
-		unsigned int hcode;
-		_stSDBWordTable strCode;	
-		for (int j = 0; j < num; j++) {
-			fread(&hcode, sizeof(unsigned int), 1, fp);
-			fread(&strCode.str, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
-			m_mapWordTable[hcode] = strCode;
+	//m_mapWordTable.swap(std::map<unsigned int, _stSDBWordTable>());
+	//
+	//USES_CONVERSION;
+	//CString strFile;
+	//char* sz = 0;
+	//
+	//// Read InfoFile First //
+	//strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
+	//sz = T2A(strFile);
+	//FILE* fp = 0;
+	//fopen_s(&fp, sz, "rb");
+	//if (fp) {
+	//	int num = 0, cLen = 0;
+	//	fread(&num, sizeof(int), 1, fp);
+	//	unsigned int hcode;
+	//	_stSDBWordTable strCode;	
+	//	for (int j = 0; j < num; j++) {
+	//		fread(&hcode, sizeof(unsigned int), 1, fp);
+	//		fread(&strCode.str, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
+	//		m_mapWordTable[hcode] = strCode;
 
-		}
-		fclose(fp);
-	}
+	//	}
+	//	fclose(fp);
+	//}
 
 	//=====================================//
 	//strFile.Format(L"%s\\wdb.sdb", m_strUserDataFolder);
@@ -1352,62 +1350,62 @@ void CMNDataManager::LoadSDBFiles()
 
 void CMNDataManager::UpdateSDBFiles()
 {
-	USES_CONVERSION;
+	//USES_CONVERSION;
 
-	CString strFile;
-	char* sz = 0;
-	// Write code Table if it is needed //
-	if (m_bIsUpdateTable) {		
-		strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
-		sz = T2A(strFile);
+	//CString strFile;
+	//char* sz = 0;
+	//// Write code Table if it is needed //
+	//if (m_bIsUpdateTable) {		
+	//	strFile.Format(L"%s\\wtable.htbl", m_strUserDataFolder);
+	//	sz = T2A(strFile);
 
-		FILE* fp = 0;
-		fopen_s(&fp, sz, "wb");
-		if (fp) {
-			int wnum = static_cast<int>(m_mapWordTable.size());
-			std::map<unsigned int, _stSDBWordTable>::iterator iter= m_mapWordTable.begin();
+	//	FILE* fp = 0;
+	//	fopen_s(&fp, sz, "wb");
+	//	if (fp) {
+	//		int wnum = static_cast<int>(m_mapWordTable.size());
+	//		std::map<unsigned int, _stSDBWordTable>::iterator iter= m_mapWordTable.begin();
 
-			fwrite(&wnum, sizeof(int), 1, fp);
-			for (; iter != m_mapWordTable.end(); iter++) {
-				fwrite(&iter->first, sizeof(unsigned int), 1, fp);
-				fwrite(&iter->second, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
-			}
-			fclose(fp);
-		}
-	}
-	//=================================================================
+	//		fwrite(&wnum, sizeof(int), 1, fp);
+	//		for (; iter != m_mapWordTable.end(); iter++) {
+	//			fwrite(&iter->first, sizeof(unsigned int), 1, fp);
+	//			fwrite(&iter->second, sizeof(wchar_t)*_MAX_WORD_SIZE, 1, fp);
+	//		}
+	//		fclose(fp);
+	//	}
+	//}
+	////=================================================================
 
 
-	// For debugiing ====================================//
-	if (m_bIsUpdateTable) {
-		strFile.Format(L"%s\\wtable.txt", m_strUserDataFolder);
-		CFile cfile;
-		if (!cfile.Open(strFile, CFile::modeWrite | CFile::modeCreate))
-		{
-			return;
-		}
-		USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
-		cfile.Write(&nShort, 2);
+	//// For debugiing ====================================//
+	//if (m_bIsUpdateTable) {
+	//	strFile.Format(L"%s\\wtable.txt", m_strUserDataFolder);
+	//	CFile cfile;
+	//	if (!cfile.Open(strFile, CFile::modeWrite | CFile::modeCreate))
+	//	{
+	//		return;
+	//	}
+	//	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+	//	cfile.Write(&nShort, 2);
 
-		// Write data //
-		CString strtmp;
-		int wnum = static_cast<int>(m_mapWordTable.size());
-		strtmp.Format(L"Total character: %d", wnum);
-		int len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);		// word code //
-		cfile.Write(strtmp.GetBuffer(), len);
-		cfile.Write(L"\r\n", 4);
-		std::map<unsigned int, _stSDBWordTable>::iterator iter = m_mapWordTable.begin();
-		for (; iter != m_mapWordTable.end(); iter++) {
-			strtmp.Format(L"%d ", iter->first);
-			int len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);		// word code //
-			cfile.Write(strtmp.GetBuffer(), len);
+	//	// Write data //
+	//	CString strtmp;
+	//	int wnum = static_cast<int>(m_mapWordTable.size());
+	//	strtmp.Format(L"Total character: %d", wnum);
+	//	int len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);		// word code //
+	//	cfile.Write(strtmp.GetBuffer(), len);
+	//	cfile.Write(L"\r\n", 4);
+	//	std::map<unsigned int, _stSDBWordTable>::iterator iter = m_mapWordTable.begin();
+	//	for (; iter != m_mapWordTable.end(); iter++) {
+	//		strtmp.Format(L"%d ", iter->first);
+	//		int len = static_cast<int>(wcslen(strtmp.GetBuffer()) * 2);		// word code //
+	//		cfile.Write(strtmp.GetBuffer(), len);
 
-			len = static_cast<int>(wcslen(iter->second.str) * 2);
-			cfile.Write(&iter->second.str, len);
-			cfile.Write(L"\r\n", 4);
-		}		
-		cfile.Close();
-	}
+	//		len = static_cast<int>(wcslen(iter->second.str) * 2);
+	//		cfile.Write(&iter->second.str, len);
+	//		cfile.Write(L"\r\n", 4);
+	//	}		
+	//	cfile.Close();
+	//}
 
 }
 
@@ -1449,8 +1447,17 @@ void CMNDataManager::DoKeywordSearch(CString strKeyword)
 
 			if (m_mapFilePathTable.find(res.filecode) != m_mapFilePathTable.end()) {
 				CString strPath = m_mapFilePathTable[res.filecode];
-				if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
-					_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+
+				memset(char_str, 0x00, _MAX_WORD_SIZE * 2);
+				int char_str_len = WideCharToMultiByte(CP_ACP, 0, res.str, -1, NULL, 0, NULL, NULL);
+				WideCharToMultiByte(CP_ACP, 0, res.str, -1, char_str, char_str_len, 0, 0);
+				unsigned int strcode = getHashCode(char_str);
+
+
+				//if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+				//	_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+			//	if (m_mapWordTable.find(strcode) != m_mapWordTable.end()) {
+				//	_stSDBWordTable tmpstr = m_mapWordTable[strcode];
 
 					//==================================================================//
 					if (m_mapImageData.find(res.filecode) != m_mapImageData.end()) {
@@ -1480,7 +1487,7 @@ void CMNDataManager::DoKeywordSearch(CString strKeyword)
 						}
 					}
 					//================================================================//
-				}
+			//	}
 			}			
 		}
 	}	
@@ -1611,9 +1618,12 @@ void CMNDataManager::ExportDatabase()
 
 						filePath = GetEditFilePath(L".jp2", strPath);
 						LoadImageData(filePath, pageImg, true);
+						if (pageImg.ptr() == nullptr) {
+							LoadImageData(strPath, pageImg, true);
+						}
 					}
 
-					if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+				//	if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
 						cv::Mat cutImg = pageImg(res.rect).clone();
 
 						int pixelcnt = 0;
@@ -1634,8 +1644,9 @@ void CMNDataManager::ExportDatabase()
 					//	data_encode.clear();
 						data_encode.swap(std::vector<uchar>());
 
-						_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
-						CString strWord = tmpstr.str;
+					//	_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+					//	CString strWord = tmpstr.str;
+						CString strWord = res.str;
 						//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
 
 						int len = static_cast<int>(wcslen(strWord.GetBuffer()) * 2);		// word code //
@@ -1673,7 +1684,7 @@ void CMNDataManager::ExportDatabase()
 
 						cfile.Write(L"\r\n", 4);
 						cutImg.release();
-					}
+				//	}
 				}
 			}
 			pageImg.release();
@@ -1732,6 +1743,9 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 				}
 				filePath = GetEditFilePath(L".jp2", strPath);
 				LoadImageData(filePath, pageImg, true);
+				if (pageImg.ptr() == nullptr) {
+					LoadImageData(strPath, pageImg, true);
+				}
 
 
 				// Export words //
@@ -1741,8 +1755,8 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 						_stSDBWord res = iter->second[i];
 
 						if (res.filecode != filecode) continue;
-						if (res.strcode == 5381)	continue;
-						if (res.fConfi < 0.8f)	continue;
+					//	if (res.strcode == 5381)	continue;
+					//	if (res.fConfi < 0.5f)	continue;
 
 						cv::Rect nRect = GetNomalizedSize(res.rect);
 						cv::Mat tmpcut = pageImg(res.rect).clone();
@@ -1773,10 +1787,12 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 					//	data_encode.clear();
 						data_encode.swap(std::vector<uchar>());
 
-						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
-							_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
-							CString strWord = tmpstr.str;
+					//	if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+					//		_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+					//		CString strWord = tmpstr.str;
 							//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
+
+						CString strWord = res.str;
 
 							int len = static_cast<int>(wcslen(strWord.GetBuffer()) * 2);		// word code //
 							cfile.Write(strWord.GetBuffer(), len);
@@ -1815,7 +1831,7 @@ void CMNDataManager::ExportDatabase(CString _strFolder)
 							cfile.Write(L"\r\n", 4);
 							cutImg.release();
 							tmpcut.release();
-						}
+					//	}
 
 					}
 				}
@@ -2005,6 +2021,9 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 				}
 				filePath = GetEditFilePath(L".jp2", strPath);
 				LoadImageData(filePath, pageImg, true);
+				if (pageImg.ptr() == nullptr) {
+					LoadImageData(strPath, pageImg, true);
+				}
 
 
 				// Export words //
@@ -2014,8 +2033,8 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 						_stSDBWord res = iter->second[i];
 
 						if (res.filecode != filecode) continue;
-						if (res.strcode == 5381) continue;
-						if (res.fConfi < 0.8f)	continue;
+				//		if (res.strcode == 5381) continue;
+				//		if (res.fConfi < 0.8f)	continue;
 						
 						
 
@@ -2047,11 +2066,12 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 					//	data_encode.clear();
 						data_encode.swap(std::vector<uchar>());
 
-						if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
+					//	if (m_mapWordTable.find(res.strcode) != m_mapWordTable.end()) {
 
-							_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
-							CString strWord = tmpstr.str;
+					//		_stSDBWordTable tmpstr = m_mapWordTable[res.strcode];
+					//		CString strWord = tmpstr.str;
 							//		TRACE(L"%s---%s, %d, %d, %d, %3.2f, %3.2f, \n", filePath, strWord, res.rect.x, res.rect.y, res.rect.width, res.fConfi, res.fDiff);
+						CString strWord = res.str;
 
 							int len = static_cast<int>(wcslen(strWord.GetBuffer()) * 2);		// word code //
 							cfile.Write(strWord.GetBuffer(), len);
@@ -2099,7 +2119,7 @@ void CMNDataManager::ExportDatabaseToHtml(CString _strFolder)
 
 
 							cfile.Write(L"\r\n", 4);
-						}
+					//	}
 						cutImg.release();
 						tmpcut.release();
 
@@ -2230,6 +2250,8 @@ bool CMNDataManager::FindHorizonEage(cv::Mat &srcImg, cv::Rect& cutRect, int typ
 		}
 		break;
 	}
+
+	return false;
 }
 bool CMNDataManager::FindVerticalEage(cv::Mat &srcImg, cv::Rect& cutRect, int type, int direction, cv::Rect& oriRect)
 {

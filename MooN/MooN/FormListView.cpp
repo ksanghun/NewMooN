@@ -115,7 +115,7 @@ void CFormListView::OnInitialUpdate()
 
 	m_ctrlList.AddUserColumn(L"PID", 100);
 	m_ctrlList.AddUserColumn(L"MID", 100);
-	m_ctrlList.AddUserColumn(L"LINE_TEXT_ID", 100);
+	m_ctrlList.AddUserColumn(L"UUID", 100);
 
 	UINT nFlags = ILC_MASK;
 	nFlags |= (theApp.m_bHiColorIcons) ? ILC_COLOR24 : ILC_COLOR4;

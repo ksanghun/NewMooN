@@ -171,7 +171,6 @@ GLuint CMNPageObject::LoadFullImage()
 	if (PathFileExists(tmpStr)) {
 		strPath = tmpStr;
 		m_bImageChanged = false;
-
 	}
 
 	cv::Mat pimg;
@@ -1280,6 +1279,8 @@ void CMNPageObject::AddDBSearchResult(cv::Rect _rect)
 	m_sdbResult.push_back(res);
 }
 
+
+
 void CMNPageObject::AddOCRResult(int lineid, _stOCRResult res)
 {
 	// !!!!!need to dup check //
@@ -1290,22 +1291,60 @@ void CMNPageObject::AddOCRResult(int lineid, _stOCRResult res)
 	int char_str_len = WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, NULL, 0, NULL, NULL);
 	WideCharToMultiByte(CP_ACP, 0, res.strCode, -1, char_str, char_str_len, 0, 0);
 
-
-	res.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
-
-	if ((lineid < m_paragraph.size()) && (lineid >= 0)) {
-		m_paragraph[lineid].vecTextBox.push_back(std::move(res));
-	}
-	else {  // Find line if by rect, line id is -1, unknown cut 
-
+//	if (lineid < m_paragraph.size()) {
+	if (lineid == -1) {  // From CNS
 		for (auto i = 0; i < m_paragraph.size(); i++) {
 			cv::Rect andRect_overlap = (m_paragraph[i].rect & res.rect);
 			if (andRect_overlap.area() >= (res.rect.area()*0.75f)) {
-				m_paragraph[i].vecTextBox.push_back(std::move(res));
-				break;
+				bool IsUpdated = false;
+				for (int j = 0; j < m_paragraph[i].vecTextBox.size(); j++) {
+					andRect_overlap = (m_paragraph[i].vecTextBox[j].rect & res.rect);
+					if (andRect_overlap.area() >= (res.rect.area()*0.75f)) { // Update		// Update //
+						m_paragraph[i].vecTextBox[j].fConfidence = res.fConfidence;
+						memcpy(m_paragraph[i].vecTextBox[j].strCode, res.strCode, sizeof(wchar_t)*_MAX_WORD_SIZE);
+						IsUpdated = true;
+						break;
+					}
+				}
+				if (IsUpdated == false) {		// Add new
+					res.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
+					m_paragraph[i].vecTextBox.push_back(std::move(res));
+				}
 			}
-		}		
+		}
 	}
+	else {		// And new //
+		if (lineid < m_paragraph.size()) {
+			res.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
+			m_paragraph[lineid].vecTextBox.push_back(std::move(res));
+		}
+	}
+//	}
+	
+
+	//if ((lineid < m_paragraph.size()) && (lineid >= 0)) {
+	//	res.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
+	//	m_paragraph[lineid].vecTextBox.push_back(std::move(res));
+	//}
+	//else {  // Find line if by rect, line id is -1, unknown cut 
+
+	//	for (auto i = 0; i < m_paragraph.size(); i++) {
+	//		cv::Rect andRect_overlap = (m_paragraph[i].rect & res.rect);
+	//		if (andRect_overlap.area() >= (res.rect.area()*0.75f)) {
+
+	//			for (int j = 0; j < m_paragraph[i].vecTextBox.size(); j++) {
+	//				andRect_overlap = (m_paragraph[i].vecTextBox[j].rect & res.rect);
+	//				if (andRect_overlap.area() >= (res.rect.area()*0.75f)) { // Update		// Update //
+	//				}
+	//				else {		// Add new
+	//					res.uuid = SINGLETON_DataMng::GetInstance()->GetUUID();
+	//					m_paragraph[i].vecTextBox.push_back(std::move(res));
+	//				}
+	//			}				
+	//			break;
+	//		}
+	//	}		
+	//}
 
 //	res.hcode = getHashCode(char_str);
 //	m_ocrResult.push_back(res);
@@ -1387,8 +1426,6 @@ void CMNPageObject::WriteSearchDBFile()
 		wnum += static_cast<int>(m_paragraph[i].vecTextBox.size());
 	}
 
-
-
 	std::map<unsigned int, _stSDB> mapSDB;
 
 //	int wnum = m_ocrResult.size();
@@ -1402,8 +1439,8 @@ void CMNPageObject::WriteSearchDBFile()
 
 			_stSDBWord sdword;
 			//	sdword.strcode = m_ocrResult[i].hcode;
-
-			sdword.strcode = getHashCode(char_str);
+			//sdword.strcode = getHashCode(char_str);
+			unsigned int strcode = getHashCode(char_str);
 
 			//if (sdword.strcode == 5381) 
 			//	continue;
@@ -1412,8 +1449,11 @@ void CMNPageObject::WriteSearchDBFile()
 			sdword.rect = m_paragraph[j].vecTextBox[i].rect;
 			sdword.fConfi = m_paragraph[j].vecTextBox[i].fConfidence;
 			sdword.fDiff = 0.0f;
+			memset(sdword.str, 0x00, sizeof(wchar_t)* _MAX_WORD_SIZE);
+			memcpy(sdword.str, m_paragraph[j].vecTextBox[i].strCode, sizeof(wchar_t)* _MAX_WORD_SIZE);
 
-			mapSDB[sdword.strcode].push_back(sdword);
+			mapSDB[strcode].push_back(sdword);
+			//mapSDB[sdword.strcode].push_back(sdword);
 			//	SINGLETON_DataMng::GetInstance()->AddSDBTable(sdword.strcode, m_ocrResult[i].strCode);
 		}
 	}

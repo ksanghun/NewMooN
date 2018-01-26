@@ -536,10 +536,11 @@ struct _stOCRResult {
 
 struct _stSDBWord {
 	unsigned int filecode;
-	unsigned int strcode;
+//	unsigned int strcode;
 	cv::Rect rect;
 	float fConfi;
 	float fDiff;
+	wchar_t str[_MAX_WORD_SIZE];
 };
 
 struct _stCNSResult {

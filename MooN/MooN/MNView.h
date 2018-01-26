@@ -93,6 +93,7 @@ public:
 	void DrawBGPageAni();
 	void DrawBGPage();	
 	void DrawOCRRes();
+	void MakeList_DrawOCRResText();
 
 	void InitCamera(bool movexy = true);
 	int SelectObject3D(int x, int y, int rect_width, int rect_height, int selmode);
@@ -224,6 +225,7 @@ private:
 	POINT3D m_vSplitPos;
 	void DoSplitTextBox();
 	void DoSplitLineBox();
+
 
 public:
 	DECLARE_MESSAGE_MAP()
