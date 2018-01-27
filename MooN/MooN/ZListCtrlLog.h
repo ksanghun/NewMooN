@@ -17,7 +17,7 @@ public:
 	void AddRecode();
 	void ResetListCtrl();
 	void AddListToTraining();
-	void SetAutoFillOption(BOOL IsAutoFill) { m_bIsAutoFill = IsAutoFill; }
+	void SetAutoFillOption(bool IsAutoFill) { m_bIsAutoFill = IsAutoFill; }
 
 	void SelItemByLineTextBoxID(int _id);
 	void DeleteItemByLineTextBoxID(int linetextid);
@@ -50,7 +50,7 @@ public:
 	int		m_selItem;
 	CString	m_strSearchId;
 
-	BOOL	m_bIsAutoFill;
+	bool	m_bIsAutoFill;
 	bool	m_bMoveCamera;
 
 

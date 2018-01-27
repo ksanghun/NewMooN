@@ -24,6 +24,7 @@ CZListCtrlLog::CZListCtrlLog()
 	m_currDrawId = 0;
 	m_colorid = 0;
 	m_bMoveCamera = true;
+	m_bIsAutoFill = true;
 }
 
 CZListCtrlLog::~CZListCtrlLog()
@@ -220,12 +221,18 @@ BOOL CZListCtrlLog::PreTranslateMessage(MSG* pMsg)
 			// fine next selitem //
 			int listcnt = GetItemCount();
 			int sid = _wtoi(GetItemText(m_selItem, 3));
-			while (m_selItem < (listcnt-1)) {
-				m_selItem++;
-				int nextId = _wtoi(GetItemText(m_selItem, 3));
-				if (sid != nextId) {					
-					break;
+
+			if (m_bIsAutoFill) {
+				while (m_selItem < (listcnt - 1)) {
+					m_selItem++;
+					int nextId = _wtoi(GetItemText(m_selItem, 3));
+					if (sid != nextId) {
+						break;
+					}
 				}
+			}
+			else {
+				m_selItem++;
 			}
 
 			int moveid = m_selItem + 5;

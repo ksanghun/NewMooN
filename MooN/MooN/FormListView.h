@@ -53,6 +53,7 @@ public:
 	void ResetLogList();
 	void AddRecord();
 	void AddRecord_CNSAll();
+	void SetAutoFillOption(bool IsAuto);
 
 	afx_msg void OnBnClickedBnAddToOcr();
 //	afx_msg void OnBnClickedCheckAutofill();

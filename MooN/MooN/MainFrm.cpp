@@ -1183,12 +1183,14 @@ void CMainFrame::OnOcrCutandsearchall()
 void CMainFrame::OnOptionsAutofillon()
 {
 	// TODO: Add your command handler code here
+	m_wndFormListView.SetAutoFillOption(true);
 }
 
 
 void CMainFrame::OnOptionsAutofilloff()
 {
 	// TODO: Add your command handler code here
+	m_wndFormListView.SetAutoFillOption(false);
 }
 
 

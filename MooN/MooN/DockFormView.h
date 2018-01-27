@@ -19,6 +19,7 @@ public:
 	void ResetLogList();
 	void SelItemByLineTextBoxID(int _id);
 	void DeleteItemByLineTextBoxID(int _id);
+	void SetAutoFillOption(bool IsAuto);
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

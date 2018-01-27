@@ -128,7 +128,7 @@ void CFormListView::OnInitialUpdate()
 	m_imgListId = 0;
 
 	m_bIsAutoFill = TRUE;
-	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
+//	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
 }
 
 void CFormListView::ResetLogList()
@@ -276,7 +276,10 @@ void CFormListView::OnBnClickedBnAddToOcr()
 //	}
 //	m_ctrlList.SetAutoFillOption(m_bIsAutoFill);
 //}
-
+void CFormListView::SetAutoFillOption(bool IsAuto)
+{
+	m_ctrlList.SetAutoFillOption(IsAuto);
+}
 
 void CFormListView::AddRecord_CNSAll()
 {

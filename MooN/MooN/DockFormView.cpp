@@ -63,6 +63,12 @@ void CDockFormView::AddMatchResult()
 
 }
 
+void CDockFormView::SetAutoFillOption(bool IsAuto)
+{
+	if (m_pMyFormView)
+		m_pMyFormView->SetAutoFillOption(IsAuto);
+}
+
 void CDockFormView::AddMatchResultCNS()
 {
 	if (m_pMyFormView)
