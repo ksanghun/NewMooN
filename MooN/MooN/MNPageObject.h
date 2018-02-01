@@ -167,7 +167,7 @@ public:
 	void UpdateDataBaseFiles();
 	bool LoadPageInfo(unsigned short& width, unsigned short& height);
 	void EncodeTexBoxHori();
-	void EncodeTexBoxVerti();
+	void EncodeTexBoxVerti(CFile& cfile);
 
 	void ClearParagraph();
 	void ClearOCRResult();
@@ -178,6 +178,7 @@ public:
 
 
 	stParapgraphInfo GetLineBoxInfo(int pid);
+	void SortLines(bool IsVerti);
 private:
 	// Basic Information //
 	CString m_strPath;

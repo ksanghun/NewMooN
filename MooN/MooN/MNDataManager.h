@@ -134,7 +134,7 @@ public:
 	DB_CHK IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
 	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);
-	void CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh);
+	void CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh, int _selImgId);
 	CMNPageObject* GetPageByID(int pid);
 
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
@@ -162,6 +162,7 @@ public:
 	void SetOCRDBOrder(int _id, _LANGUAGE_TYPE _lang);
 	_LANGUAGE_TYPE* GetOCROrder() { return m_ocrDBOrder; }
 
+	void ProcEncodingText(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode, CFile& cfile);
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;

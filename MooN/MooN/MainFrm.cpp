@@ -78,6 +78,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_OCR_MERGELINEBOX, &CMainFrame::OnOcrMergelinebox)
 	ON_COMMAND(ID_SPLITLINEBOX_VERTICALLY, &CMainFrame::OnSplitlineboxVertically)
 	ON_COMMAND(ID_SPLITLINEBOX_HORIZONTALY, &CMainFrame::OnSplitlineboxHorizontaly)
+	ON_COMMAND(ID_EXPLORER_ENCODETEXT, &CMainFrame::OnExplorerEncodetext)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -1253,3 +1254,37 @@ void CMainFrame::OnSplitlineboxHorizontaly()
 	pViewImage->SetSplitBoxMode(_HORI_DIR, _SPLIT_LINE);
 }
 
+
+
+void CMainFrame::OnExplorerEncodetext()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	CString strFolder = m_wndFileView.GetExtractDBFolder();
+
+
+	CString path, filename;
+	int nIndex = strFolder.ReverseFind(_T('\\'));
+	if (nIndex > 0) {
+		int len = strFolder.GetLength();
+		filename = strFolder.Right(len - (nIndex + 1));
+	}
+	//	filename += strExtension;	
+	path = strFolder + L"\\" + filename + L".txt";
+
+
+	CDragDropTreeCtrl* pCtrl = m_wndFileView.GetTreeCtrl();
+	if (pCtrl->GetSelItemList()->size() > 0) {
+
+		CFile cfile;
+		if (!cfile.Open(path, CFile::modeWrite | CFile::modeCreate))
+		{
+			return;
+		}
+		HTREEITEM selItem = (*pCtrl->GetSelItemList())[0];
+		pView->EncodeTextFromTreeCtrl(selItem, pCtrl, cfile);
+
+		cfile.Close();
+		::ShellExecute(NULL, L"open", L"notepad", path, NULL, SW_SHOW);
+	}
+}

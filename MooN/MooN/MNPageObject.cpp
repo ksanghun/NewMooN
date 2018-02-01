@@ -84,9 +84,6 @@ void CMNPageObject::SetName(CString _strpath, CString _strpname, CString _strnam
 	if (PathFileExists(path) == 0) {
 		CreateDirectory(path, NULL);
 	}
-
-
-
 }
 
 void CMNPageObject::SetSize(unsigned short _w, unsigned short _h, float _size)
@@ -1755,8 +1752,52 @@ void CMNPageObject::EncodeTexBoxHori()
 
 
 
-void CMNPageObject::EncodeTexBoxVerti()
+void CMNPageObject::EncodeTexBoxVerti(CFile& cfile)
 {
+	SortLines(true);
+
+	//=For Encoding======================//
+	//CString strPath = GetPInfoPath(L".txt");
+	//CFile cfile;
+	//if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+	//{
+	//	return;
+	//}
+
+	USHORT nShort = 0xfeff;  // 유니코드 바이트 오더마크.
+	cfile.Write(&nShort, 2);
+
+	CString strTmp;
+	cfile.Write(m_strName, m_strName.GetLength() * 2);
+	cfile.Write(L"\r\n", 4);
+	cfile.Write(L"--------------------", 40);
+	cfile.Write(L"\r\n", 4);
+
+	for (auto i = 0; i < m_paragraph.size(); i++) {
+		strTmp.Format(L"%d	", i + 1);
+		cfile.Write(strTmp, strTmp.GetLength()*2);
+		auto len = 0;
+		auto cNum = m_paragraph[i].vecTextBox.size();
+		for (auto j = 0; j < cNum; j++) {
+			len = wcslen(m_paragraph[i].vecTextBox[j].strCode) * 2;
+			cfile.Write(m_paragraph[i].vecTextBox[j].strCode, len);
+
+			if (j < cNum - 1) {
+				int diff = m_paragraph[i].vecTextBox[j+1].rect.y - (m_paragraph[i].vecTextBox[j].rect.y + m_paragraph[i].vecTextBox[j].rect.height);
+				if (diff > m_paragraph[i].vecTextBox[j].rect.width / 2) {
+					cfile.Write(L" ", 2);		// Space
+				}
+			}
+
+		}
+		cfile.Write(L"\r\n", 4);
+	}
+
+	cfile.Write(L"\r\n", 4);
+	//cfile.Close();
+	//::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+
+
 	//int wordheight = 32;
 	//// Sorting by x, y pos //
 	////=For Encoding======================//
@@ -1931,4 +1972,71 @@ stParapgraphInfo CMNPageObject::GetLineBoxInfo(int pid)
 	}
 
 	return lineBox;
+}
+
+void CMNPageObject::SortLines(bool IsVerti)
+{
+	int numLine = static_cast<int>(m_paragraph.size());
+
+	if ((IsVerti) &&(numLine>0)){
+		for (auto i = 0; i < numLine - 1; i++)
+		{
+			for (auto j =0; j < numLine -i - 1; j++)
+			{
+				if ((m_paragraph[j].rect.x) < (m_paragraph[j + 1].rect.x )) {
+					stParapgraphInfo swap = m_paragraph[j];
+					m_paragraph[j] = m_paragraph[j + 1];
+					m_paragraph[j + 1] = swap;
+				}
+			}
+		}
+
+		//========Sort Characters========From Top to bottom ====//
+		for (auto i = 0; i < m_paragraph.size(); i++) {
+			if (m_paragraph[i].vecTextBox.size() == 0) continue;
+
+			for(auto j=0; j<m_paragraph[i].vecTextBox.size()-1; j++){
+				for (auto k = 0; k < m_paragraph[i].vecTextBox.size()-j-1; k++) {
+					if ((m_paragraph[i].vecTextBox[k].rect.y) > (m_paragraph[i].vecTextBox[k + 1].rect.y)) {
+						_stOCRResult swap = m_paragraph[i].vecTextBox[k];
+						m_paragraph[i].vecTextBox[k] = m_paragraph[i].vecTextBox[k + 1];
+						m_paragraph[i].vecTextBox[k + 1] = swap;
+					}
+				}
+			}
+		}
+
+	}
+	//else {
+	//	for (auto i = 0; i < numLine - 1; i++)
+	//	{
+	//		for (auto j = 0; j < numLine - i - 1; j++)
+	//		{
+	//			if ((m_paragraph[j].rect.y) > (m_paragraph[j + 1].rect.y)) /* For decreasing order use < */
+	//			{
+	//				stParapgraphInfo swap = m_paragraph[j];
+	//				m_paragraph[j] = m_paragraph[j + 1];
+	//				m_paragraph[j + 1] = swap;
+	//			}
+	//		}
+	//	}
+
+	//	//========Sort Characters========From Left to Top ====//
+	//	for (auto i = 0; i < m_paragraph.size(); i++) {
+	//		for (auto j = 0; j<m_paragraph[i].vecTextBox.size() - 1; j++) {
+	//			for (auto k = 0; k < m_paragraph[i].vecTextBox.size() - j - 1; j++) {
+	//				if ((m_paragraph[i].vecTextBox[k].rect.x) > (m_paragraph[i].vecTextBox[k + 1].rect.x)) {
+	//					_stOCRResult swap = m_paragraph[i].vecTextBox[k];
+	//					m_paragraph[i].vecTextBox[k] = m_paragraph[i].vecTextBox[k + 1];
+	//					m_paragraph[i].vecTextBox[k + 1] = swap;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+
+
+
+
 }
