@@ -41,6 +41,7 @@ public:
 	//void SetThresholdValue(float _th);
 	//void SetResultColor(int R, int G, int B);
 	RECT2D GetSelectedAreaForCNS();
+	void EncodeTextFromTreeCtrl(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, CFile& cfile);
 
 // Overrides
 public:

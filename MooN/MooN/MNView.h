@@ -151,6 +151,8 @@ public:
 	void MergeSelectedLineBox();
 	void SetSplitBoxMode(_SPLIT_DIR _dir, _SPLIT_TYPE _type) { m_spliteDirection = _dir; m_spliteType = _type; }
 
+	
+
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -198,6 +200,7 @@ private:
 	std::map<int, _stLineTextSelectionInfo> m_mapSelectionInfo;
 	int m_selParaId;
 	int m_selOCRId;
+	int m_selImgId;
 
 
 	int m_selOCRIdforMouseHover;

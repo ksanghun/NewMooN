@@ -67,6 +67,8 @@ CMNView::CMNView()
 	m_spliteDirection = _NONE_DIR;
 	m_spliteType = _SPLIT_TEXT;
 	mtSetPoint3D(&m_vSplitPos, 0.0f, 0.0f, 0.0f);
+
+	m_selImgId = -1;
 }
 
 
@@ -268,9 +270,12 @@ void CMNView::DrawBGPageAni()
 //			vecImg[i]->DrawParagraph(m_selParaId);
 			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 			//if((iter != m_mapSelectionInfo.end())/* && (iter->second.vecTextId.size() >0)*/)
-			for (; iter != m_mapSelectionInfo.end(); iter++) {
-				vecImg[i]->DrawParagraph(iter->second.lineid, static_cast<bool>(m_spliteType));
+			if (i == m_selImgId) {
+				for (; iter != m_mapSelectionInfo.end(); iter++) {
+					vecImg[i]->DrawParagraph(iter->second.lineid, static_cast<bool>(m_spliteType));
+				}
 			}
+
 		}
 		else {
 			vecImg[i]->DrawSDBItem();
@@ -815,7 +820,8 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 		m_pSelectPageForCNS->SetSelection(false);
 		m_pSelectPageForCNS = NULL;
 		m_selParaId = -1;
-		m_selOCRId = -1;		
+		m_selOCRId = -1;	
+		m_selImgId = -1;
 		//std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 		//for (; iter != m_mapSelectionInfo.end(); iter++) {
 		//	iter->second.vecTextId.swap(std::vector<int>());
@@ -877,6 +883,9 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 				m_pSelectPageForCNS = SINGLETON_DataMng::GetInstance()->GetPageByOrderID(selid);
 				MakeList_DrawOCRResText();
 				if (m_pSelectPageForCNS) {
+
+					m_selImgId = selid;
+
 					m_pSelectPageForCNS->SetSelection(true);
 					m_pSelectPageForCNS->SetIsNear(true);
 				//	DrawOCRRes();					
@@ -1734,6 +1743,7 @@ void CMNView::ConfirmOCRRes()
 		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 		if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
 			m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
+			MakeList_DrawOCRResText();
 		}
 		//for (; iter != m_mapSelectionInfo.end(); iter++) {
 		//	for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
@@ -1761,6 +1771,7 @@ void CMNView::UpdateOCRCode(CString _strCode)
 		//m_selOCRId = -1;
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
+		MakeList_DrawOCRResText();
 	}
 }
 
@@ -1890,13 +1901,23 @@ void CMNView::AddLineBox(cv::Rect rect)
 void CMNView::EncodePage()
 {
 	if ((m_pSelectPageForCNS)) {
+		CString strPath = m_pSelectPageForCNS->GetPInfoPath(L".txt");
+		CFile cfile;
+		if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+		{
+			return;
+		}
+
 		m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
 		if (m_extractionSetting.IsVerti) {
-			m_pSelectPageForCNS->EncodeTexBoxVerti();
+			m_pSelectPageForCNS->EncodeTexBoxVerti(cfile);
 		}
 		else {
 			m_pSelectPageForCNS->EncodeTexBoxHori();
 		}
+
+		cfile.Close();
+		::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
 	}
 }
 
@@ -2427,7 +2448,7 @@ void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, 
 			
 			if (((dbRes.fConfidence+0.1) > ocrRes[k].fConfidence) && (dbRes.fConfidence > 0.6f)){
 				ocrRes[k].type = 100;
-				dbRes.type = 3;
+				dbRes.type = __CNS;
 				ocrAdd.push_back(dbRes);
 			}
 			imgword.release();
@@ -3135,6 +3156,10 @@ void CMNView::ProcDoSearchSelection()
 
 int CMNView::SelectObject3DForMouseOver(int x, int y, int rect_width, int rect_height, int selmode)
 {
+	if (m_bIsThreadEnd == false) return 0;
+
+
+	wglMakeCurrent(m_CDCPtr->GetSafeHdc(), m_hRC);
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 
 	if (m_pSelectPageForCNS) {
@@ -3512,11 +3537,11 @@ bool CMNView::DoCNSSegments()
 {
 	// generate temporary index that start from 65536 ! , except for unicode scope //
 	m_bIsThreadEnd = false;
-	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+//	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	m_addImgCnt = 0;
 	m_loadedImgCnt = 1;
 
-	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt, m_fThreshold);
+	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt, m_fThreshold, m_selImgId);
 	m_bIsThreadEnd = true;
 
 	//auto i = 0;
@@ -3745,10 +3770,12 @@ _stOCRResult CMNView::GetCORResult(cv::Mat& cutImg)
 			if (pOrder[i] == __ENG) {
 				m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_WORD);
 				ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(__ENG), tesseract::RIL_WORD, 1.0f, pOrder[i]);
+				ocrtmp.type = __ENG;
 			}
 			else {
 				m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_CHAR);
 				ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_SYMBOL, 1.0f, pOrder[i]);
+				ocrtmp.type = pOrder[i];
 			}	
 						
 			if (ocrtmp.fConfidence > 0.9f) {

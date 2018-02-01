@@ -41,6 +41,7 @@ BEGIN_MESSAGE_MAP(CDragDropTreeCtrl, CTreeCtrl)
 	ON_NOTIFY_REFLECT(NM_DBLCLK, &CDragDropTreeCtrl::OnNMDblclk)
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, &CDragDropTreeCtrl::OnNMCustomdraw)
 	ON_WM_TIMER()
+	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -609,4 +610,10 @@ void CDragDropTreeCtrl::OnTimer(UINT_PTR nIDEvent)
 	  }
 
 	CTreeCtrl::OnTimer(nIDEvent);
+}
+
+
+void CDragDropTreeCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/)
+{
+	// TODO: Add your message handler code here
 }

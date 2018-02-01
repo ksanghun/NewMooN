@@ -432,3 +432,56 @@ RECT2D CMooNView::GetSelectedAreaForCNS()
 //		m_pViewImage->SetResColor(color);
 //	}
 //}
+
+
+void CMooNView::EncodeTextFromTreeCtrl(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, CFile& cfile)
+{
+	//CString strPath = GetPInfoPath(L".txt");
+	//CFile cfile;
+	//if (!cfile.Open(strPath, CFile::modeWrite | CFile::modeCreate))
+	//{
+	//	return;
+	//}
+
+	//cfile.Close();
+	//::ShellExecute(NULL, L"open", L"notepad", strPath, NULL, SW_SHOW);
+
+
+	USES_CONVERSION;	char* sz = 0;
+
+	CString strPath, strPName, strName;
+	unsigned long pCode = 0, cCode = 0, nameCode = 0;
+	HTREEITEM hChildItem = pCtrl->GetChildItem(_item);
+
+	if (hChildItem == NULL) {}  // No Child!! File}
+	else {		// Has Child : Folder //
+		strPName = pCtrl->GetItemFullPath(_item);
+		sz = T2A(strPName);
+		pCode = getHashCode(sz);
+		// Change Item Status //
+		//pCtrl->SetItemImage(_item, 1, 1);
+		while (hChildItem) {
+			HTREEITEM cItem = pCtrl->GetChildItem(hChildItem);
+
+			if (cItem == NULL) { // File //
+			//	pCtrl->SetItemImage(hChildItem, 4, 4);
+				strName = pCtrl->GetItemText(hChildItem);
+				strPath = pCtrl->GetItemFullPath(hChildItem);
+				
+				char* sz = T2A(strPath);
+				cCode = getHashCode(sz);
+				sz = T2A(strName);
+				nameCode = getHashCode(sz);
+				// Add Image Data //
+				SINGLETON_DataMng::GetInstance()->ProcEncodingText(strPath, strPName, strName, cCode, pCode, cfile);
+			}
+
+			else {
+				EncodeTextFromTreeCtrl(hChildItem, pCtrl, cfile);
+			}
+			hChildItem = pCtrl->GetNextItem(hChildItem, TVGN_NEXT);
+		}
+	}
+
+
+}

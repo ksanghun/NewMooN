@@ -821,6 +821,7 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 			memset(ocrres.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			memcpy(ocrres.strCode, m_refImgClass[classid].vecStr[pos], sizeof(wchar_t)*clen);
 			ocrres.fConfidence = confi;
+			ocrres.type = __CNS;
 			//if (ocrres.fConfidence > 1.0f)
 			//	ocrres.fConfidence = 1.0f;
 		}
@@ -857,7 +858,7 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
 {
 	DB_CHK res = SDB_ADD;
-	float addTh = 0.9f;
+	float addTh = 0.95f;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
@@ -2360,7 +2361,7 @@ bool CMNDataManager::IsSupportFormat(CString strPath)
 	return false;
 }
 
-void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh)
+void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh, int _selImgId)
 {
 	CMNView* pViewImage = pView->GetImageView();
 	// Prepare Cut&Search matching //	
@@ -2374,6 +2375,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	int cnt = 0;
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
 //		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+		if (i != _selImgId)  continue;
+
 		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 		for (auto k = 0; k < vecLine.size(); k++) {
 		//	for (auto j = 0; j < ocrRes.size(); j++) {
@@ -2383,6 +2386,13 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 			}
 		}
 	}
+
+	if (cnt == 0) {
+		addCnt = 0;
+		totalCnt = 0;
+		return;
+	}
+
 	averheight /= cnt;
 	float fNormalScale = 1.0f;
 //	float fNormalScale = 32.0f / static_cast<float>(averheight);
@@ -2390,6 +2400,8 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	// Initialize Cut & Search Vector==============//
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
 		//		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
+		if (i != _selImgId)  continue;
+
 		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 
 		cv::Mat srcImg = m_vecImgData[i]->GetSrcPageGrayImg();
@@ -2560,4 +2572,15 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 		addCnt++;
 	}
 	// Add Match result to each page //
+}
+
+
+void CMNDataManager::ProcEncodingText(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode, CFile& cfile)
+{
+	CMNPageObject pimg;
+	pimg.SetName(_strpath, _strPName, _strName, _code, _pcode);
+	unsigned short width = 0, height = 0;
+	if (pimg.LoadPageInfo(width, height)) {
+		pimg.EncodeTexBoxVerti(cfile);
+	}
 }

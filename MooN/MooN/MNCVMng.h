@@ -8,7 +8,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 #define _NUM_LANGUAGE_TYPE 4
-enum _LANGUAGE_TYPE { __ENG = 0, __CHI, __KOR, __JAP, __LANG_NONE, __CNS };
+enum _LANGUAGE_TYPE { __ENG = 0, __CHI, __KOR, __JAP, __CNS, __LANG_NONE };
 enum _ALIGHN_TYPE { _HORIZON_ALIGN, _VERTICAL_ALIGN, _UNKNOWN_ALIGN};
 #define _MAX_EXTRACT_ITERATION 20
 

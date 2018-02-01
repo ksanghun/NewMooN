@@ -103,6 +103,7 @@ public:
 	afx_msg void OnNMDblclk(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMCustomdraw(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
 };
 
 /////////////////////////////////////////////////////////////////////////////

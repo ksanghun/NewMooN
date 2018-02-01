@@ -282,6 +282,8 @@ BEGIN
     BEGIN
         MENUITEM "Export Database",             ID_EXPLORER_EXPORTDATABASE
         MENUITEM "Export Database (Html)",      ID_EXPLORER_EXPORTDATABASE_HTML
+        MENUITEM SEPARATOR
+        MENUITEM "Encode Text",                 ID_EXPLORER_ENCODETEXT
     END
 END
 

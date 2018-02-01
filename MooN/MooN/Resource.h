@@ -154,7 +154,6 @@
 #define IDC_COMBO_1ST_LANGUAGE          1047
 #define IDC_COMBO_2ND_LANGUAGE          1048
 #define IDC_COMBO_3RD_LANGUAGE          1049
-#define IDC_COMBO4                      1050
 #define IDC_COMBO_4TH_LANGUAGE          1050
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
@@ -250,13 +249,14 @@
 #define ID_OCR_MERGELINEBOX             32861
 #define ID_SPLITLINEBOX_VERTICALLY      32862
 #define ID_SPLITLINEBOX_HORIZONTALY     32863
+#define ID_EXPLORER_ENCODETEXT          32864
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32864
+#define _APS_NEXT_COMMAND_VALUE         32865
 #define _APS_NEXT_CONTROL_VALUE         1048
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

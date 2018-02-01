@@ -215,9 +215,6 @@ BOOL CZListCtrlLog::PreTranslateMessage(MSG* pMsg)
 			UpdateCodeValue();
 
 			SetItemState(m_selItem, 0, LVIS_FOCUSED | LVIS_SELECTED);
-
-
-
 			// fine next selitem //
 			int listcnt = GetItemCount();
 			int sid = _wtoi(GetItemText(m_selItem, 3));
