@@ -383,7 +383,7 @@ BEGIN
         MENUITEM "Add Line Box",                ID_OCR_ADD_LINEBOX
         MENUITEM "Delete Line Box",             ID_OCR_DELETEL_INEBOX
         MENUITEM "Rotate Line Box",             ID_OCR_ROTATE_LINE
-        MENUITEM "Undo Rotaion Line Box",       ID_OCR_UNDOROTAION_LINE
+        MENUITEM "Undo Rotation of Line Box",   ID_OCR_UNDOROTAION_LINE
         MENUITEM "Merge Line Box",              ID_OCR_MERGELINEBOX
         POPUP "Split Line Box"
         BEGIN
@@ -394,7 +394,7 @@ BEGIN
         MENUITEM "Add Text Box",                ID_OCR_ADD_TEXTBOX
         MENUITEM "Delete Text Box",             ID_OCR_DELETETE_XTBOX32820
         MENUITEM "Merge Text Box",              ID_OCR_MERGE_BOX
-        POPUP "Splite Text Box"
+        POPUP "Split Text Box"
         BEGIN
             MENUITEM "Vertically",                  ID_SPLITETEXTBOX_VERTICALLY
             MENUITEM "Horizontally",                ID_SPLITETEXTBOX_HORIZONTALL
