@@ -385,7 +385,7 @@ BEGIN
         MENUITEM "Add Line Box",                ID_OCR_ADD_LINEBOX
         MENUITEM "Delete Line Box",             ID_OCR_DELETEL_INEBOX
         MENUITEM "Rotate Line Box",             ID_OCR_ROTATE_LINE
-        MENUITEM "Undo Rotation of Line Box",   ID_OCR_UNDOROTAION_LINE
+        MENUITEM "Undo Rotaion Line Box",       ID_OCR_UNDOROTAION_LINE
         MENUITEM "Merge Line Box",              ID_OCR_MERGELINEBOX
         POPUP "Split Line Box"
         BEGIN
@@ -396,7 +396,7 @@ BEGIN
         MENUITEM "Add Text Box",                ID_OCR_ADD_TEXTBOX
         MENUITEM "Delete Text Box",             ID_OCR_DELETETE_XTBOX32820
         MENUITEM "Merge Text Box",              ID_OCR_MERGE_BOX
-        POPUP "Split Text Box"
+        POPUP "Splite Text Box"
         BEGIN
             MENUITEM "Vertically",                  ID_SPLITETEXTBOX_VERTICALLY
             MENUITEM "Horizontally",                ID_SPLITETEXTBOX_HORIZONTALL
@@ -471,12 +471,11 @@ BEGIN
     PUSHBUTTON      "Browser...",IDC_BUTTON_BROWSER2,300,40,48,14
 END
 
-IDD_FORMLISTVIEW DIALOGEX 0, 0, 156, 156
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-FONT 8, "MS Shell Dlg", 0, 0, 0x0
+IDD_FORMLISTVIEW DIALOGEX 0, 0, 80, 156
+STYLE DS_SETFONT | WS_CHILD
+FONT 16, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,24,102,125
-    PUSHBUTTON      "Train Results",IDC_BN_ADD_TO_OCR,7,7,65,15
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,66,142
 END
 
 IDD_FROMPROPERTIES DIALOGEX 0, 0, 190, 546
@@ -607,7 +606,7 @@ BEGIN
     IDD_FORMLISTVIEW, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 149
+        RIGHTMARGIN, 73
         TOPMARGIN, 7
         BOTTOMMARGIN, 149
     END
