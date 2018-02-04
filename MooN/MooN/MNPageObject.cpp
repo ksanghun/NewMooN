@@ -1235,7 +1235,7 @@ void CMNPageObject::UpdateLineStatus(int _id, bool IsCNS)
 }
 
 
-void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid)
+bool CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid)
 {
 	m_IsNeedToSave = true;
 //	if ((selid < m_ocrResult.size()) && (selid >= 0)) {
@@ -1251,7 +1251,9 @@ void CMNPageObject::UpdateOCRCode(CString _strCode, float _fConfi, int lid, int 
 		m_paragraph[lid].vecTextBox[selid].hcode_s = getHashCode(char_str);
 
 //		m_paragraph[lid].vecTextBox[selid].strCode = _strCode;
+		return true;
 	}
+	return false;
 }
 
 

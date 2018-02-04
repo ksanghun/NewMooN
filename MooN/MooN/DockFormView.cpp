@@ -76,6 +76,13 @@ void CDockFormView::AddMatchResultCNS()
 
 }
 
+void CDockFormView::AddListToTraining()
+{
+	if (m_pMyFormView)
+		m_pMyFormView->AddListToTraining();
+
+}
+
 void CDockFormView::ResizeListColSize(int _maxwidth)
 {
 	if (m_pMyFormView)

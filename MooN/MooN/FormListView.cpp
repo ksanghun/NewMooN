@@ -35,7 +35,7 @@ void CFormListView::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CFormListView, CFormView)
 	ON_WM_SIZE()
-	ON_BN_CLICKED(IDC_BN_ADD_TO_OCR, &CFormListView::OnBnClickedBnAddToOcr)
+//	ON_BN_CLICKED(IDC_BN_ADD_TO_OCR, &CFormListView::OnBnClickedBnAddToOcr)
 //	ON_BN_CLICKED(IDC_CHECK_AUTOFILL, &CFormListView::OnBnClickedCheckAutofill)
 END_MESSAGE_MAP()
 
@@ -75,7 +75,7 @@ void CFormListView::OnSize(UINT nType, int cx, int cy)
 
 	// TODO: Add your message handler code here
 	if(m_bIsCreated)
-		m_ctrlList.MoveWindow(0, 40, cx, cy-40);
+		m_ctrlList.MoveWindow(0, 0, cx, cy);
 }
 
 void CFormListView::ResizeListColSize(int _maxwidth)
@@ -257,12 +257,17 @@ void CFormListView::AddRecord()
 	
 }
 
-void CFormListView::OnBnClickedBnAddToOcr()
+void CFormListView::AddListToTraining()
 {
-	// TODO: Add your control notification handler code here
-
 	m_ctrlList.AddListToTraining();
 }
+
+//void CFormListView::OnBnClickedBnAddToOcr()
+//{
+//	// TODO: Add your control notification handler code here
+//
+//	m_ctrlList.AddListToTraining();
+//}
 
 
 //void CFormListView::OnBnClickedCheckAutofill()

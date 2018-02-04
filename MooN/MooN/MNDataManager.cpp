@@ -10,6 +10,8 @@
 #endif
 
 
+#define DB_ADD_TH 0.7f
+
 // For convert image file to base64 //
 static const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -811,8 +813,8 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		rect.width = w;
 		rect.height = h;
 		
-		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
+		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 		int clen = m_refImgClass[classid].maxCharLen;
 //		float confi = TemplateMatching(cutimg, imgword)+0.1f;
 		
@@ -855,10 +857,43 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 	return th;
 }
 
-DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid)
+DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh)
 {
 	DB_CHK res = SDB_ADD;
-	float addTh = 0.95f;
+	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
+		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
+		// Template Matching //
+		int w = (classid + 1) * DB_IMGCHAR_SIZE;
+		int h = DB_IMGCHAR_SIZE;
+		cv::Rect rect;
+		rect.x = (pos % m_refImgClass[classid].wNum)*w;
+		rect.y = (pos / m_refImgClass[classid].wNum)*h;
+		rect.width = w;
+		rect.height = h;
+
+		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+
+		float fAccuracy = TemplateMatching(cutimg, imgword);
+		if (fAccuracy > 0.99f) {	// Same cut //
+			if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) != 0) {
+				int clen = m_refImgClass[classid].maxCharLen;
+				memset(m_refImgClass[classid].vecStr[pos], 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+				memcpy(m_refImgClass[classid].vecStr[pos], strcode, sizeof(wchar_t)*clen);
+				//m_refImgClass[classid].needToUpdate = true;
+				m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+				res = SDB_UPDATE;
+				break;
+			}
+		}
+	}
+	return res;
+}
+
+DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh)
+{
+	DB_CHK res = SDB_ADD;
+	addTh = DB_ADD_TH;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
@@ -871,29 +906,56 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 		rect.width = w;
 		rect.height = h;
 
-		cv::Mat imgword = cv::Mat(h + 8, w + 8, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(4, 4, w, h)));
+		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+
+		//float fAccuracy = TemplateMatching(cutimg, imgword);
+		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
+			float fAccuracy = TemplateMatching(cutimg, imgword);
+			if (fAccuracy > 0.7f) {
+				res = SDB_SKIP;
+				addTh = fAccuracy;			
+				break;
+			}
+		}
+	}
+	return res;
+}
+
+DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh)
+{
+	DB_CHK res = SDB_ADD;
+	//	float addTh = 0.95f;
+	addTh = DB_ADD_TH;
+	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
+
+		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
+		// Template Matching //
+		int w = (classid + 1) * DB_IMGCHAR_SIZE;
+		int h = DB_IMGCHAR_SIZE;
+		cv::Rect rect;
+		rect.x = (pos % m_refImgClass[classid].wNum)*w;
+		rect.y = (pos / m_refImgClass[classid].wNum)*h;
+		rect.width = w;
+		rect.height = h;
+
+		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
-		//	if (TemplateMatching(cutimg, imgword) > addTh) {
-			if(fAccuracy > addTh){
+			if (fAccuracy > addTh) {
 				res = SDB_SKIP;
-				addTh = fAccuracy;			
-			//	break;
-			}
-			else {
-				res = SDB_ADD;
-			//	break;
+				addTh = fAccuracy;
 			}
 		}
 		else {
-//			if (TemplateMatching(cutimg, imgword) > addTh) {
-			if(fAccuracy > 0.99f){	// Same cut //
+			if (fAccuracy > 0.99f) {	// Same cut //
 				int clen = m_refImgClass[classid].maxCharLen;
 				memset(m_refImgClass[classid].vecStr[pos], 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 				memcpy(m_refImgClass[classid].vecStr[pos], strcode, sizeof(wchar_t)*clen);
-				m_refImgClass[classid].needToUpdate = true;				
+//				m_refImgClass[classid].needToUpdate = true;
+				m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
 				res = SDB_UPDATE;
 				break;
 			}
@@ -948,7 +1010,7 @@ void CMNDataManager::ProcDBTrainingFromCutSearch()
 			memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			wsprintf(wstrcode, iter->second[i].strCode.GetBuffer());
 
-			DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid);
+			DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid, 0.8f);
 
 			if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
 				int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
@@ -967,7 +1029,8 @@ void CMNDataManager::ProcDBTrainingFromCutSearch()
 				memcpy(strcode, wstrcode, sizeof(wchar_t)*clen);
 				m_refImgClass[classid].vecStr.push_back(strcode);
 
-				m_refImgClass[classid].needToUpdate = true;
+//				m_refImgClass[classid].needToUpdate = true;
+				m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
 				
 				// Update Table =======================//
 				//char char_str[_MAX_WORD_SIZE * 2];
@@ -981,6 +1044,8 @@ void CMNDataManager::ProcDBTrainingFromCutSearch()
 		}
 	}
 }
+
+
 
 void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode, unsigned int hcode)
 {
@@ -996,22 +1061,36 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 	cv::Rect imgRect = cv::Rect(0, 0, cutimg.cols, cutimg.rows);
 	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
 	int classid = GetNomalizedWordSize(imgRect, norRect, 32) - 1;
-	int imgid = m_refImgClass[classid].nCurrImgId;
+//	int imgid = m_refImgClass[classid].nCurrImgId;
 
 	cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
 	resimg.setTo(255);
 	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
 	// Verify to add into DB =====================================//
-	DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid);
+	DB_CHK IsAdd = IsNeedToAddDBForCNS(resimg, wstrcode, classid, 0.8f);
 	//===========================================================//
 
 	if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
-		int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
+		
+		int totalchar = static_cast<int>(m_refImgClass[classid].vecStr.size());
+		int imgid = totalchar / m_refImgClass[classid].getTotalNum();
+		int wordPosId = totalchar % m_refImgClass[classid].getTotalNum();
 
 		int w = (classid + 1) * DB_IMGCHAR_SIZE;
 		int h = DB_IMGCHAR_SIZE;
 
+		if (m_refImgClass[classid].img[imgid].ptr() == NULL) {		// Create New DB Class image File //
+			int w = m_refImgClass[classid].wNum * w;
+			int h = m_refImgClass[classid].hNum * h;
+			m_refImgClass[classid].img[imgid] = cv::Mat(w, h, CV_8UC1, cv::Scalar(255));
+			m_refImgClass[classid].nCurrImgId = imgid;
+//			m_refImgClass[classid].needToUpdate = true;
+			m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+		}
+		
+
+		
 		norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
 		norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
 
@@ -1023,7 +1102,8 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 		memcpy(strcode, wstrcode, sizeof(wchar_t)*clen);
 		m_refImgClass[classid].vecStr.push_back(strcode);
 
-		m_refImgClass[classid].needToUpdate = true;
+//		m_refImgClass[classid].needToUpdate = true;
+		m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
 
 		// Update Table =======================//
 		char char_str[_MAX_WORD_SIZE * 2];
@@ -1032,7 +1112,7 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 		WideCharToMultiByte(CP_ACP, 0, wstrcode, -1, char_str, char_str_len, 0, 0);
 		unsigned int hcode = getHashCode(char_str);
 
-		AddSDBTable(hcode, strcode);
+		//AddSDBTable(hcode, strcode);
 		m_bIsUpdateTable = true;
 
 	//	AddSDBTable(0, strcode);
@@ -1041,17 +1121,128 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 }
 
 
+
+void CMNDataManager::DBUpdateStrCode(CMNPageObject* pPage, int lineid, int objid)
+{
+	//	std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
+	std::vector<stParapgraphInfo> vecLine = pPage->GetVecParagraph();
+
+	cv::Mat cutimg = pPage->GetSrcPageGrayImg()(vecLine[lineid].vecTextBox[objid].rect);
+	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
+	int classid = GetNomalizedWordSize(vecLine[lineid].vecTextBox[objid].rect, norRect, 32) - 1;
+	int imgid = m_refImgClass[classid].nCurrImgId;
+
+	cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
+	resimg.setTo(255);
+	//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
+
+	DB_CHK IsAdd = IsNeedToUpdateDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.7f);
+
+	if (IsAdd == SDB_ADD) {
+		DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.7f);
+
+		if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
+			int totalchar = static_cast<int>(m_refImgClass[classid].vecStr.size());
+			int imgid = totalchar / m_refImgClass[classid].getTotalNum();
+			int wordPosId = totalchar % m_refImgClass[classid].getTotalNum();
+
+			int w = (classid + 1) * DB_IMGCHAR_SIZE;
+			int h = DB_IMGCHAR_SIZE;
+
+			if (m_refImgClass[classid].img[imgid].ptr() == NULL) {		// Create New DB Class image File //
+				int imgw = m_refImgClass[classid].wNum * w;
+				int imgh = m_refImgClass[classid].hNum * h;
+				m_refImgClass[classid].img[imgid] = cv::Mat(imgw, imgh, CV_8UC1, cv::Scalar(255));
+				m_refImgClass[classid].nCurrImgId = imgid;
+				//			m_refImgClass[classid].needToUpdate = true;
+				m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+			}
+
+			norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
+			norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
+
+			resimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+
+			int clen = m_refImgClass[classid].maxCharLen;
+			wchar_t* strcode = new wchar_t[clen];
+			memset(strcode, 0x00, sizeof(wchar_t)*clen);
+			memcpy(strcode, vecLine[lineid].vecTextBox[objid].strCode, sizeof(wchar_t)*clen);
+			m_refImgClass[classid].vecStr.push_back(strcode);
+
+//			m_refImgClass[classid].needToUpdate = true;
+			m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+			m_bIsUpdateTable = true;
+		}
+		pPage->UpdateOCRResStatus(lineid, objid, false, vecLine[lineid].vecTextBox[objid].type);
+	}
+}
+
+void CMNDataManager::DBTrainingStrCode(CMNPageObject* pPage, int lineid, int objid)
+{
+	std::vector<stParapgraphInfo> vecLine = pPage->GetVecParagraph();
+
+	cv::Mat cutimg = pPage->GetSrcPageGrayImg()(vecLine[lineid].vecTextBox[objid].rect);
+	cv::Rect norRect;// = GetNomalizedWordSize(ocrRes[j].rect);
+	int classid = GetNomalizedWordSize(vecLine[lineid].vecTextBox[objid].rect, norRect, 32) - 1;
+	int imgid = m_refImgClass[classid].nCurrImgId;
+
+	cv::Mat resimg = cv::Mat(cvSize(norRect.width, norRect.height), cutimg.type());
+	resimg.setTo(255);
+	//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
+	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
+
+	DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.7f);
+
+	if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
+		//int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
+
+		//int w = (classid + 1) * DB_IMGCHAR_SIZE;
+		//int h = DB_IMGCHAR_SIZE;
+
+		int totalchar = static_cast<int>(m_refImgClass[classid].vecStr.size());
+		int imgid = totalchar / m_refImgClass[classid].getTotalNum();
+		int wordPosId = totalchar % m_refImgClass[classid].getTotalNum();
+
+		int w = (classid + 1) * DB_IMGCHAR_SIZE;
+		int h = DB_IMGCHAR_SIZE;
+
+		if (m_refImgClass[classid].img[imgid].ptr() == NULL) {		// Create New DB Class image File //
+			int imgw = m_refImgClass[classid].wNum * w;
+			int imgh = m_refImgClass[classid].hNum * h;
+			m_refImgClass[classid].img[imgid] = cv::Mat(imgw, imgh, CV_8UC1, cv::Scalar(255));
+			m_refImgClass[classid].nCurrImgId = imgid;
+//			m_refImgClass[classid].needToUpdate = true;
+			m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+		}
+
+		norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
+		norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
+
+		resimg.copyTo(m_refImgClass[classid].img[imgid](norRect));
+
+		int clen = m_refImgClass[classid].maxCharLen;
+		wchar_t* strcode = new wchar_t[clen];
+		memset(strcode, 0x00, sizeof(wchar_t)*clen);
+		memcpy(strcode, vecLine[lineid].vecTextBox[objid].strCode, sizeof(wchar_t)*clen);
+		m_refImgClass[classid].vecStr.push_back(strcode);
+
+//		m_refImgClass[classid].needToUpdate = true;
+		m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+
+		m_bIsUpdateTable = true;
+	}
+	pPage->UpdateOCRResStatus(lineid, objid, false, vecLine[lineid].vecTextBox[objid].type);
+	
+}
+
 void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 {
 //	std::vector<_stOCRResult> ocrRes = pPage->GetVecOCRResult();
 
 	std::vector<stParapgraphInfo> vecLine = pPage->GetVecParagraph();
 	for (auto i = 0; i < vecLine.size(); i++) {
-
-
-
-
-
+		
 	//	for (int j = 0; j < ocrRes.size(); j++) {
 		for (int j = 0; j < vecLine[i].vecTextBox.size(); j++) {
 			if ((vecLine[i].vecTextBox[j].bNeedToDB) && (vecLine[i].vecTextBox[j].fConfidence > 0.1f)) {
@@ -1072,14 +1263,25 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 
 
 				// Verify to add into DB =====================================//
-				DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[i].vecTextBox[j].strCode, classid);
+				DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[i].vecTextBox[j].strCode, classid, 0.8f);
 				//===========================================================//
 
 				if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
-					int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
+					int totalchar = static_cast<int>(m_refImgClass[classid].vecStr.size());
+					int imgid = totalchar / m_refImgClass[classid].getTotalNum();
+					int wordPosId = totalchar % m_refImgClass[classid].getTotalNum();
 
 					int w = (classid + 1) * DB_IMGCHAR_SIZE;
 					int h = DB_IMGCHAR_SIZE;
+
+					if (m_refImgClass[classid].img[imgid].ptr() == NULL) {		// Create New DB Class image File //
+						int imgw = m_refImgClass[classid].wNum * w;
+						int imgh = m_refImgClass[classid].hNum * h;
+						m_refImgClass[classid].img[imgid] = cv::Mat(imgw, imgh, CV_8UC1, cv::Scalar(255));
+						m_refImgClass[classid].nCurrImgId = imgid;
+						//			m_refImgClass[classid].needToUpdate = true;
+						m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
+					}
 
 					norRect.x = (wordPosId % m_refImgClass[classid].wNum)*w;
 					norRect.y = (wordPosId / m_refImgClass[classid].wNum)*h;
@@ -1092,7 +1294,8 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 					memcpy(strcode, vecLine[i].vecTextBox[j].strCode, sizeof(wchar_t)*clen);
 					m_refImgClass[classid].vecStr.push_back(strcode);
 
-					m_refImgClass[classid].needToUpdate = true;
+//					m_refImgClass[classid].needToUpdate = true;
+					m_refImgClass[classid].IsNeedToUpdate[imgid] = true;
 
 					// Update Table //
 	//				AddSDBTable(ocrRes[j].hcode, strcode);
@@ -1160,20 +1363,29 @@ void CMNDataManager::UpdateAllImgVecData()
 void CMNDataManager::UpdateImgClassDB()
 {
 	USES_CONVERSION;
+	CString strFile;
+	char* sz = 0;
+	
 	for (int i = 0; i < DB_CLASS_NUM; i++) {
-		if (m_refImgClass[i].needToUpdate) {
-			int imgid = m_refImgClass[i].nCurrImgId;
-			CString strFile;
-			strFile.Format(L"%s//class%02d_%02d.jp2", m_strUserDataFolder, i, imgid);
-			char* sz = T2A(strFile);
-			cv::imwrite(sz, m_refImgClass[i].img[imgid]);
+		bool bImgUpdate = false;
+		for (int j = 0; j <= m_refImgClass[i].nCurrImgId; j++) {
+			if (m_refImgClass[i].IsNeedToUpdate[j]) {
+				int imgid = j;
+				strFile.Format(L"%s\\class%02d_%02d.jp2", m_strUserDataFolder, i, imgid);
+				sz = T2A(strFile);
+				cv::imwrite(sz, m_refImgClass[i].img[imgid]);
 
-			strFile.Format(L"%s//class%02d_%02d.jpg", m_strUserDataFolder, i, imgid);
-			sz = T2A(strFile);
-			cv::imwrite(sz, m_refImgClass[i].img[imgid]);
+				strFile.Format(L"%s\\class%02d_%02d.jpg", m_strUserDataFolder, i, imgid);
+				sz = T2A(strFile);
+				cv::imwrite(sz, m_refImgClass[i].img[imgid]);				
+				m_refImgClass[i].IsNeedToUpdate[j] = false;
+				bImgUpdate = true;
+			}
+		}
 
-			// Write image encode //
-			strFile.Format(L"%s//class%02d.jp3", m_strUserDataFolder, i);
+		// Write image encode //
+		if (bImgUpdate) {
+			strFile.Format(L"%s\\class%02d.jp3", m_strUserDataFolder, i);
 			sz = T2A(strFile);
 			FILE* fp = 0;
 			fopen_s(&fp, sz, "wb");
@@ -1187,7 +1399,7 @@ void CMNDataManager::UpdateImgClassDB()
 			}
 			fclose(fp);
 		}
-	}
+	}	
 }
 
 
@@ -1237,7 +1449,7 @@ void CMNDataManager::InitDataBaseFiles()
 				int w = m_refImgClass[i].wNum * DB_IMGCHAR_SIZE*(i + 1);
 				int h = m_refImgClass[i].hNum * DB_IMGCHAR_SIZE;
 				m_refImgClass[i].img[j] = cv::Mat(w, h, CV_8UC1, cv::Scalar(255));
-				m_refImgClass[i].needToUpdate = true;
+				m_refImgClass[i].IsNeedToUpdate[j] = true;
 			}
 		}
 	}
@@ -2361,7 +2573,8 @@ bool CMNDataManager::IsSupportFormat(CString strPath)
 	return false;
 }
 
-void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh, int _selImgId)
+
+void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, std::vector<int>& vecSelPage)
 {
 	CMNView* pViewImage = pView->GetImageView();
 	// Prepare Cut&Search matching //	
@@ -2375,8 +2588,10 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	int cnt = 0;
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
 //		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
-		if (i != _selImgId)  continue;
+//		if (i != _selImgId)  continue;
 
+	//for (auto k = 0; k<vecSelPage.size(); k++) {
+	//	int i = vecSelPage[k];
 		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 		for (auto k = 0; k < vecLine.size(); k++) {
 		//	for (auto j = 0; j < ocrRes.size(); j++) {
@@ -2400,7 +2615,9 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 	// Initialize Cut & Search Vector==============//
 	for (auto i = 0; i < m_vecImgData.size(); i++) {
 		//		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
-		if (i != _selImgId)  continue;
+//		if (i != _selImgId)  continue;
+	//for (auto k = 0; k<vecSelPage.size(); k++) {
+	//	int i = vecSelPage[k];
 
 		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 
@@ -2466,11 +2683,11 @@ void CMNDataManager::CutNSearchMatching(unsigned int& addCnt, unsigned int& tota
 					// Cut and Search matching //
 					//cv::Mat result(1, 1, CV_32FC1);
 
-					cv::Mat dstimg1 = cv::Mat(vecCnSResults[l].cutimg.rows + 4, vecCnSResults[l].cutimg.cols + 4, CV_8UC1, cv::Scalar(255));
-					vecCnSResults[l].cutimg.copyTo(dstimg1(cv::Rect(2, 2, vecCnSResults[l].cutimg.cols, vecCnSResults[l].cutimg.rows)));
+					cv::Mat dstimg1 = cv::Mat(vecCnSResults[l].cutimg.rows + 2, vecCnSResults[l].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
+					vecCnSResults[l].cutimg.copyTo(dstimg1(cv::Rect(1, 1, vecCnSResults[l].cutimg.cols, vecCnSResults[l].cutimg.rows)));
 
-					cv::Mat dstimg2 = cv::Mat(vecCnSResults[k].cutimg.rows + 4, vecCnSResults[k].cutimg.cols + 4, CV_8UC1, cv::Scalar(255));
-					vecCnSResults[k].cutimg.copyTo(dstimg2(cv::Rect(2, 2, vecCnSResults[k].cutimg.cols, vecCnSResults[k].cutimg.rows)));
+					cv::Mat dstimg2 = cv::Mat(vecCnSResults[k].cutimg.rows + 2, vecCnSResults[k].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
+					vecCnSResults[k].cutimg.copyTo(dstimg2(cv::Rect(1, 1, vecCnSResults[k].cutimg.cols, vecCnSResults[k].cutimg.rows)));
 
 					//cv::matchTemplate(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg, result, CV_TM_CCOEFF_NORMED);
 					//float fD1 = result.at<float>(0, 0);
@@ -2583,4 +2800,49 @@ void CMNDataManager::ProcEncodingText(CString _strpath, CString _strPName, CStri
 	if (pimg.LoadPageInfo(width, height)) {
 		pimg.EncodeTexBoxVerti(cfile);
 	}
+}
+
+void CMNDataManager::AddListItemVecForTraiing(int pid, int mid, CString strCode)
+{
+	stListItemInfo item;
+	item.pageId = pid;
+	item.matchId = mid;
+	item.strCode = strCode;
+	m_veclistItemForTraining.push_back(item);
+}
+
+void CMNDataManager::ProcAddListToDB(int& addCnt, int& totalCnt, bool& IsEnd)
+{
+	totalCnt = m_veclistItemForTraining.size();
+	for (auto i = 0; i < m_veclistItemForTraining.size(); i++) {
+		int pageid = m_veclistItemForTraining[i].pageId;
+		int matchid = m_veclistItemForTraining[i].matchId;			
+		CString strCode = m_veclistItemForTraining[i].strCode;
+
+		CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(pageid);
+		if (pPage) {
+			_stOCRResult ocrRes;
+			ocrRes.type = __CNS;
+
+			if (pPage->GetRectByMatchID(matchid, ocrRes.rect, ocrRes.fConfidence)) {
+
+				// Need to add cut&Search result to OCR results !!!! //
+				memset(&ocrRes.strCode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
+				wsprintf(ocrRes.strCode, strCode.GetBuffer());
+
+
+				ocrRes.bNeedToDB = true;
+
+				pPage->AddOCRResult(-1, ocrRes);  // hcode here!!
+
+				cv::Mat cutImg = pPage->GetSrcPageGrayImg()(ocrRes.rect).clone();
+				//			SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, ocrRes.hcode);
+				SINGLETON_DataMng::GetInstance()->DBTrainingFromCutSearch(cutImg, ocrRes.strCode, 0);
+				cutImg.release();
+			}
+		}
+		addCnt++;
+	}
+
+	IsEnd = true;
 }

@@ -1198,8 +1198,22 @@ void CMainFrame::OnOptionsAutofilloff()
 void CMainFrame::OnOptionsTrainingall()
 {
 	// TODO: Add your command handler code here
+	//m_wndFormListView.AddListToTraining();	
+	//CMNView* pViewImage = pView->GetImageView();
+	//pViewImage->ProcAddListToTraining();
+
+	int addNum = 0, totalNum = 0;
+	bool threadEnd = false;
+	m_wndFormListView.AddListToTraining();
+
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcAddListToTraining();
 }
 
+void CMainFrame::AddListToTraining(int& addNum, int& totalNum, bool& threadEnd)
+{
+//	m_wndFormListView.AddListToTraining(addNum, totalNum, threadEnd);
+}
 
 void CMainFrame::OnOptionsTrainingselection()
 {

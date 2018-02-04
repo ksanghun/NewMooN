@@ -4,7 +4,9 @@
 #include "stdafx.h"
 #include "ZListCtrlLog.h"
 #include "resource.h"
+#include "MNDataManager.h"
 #include "MooNView.h"
+
 
 
 
@@ -25,6 +27,7 @@ CZListCtrlLog::CZListCtrlLog()
 	m_colorid = 0;
 	m_bMoveCamera = true;
 	m_bIsAutoFill = true;
+
 }
 
 CZListCtrlLog::~CZListCtrlLog()
@@ -108,14 +111,20 @@ void CZListCtrlLog::ResetListCtrl()
 
 void CZListCtrlLog::AddListToTraining()
 {
-	for (int row = 0; row < GetItemCount(); ++row)
+//	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+
+	SINGLETON_DataMng::GetInstance()->ClearListItemVec();
+	int totalNum = GetItemCount();
+	for (int row = 0; row < totalNum; ++row)
 	{
 		int pageId = _ttoi(GetItemText(row, 13));
 		int matchId = _ttoi(GetItemText(row, 14));
 		CString strCode = GetItemText(row, 1);
 
-		pView->AddListToTraining(pageId, matchId, strCode);
+		SINGLETON_DataMng::GetInstance()->AddListItemVecForTraiing(pageId, matchId, strCode);
+//		pView->AddListToTraining(pageId, matchId, strCode);
 	}
+
 }
 
 
@@ -856,3 +865,5 @@ void CZListCtrlLog::DeleteItemByLineTextBoxID(int _id)
 		}
 	}
 }
+
+

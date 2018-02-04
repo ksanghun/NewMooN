@@ -365,8 +365,8 @@ void CMooNView::DoOCR()
 void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 {
 	//SINGLETON_DataMng::GetInstance()->ProcDBTrainingFromCutSearch();
-	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
-	pM->AddOutputString(L"Training Cut & Search Results...", false);
+//	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+//	pM->AddOutputString(L"Training Cut & Search Results...", false);
 
 	CMNPageObject* pPage = SINGLETON_DataMng::GetInstance()->GetPageByID(pageid);
 	if (pPage) {
@@ -395,7 +395,7 @@ void CMooNView::AddListToTraining(int pageid, int matchid, CString strCode)
 		}
 	}
 
-	pM->AddOutputString(L"Training Cut & Search Results...complete", false);
+//	pM->AddOutputString(L"Training Cut & Search Results...complete", false);
 }
 
 

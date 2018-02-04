@@ -40,6 +40,7 @@ public:
 	void SetOCRResInfo(wchar_t* strCode, float fConfi, int lang);
 	void DeleteMatchList(int line_text_id);
 	void ClearAllResults();
+	void AddListToTraining(int& addNum, int& totalNum, bool& threadEnd);
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);

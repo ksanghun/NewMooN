@@ -149,7 +149,7 @@ public:
 	cv::Rect GetSelParaRect(int selid);
 	unsigned int DeleteSelOCRRes(int lid, int selid);
 	void ConfirmOCRRes(int lid, int selid);
-	void UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid);
+	bool UpdateOCRCode(CString _strCode, float _fConfi, int lid, int selid);
 	void UpdateOCRResStatus(int lid, int selid, bool IsUpdate, int _type);
 	void UpdateLineStatus(int _id, bool IsCNS);
 	

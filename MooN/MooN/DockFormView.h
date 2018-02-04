@@ -15,6 +15,7 @@ public:
 
 	void AddMatchResult();
 	void AddMatchResultCNS();
+	void AddListToTraining();
 	void ResizeListColSize(int _maxwidth);
 	void ResetLogList();
 	void SelItemByLineTextBoxID(int _id);

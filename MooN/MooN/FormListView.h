@@ -54,8 +54,9 @@ public:
 	void AddRecord();
 	void AddRecord_CNSAll();
 	void SetAutoFillOption(bool IsAuto);
+	void AddListToTraining();
 
-	afx_msg void OnBnClickedBnAddToOcr();
+//	afx_msg void OnBnClickedBnAddToOcr();
 //	afx_msg void OnBnClickedCheckAutofill();
 	BOOL m_bIsAutoFill;
 

@@ -27,7 +27,7 @@ CFormProperties::CFormProperties()
 	, m_strCode(_T(""))
 	, m_fConfidence(0)
 	, m_bLineBox(TRUE)
-	, m_editConfi(80)
+	, m_editConfi(70)
 	, m_editKeyword(_T(""))
 	, m_editDefaultFontSize(32)
 	, m_editDBth(90)
@@ -179,7 +179,7 @@ void CFormProperties::OnInitialUpdate()
 
 	m_sliderForDBTh.SetRange(1, 100, TRUE);
 	m_sliderForDBTh.SetTicFreq(100);
-	m_sliderForDBTh.SetPos(m_editConfi);
+	m_sliderForDBTh.SetPos(m_editDBth);
 
 
 	CMNView* pImgView = pView->GetImageView();
@@ -450,7 +450,14 @@ void CFormProperties::OnBnClickedBnAddModifyocrres()
 	// TODO: Add your control notification handler code here
 	UpdateData(TRUE);
 	CMNView* pImgView = pView->GetImageView();
-	pImgView->UpdateOCRCode(m_strCode);
+
+
+//	if (m_comboLanguage.GetCurSel() == 4) {
+	pImgView->UpdateOCRCode(m_strCode, true);
+	//}
+	//else {
+	//	pImgView->UpdateOCRCode(m_strCode, false);
+	//}
 }
 
 

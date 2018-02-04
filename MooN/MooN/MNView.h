@@ -18,6 +18,7 @@ static UINT ThreadDoOCR(LPVOID lpParam);
 static UINT ThreadDoExportDB(LPVOID lpParam);
 static UINT ThreadDoExportDBHtml(LPVOID lpParam);
 static UINT ThreadCNSSegments(LPVOID lpParam);
+static UINT ThreadListToTraining(LPVOID lpParam);
 
 static bool  m_bIsThreadEnd;
 
@@ -42,6 +43,8 @@ public:
 	void ProcOCR(bool IsAll);
 	void ProcTrainingOCRResbyConfidence(float fConfi);
 	void ProcCNSSegments();
+	void ProcAddListToTraining();
+	void AddListToTraining();
 
 
 	void GenerateThumbnail();
@@ -133,7 +136,7 @@ public:
 	void EncodePage();
 
 	void ConfirmOCRRes();
-	void UpdateOCRCode(CString _strCode);
+	void UpdateOCRCode(CString _strCode, bool IsDBUpdate);
 
 	RECT2D GetSelectedAreaForCNS();
 	void EnableShowLine(bool Isshow) {		m_bIsShowParagraph = Isshow;	}
@@ -152,7 +155,10 @@ public:
 	void SetSplitBoxMode(_SPLIT_DIR _dir, _SPLIT_TYPE _type) { m_spliteDirection = _dir; m_spliteType = _type; }
 
 	
-
+	// thumbnail image thread //
+	int m_addImgCnt;
+	int m_loadedImgCnt;
+	//==================================//
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -164,10 +170,7 @@ private:
 	LOGFONT		m_LogFont;
 	BITMAPINFO* m_pBmpInfo;
 
-	// thumbnail image thread //
-	unsigned int m_addImgCnt;
-	unsigned int m_loadedImgCnt;
-	//==================================//
+	
 
 	// Camera Animation //
 	bool m_isAnimation;
@@ -198,6 +201,7 @@ private:
 	int m_cnsSearchId;
 
 	std::map<int, _stLineTextSelectionInfo> m_mapSelectionInfo;
+	std::vector<int> m_vecSelPage;
 	int m_selParaId;
 	int m_selOCRId;
 	int m_selImgId;

@@ -22,6 +22,7 @@ public:
 	void SelItemByLineTextBoxID(int _id);
 	void DeleteItemByLineTextBoxID(int linetextid);
 
+
 // ColumnHeader Class============================//
 	class CCustomDrawHeaderCtrl : public CHeaderCtrl
 	{
@@ -53,11 +54,11 @@ public:
 	bool	m_bIsAutoFill;
 	bool	m_bMoveCamera;
 
-
 protected:
 
 	virtual void PreSubclassWindow();
 	void UpdateCodeValue();
+	
 
 	CZEdit m_Edit;
 	int nItem, nSubItem;
@@ -81,6 +82,7 @@ public:
 
 
 	afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
+
 };
 
 

@@ -5,7 +5,7 @@
 #include "resource.h"
 #include "MooN.h"
 
-enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION, _DO_OCR, _DO_EXPORT_DB, _DO_CNS_SEGMENTS};
+enum TIMEREVNT { _RENDER = 100, _ADDIMG, _SEARCHIMG, _MOVECAMANI, _UPDATE_PAGE, _GEN_THUMBNAIL, _DO_SEARCH, _DO_EXTRACTION, _DO_OCR, _DO_EXPORT_DB, _DO_CNS_SEGMENTS, _DO_ADDLIST_TO_DB};
 
 
 #define DEFAULT_X_OFFSET -5800;
@@ -187,11 +187,10 @@ void CMNView::Render()
 		if (m_pSelectPageForCNS) {
 			m_pSelectPageForCNS->DrawSelectedParagraph(0);
 			DrawOCRRes();
-			glCallList(m_glListIdForDrawOCRRes);
-		
-			DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
+			glCallList(m_glListIdForDrawOCRRes);			
 			DrawSplitLine(1.0f, 0.0f, 0.0f, 1.0f);
 		}
+		DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
 	//	glCallList(m_glListIdForDrawOCRRes);
 	}
 
@@ -703,6 +702,22 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			MakeList_DrawOCRResText();
 		}
 	}
+
+	else if (nIDEvent == _DO_ADDLIST_TO_DB) {
+		float complete = (float)m_addImgCnt / (float)m_loadedImgCnt;
+		CString str;
+		str.Format(_T("Training Cut&Search.....%d"), int(complete * 100));
+		str += _T("%");
+		str += _T(" completed.");
+		pM->AddOutputString(str, true);
+		if (m_bIsThreadEnd) {
+			m_addImgCnt = 0;
+			KillTimer(_DO_ADDLIST_TO_DB);
+
+			str.Format(_T("Training Cut&Search.....done"));
+			pM->AddOutputString(str, true);
+		}
+	}
 	//else if (nIDEvent == _UPDATE_PAGE) {
 	//	SINGLETON_DataMng::GetInstance()->UpdatePageStatus(m_cameraPri.GetEye());
 	//}
@@ -826,6 +841,8 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 		//for (; iter != m_mapSelectionInfo.end(); iter++) {
 		//	iter->second.vecTextId.swap(std::vector<int>());
 		//}
+
+	//	m_vecSelPage.swap(std::vector<int>());
 	}
 
 	if (m_IsSearchMatchItems)
@@ -881,6 +898,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 
 			if (selid < _PICK_PARA) {		// Page selection
 				m_pSelectPageForCNS = SINGLETON_DataMng::GetInstance()->GetPageByOrderID(selid);
+			//	m_vecSelPage.push_back(selid);
 				MakeList_DrawOCRResText();
 				if (m_pSelectPageForCNS) {
 
@@ -1471,7 +1489,7 @@ void CMNView::DoExtractBoundaryAuto()
 void CMNView::ProcTrainingOCRResbyConfidence(float fConfi)
 {
 	if (m_pSelectPageForCNS) {
-		std::vector<stParapgraphInfo> vecline = m_pSelectPageForCNSAll->GetVecParagraph();
+		std::vector<stParapgraphInfo> vecline = m_pSelectPageForCNS->GetVecParagraph();
 		//std::vector<_stOCRResult> ocrRes;
 		//for (auto i = 0; i < vecline.size(); i++) {
 		//	for (auto j = 0; j < vecline[i].vecTextBox.size(); j++) {
@@ -1484,10 +1502,11 @@ void CMNView::ProcTrainingOCRResbyConfidence(float fConfi)
 				if (vecline[i].vecTextBox[j].fConfidence > m_dispConfi) {
 					//	ocrRes[j].bNeedToDB = true;
 					m_pSelectPageForCNS->UpdateOCRResStatus(i,j, true, vecline[i].vecTextBox[j].type);
-				}
-				SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
+				}				
 			}
 		}
+
+		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
 
@@ -1515,6 +1534,15 @@ void CMNView::ProcOCR(bool IsAll)
 	//}
 
 	SetTimer(_DO_OCR, 100, NULL);
+}
+
+void CMNView::ProcAddListToTraining()
+{
+	CWinThread* pl;
+	pl = AfxBeginThread(ThreadListToTraining, this);
+
+	m_bIsThreadEnd = false;
+	SetTimer(_DO_ADDLIST_TO_DB, 100, NULL);
 }
 
 void CMNView::ProcExtractBoundary()
@@ -1743,6 +1771,8 @@ void CMNView::ConfirmOCRRes()
 		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 		if ((m_selParaId >= 0) && (m_selOCRId >= 0)) {
 			m_pSelectPageForCNS->ConfirmOCRRes(m_selParaId, m_selOCRId);
+
+			SINGLETON_DataMng::GetInstance()->DBTrainingStrCode(m_pSelectPageForCNS, m_selParaId, m_selOCRId);
 			MakeList_DrawOCRResText();
 		}
 		//for (; iter != m_mapSelectionInfo.end(); iter++) {
@@ -1754,24 +1784,32 @@ void CMNView::ConfirmOCRRes()
 		//	iter->second.vecTextId.swap(std::vector<int>());
 		//}
 		//m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
-		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
+		//SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
 	}
 }
 
-void CMNView::UpdateOCRCode(CString _strCode)
+void CMNView::UpdateOCRCode(CString _strCode, bool IsDBUpdate)
 {
 	if ((m_pSelectPageForCNS)) {
 		std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
-		for (; iter != m_mapSelectionInfo.end(); iter++) {
-			for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
-				m_pSelectPageForCNS->UpdateOCRCode(_strCode, 1.0f, iter->second.lineid, iter->second.vecTextId[i]);
-			}
-			iter->second.vecTextId.swap(std::vector<int>());
-		}
+		//for (; iter != m_mapSelectionInfo.end(); iter++) {
+		//	for (auto i = 0; i < iter->second.vecTextId.size(); i++) {
+		//		m_pSelectPageForCNS->UpdateOCRCode(_strCode, 1.0f, iter->second.lineid, iter->second.vecTextId[i]);
+		//	}
+		//	iter->second.vecTextId.swap(std::vector<int>());
+		//}
 		//m_selOCRId = -1;
-		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
-		SINGLETON_DataMng::GetInstance()->DBTrainingForPage(m_pSelectPageForCNS);
-		MakeList_DrawOCRResText();
+		
+		if (m_pSelectPageForCNS->UpdateOCRCode(_strCode, 1.0f, m_selParaId, m_selOCRId)) {
+			//		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+			if (IsDBUpdate) {
+				SINGLETON_DataMng::GetInstance()->DBUpdateStrCode(m_pSelectPageForCNS, m_selParaId, m_selOCRId);
+			}
+			else {
+				SINGLETON_DataMng::GetInstance()->DBTrainingStrCode(m_pSelectPageForCNS, m_selParaId, m_selOCRId);
+			}
+			MakeList_DrawOCRResText();
+		}
 	}
 }
 
@@ -1805,6 +1843,8 @@ void CMNView::DeleteAllOCRRes()
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		m_selOCRIdforMouseHover = -1;
 		m_selParaIdforMouseHover = -1;
+
+		MakeList_DrawOCRResText();
 	}
 }
 
@@ -3541,7 +3581,7 @@ bool CMNView::DoCNSSegments()
 	m_addImgCnt = 0;
 	m_loadedImgCnt = 1;
 
-	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt, m_fThreshold, m_selImgId);
+	SINGLETON_DataMng::GetInstance()->CutNSearchMatching(m_addImgCnt, m_loadedImgCnt, m_fThreshold, m_vecSelPage);
 	m_bIsThreadEnd = true;
 
 	//auto i = 0;
@@ -3924,6 +3964,15 @@ void CMNView::MergeSelectedLineBox()
 
 
 
+void CMNView::AddListToTraining()
+{
+	m_loadedImgCnt = 1;
+	m_addImgCnt = 0;
+	m_bIsThreadEnd = false;
+//	pM->AddListToTraining(m_addImgCnt, m_loadedImgCnt, m_bIsThreadEnd);
+	SINGLETON_DataMng::GetInstance()->ProcAddListToDB(m_addImgCnt, m_loadedImgCnt, m_bIsThreadEnd);
+}
+
 
 
 
@@ -3931,6 +3980,12 @@ void CMNView::MergeSelectedLineBox()
 
 
 // Thread============//
+static UINT ThreadListToTraining(LPVOID lpParam)
+{
+	CMNView* pClass = (CMNView*)lpParam;
+	pClass->AddListToTraining();
+	return 0L;
+}
 
 static UINT ThreadDoExportDB(LPVOID lpParam)
 {

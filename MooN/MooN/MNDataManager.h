@@ -25,6 +25,12 @@ struct stPageGroup {
 	stVecPageObj imgVec;
 };
 
+struct stListItemInfo {
+	int pageId; 
+	int matchId; 
+	CString strCode;
+};
+
 
 struct stMatchResult
 {
@@ -59,8 +65,10 @@ typedef std::vector<stMatchResult> stVecMatchResult;
 
 struct stDBRefImage {
 	cv::Mat img[DB_MAXNUM_IMGDB];
+	bool IsNeedToUpdate[DB_MAXNUM_IMGDB];
 	int nCurrImgId;
-	bool needToUpdate;
+//	bool needToUpdate;
+	
 
 	unsigned short wNum, hNum, maxCharLen;
 	std::vector<wchar_t*> vecStr;
@@ -71,8 +79,16 @@ struct stDBRefImage {
 		hNum = _h;
 		maxCharLen = _len;
 		vecStr = std::vector<wchar_t*>();
-		needToUpdate = false;
+	//	needToUpdate = false;
+		for (int i = 0; i < DB_MAXNUM_IMGDB; i++) {
+			IsNeedToUpdate[i] = false;
+		}
 	};
+
+	int getTotalNum()
+	{
+		return wNum*hNum;
+	}
 };
 
 
@@ -128,13 +144,18 @@ public:
 	void MultiToUniCode(char* char_str, wchar_t* str_unicode);
 //	void DBTraining(CMNPageObject* pPage);
 	void DBTrainingForPage(CMNPageObject* pPage);
+	void DBUpdateStrCode(CMNPageObject* pPage, int lineid, int objid);
+	void DBTrainingStrCode(CMNPageObject* pPage, int lineid, int objid);
 	void DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode, unsigned int hcode);
 	void ProcDBTrainingFromCutSearch();
 	void ResizeCutImageByRatio(cv::Mat& dstimg, cv::Mat& cutimg, int norWidth, int norHeight);
-	DB_CHK IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid);
+	DB_CHK IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh);
+	DB_CHK IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh);
+	DB_CHK IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh);
 	float TemplateMatching(cv::Mat& src, cv::Mat& dst);
 	void MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres);
-	void CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh, int _selImgId);
+//	void CutNSearchMatching(unsigned int& addCnt, unsigned int& totalCnt, float _fTh, int _selImgId);
+	void CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, std::vector<int>& vecSelPage);
 	CMNPageObject* GetPageByID(int pid);
 
 	void SetExtractionSetting(_stExtractionSetting _set) {		m_extractonInfo = _set;	}
@@ -163,6 +184,12 @@ public:
 	_LANGUAGE_TYPE* GetOCROrder() { return m_ocrDBOrder; }
 
 	void ProcEncodingText(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode, CFile& cfile);
+
+
+	void ClearListItemVec() { m_veclistItemForTraining.swap(std::vector<stListItemInfo>()); }
+	void AddListItemVecForTraiing(int pid, int mid, CString strCode);
+	void ProcAddListToDB(int& addCnt, int& totalCnt, bool& IsEnd);
+
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -174,11 +201,11 @@ private:
 	std::map<unsigned long, CMNPageObject*> m_mapImageData;
 	std::map<unsigned long, stPageGroup> m_mapGrupImg;
 
+	std::vector<stListItemInfo> m_veclistItemForTraining;
 
 	// For Search DB ======================================//
 //	std::map<unsigned int, _stSDBWordTable> m_mapWordTable;
 	std::map<unsigned int, CString> m_mapFilePathTable;
-
 	std::map<unsigned int, _stSDB> m_mapGlobalSDB;
 	//=====================================================//
 
