@@ -141,6 +141,7 @@ public:
 	afx_msg void OnSplitlineboxVertically();
 	afx_msg void OnSplitlineboxHorizontaly();
 	afx_msg void OnExplorerEncodetext();
+	afx_msg void OnOcrRemovepage();
 };
 
 

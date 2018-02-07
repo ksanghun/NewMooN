@@ -980,6 +980,9 @@ bool CMNPageObject::IsNeedToExtract()
 }
 void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic)
 {
+	if ((IsVerti) && (rect.width < 10)) return;
+	if ((!IsVerti) && (rect.height < 10)) return;
+
 	m_IsNeedToSave = true;
 	stParapgraphInfo para;
 	para.init();

@@ -79,6 +79,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_SPLITLINEBOX_VERTICALLY, &CMainFrame::OnSplitlineboxVertically)
 	ON_COMMAND(ID_SPLITLINEBOX_HORIZONTALY, &CMainFrame::OnSplitlineboxHorizontaly)
 	ON_COMMAND(ID_EXPLORER_ENCODETEXT, &CMainFrame::OnExplorerEncodetext)
+	ON_COMMAND(ID_OCR_REMOVEPAGE, &CMainFrame::OnOcrRemovepage)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -842,26 +843,26 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		}
 
 		else if (nChar == 39) {
-			//if (pViewImage) {
-			//	pViewImage->MoveNextPage();
-			//}
+			if (pViewImage) {
+				pViewImage->MoveNextPage();
+			}
 		}
 		else if (nChar == 37) {
-			//if (pViewImage) {
-			//	pViewImage->MovePrePage();
-			//}
+			if (pViewImage) {
+				pViewImage->MovePrePage();
+			}
 		}
 
 		else if (nChar == 38) {
-			//if (pViewImage) {
-			//	pViewImage->MoveNextUp();
-			//}
+			if (pViewImage) {
+				pViewImage->MoveNextUp();
+			}
 		}
 
 		else if (nChar == 40) {
-			//if (pViewImage) {
-			//	pViewImage->MoveNextDown();
-			//}
+			if (pViewImage) {
+				pViewImage->MoveNextDown();
+			}
 		}
 
 		//else if (nChar == 88) {	// excute search
@@ -1301,4 +1302,12 @@ void CMainFrame::OnExplorerEncodetext()
 		cfile.Close();
 		::ShellExecute(NULL, L"open", L"notepad", path, NULL, SW_SHOW);
 	}
+}
+
+
+void CMainFrame::OnOcrRemovepage()
+{
+	// TODO: Add your command handler code here
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->RemoveSelectedPage();
 }

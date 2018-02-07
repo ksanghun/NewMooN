@@ -99,6 +99,25 @@ void CZListCtrlLog::InitListCtrl()
 {
 	m_Edit.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL , CRect(0, 0, 800, 500), this, NULL);
 	m_Edit.ShowWindow(SW_HIDE);	
+
+	CFont Font;
+
+	Font.CreateFont(16,                // Height
+		0,                             // Width
+		0,                             // Escapement
+		0,                             // Orientation
+		FW_BOLD,                       // Weight
+		FALSE,                         // Italic
+		TRUE,                          // Underline
+		0,                             // StrikeOut
+		ANSI_CHARSET,                  // CharSet
+		OUT_DEFAULT_PRECIS,            // OutPrecision
+		CLIP_DEFAULT_PRECIS,           // ClipPrecision
+		DEFAULT_QUALITY,               // Quality
+		DEFAULT_PITCH | FF_SWISS,      // PitchAndFamily
+		L"Arial");                     // Facename
+
+	m_Edit.SetFont(&Font, 1);
 }
 
 
@@ -124,13 +143,14 @@ void CZListCtrlLog::AddListToTraining()
 		SINGLETON_DataMng::GetInstance()->AddListItemVecForTraiing(pageId, matchId, strCode);
 //		pView->AddListToTraining(pageId, matchId, strCode);
 	}
-
 }
 
 
 void CZListCtrlLog::OnNMClick(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	m_bMoveCamera = true;
+
+	pView->SetTypeMode(true);
 
 	//LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	//// TODO: Add your control notification handler code here

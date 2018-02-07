@@ -380,6 +380,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Search text",                 ID_OCR_SEARCH_SELECTION
         MENUITEM SEPARATOR
+        MENUITEM "Remove Page",                 ID_OCR_REMOVEPAGE
+        MENUITEM SEPARATOR
         MENUITEM "Remove Noise",                ID_OCR_REMOVENOISE
         MENUITEM SEPARATOR
         MENUITEM "Add Line Box",                ID_OCR_ADD_LINEBOX

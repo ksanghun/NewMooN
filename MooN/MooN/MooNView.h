@@ -43,6 +43,8 @@ public:
 	RECT2D GetSelectedAreaForCNS();
 	void EncodeTextFromTreeCtrl(HTREEITEM _item, CDragDropTreeCtrl* pCtrl, CFile& cfile);
 
+	void SetTypeMode(bool IsEnable) { m_pViewImage->SetTypeMode(IsEnable); }
+
 // Overrides
 public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view

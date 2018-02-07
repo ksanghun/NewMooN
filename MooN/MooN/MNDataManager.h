@@ -123,7 +123,8 @@ public:
 
 	void InitData();
 	CMNPageObject* PushImageDataSet(CString _strpath, CString _strPName, CString _strName, unsigned long _code, unsigned long _pcode);
-	void PopImageDataSet(unsigned long _pcode);
+	void PopImageDataGroup(unsigned long _pcode);
+	void PopImageData(unsigned long _pcode, unsigned long _code);
 	CBitmap* GetLogCBitmap(cv::Mat& pimg);
 	cv::Rect GetNomalizedSize(cv::Rect rect);
 	int GetNomalizedWordSize(cv::Rect inrect, cv::Rect& outRect, int basepixel);

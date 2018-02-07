@@ -315,7 +315,11 @@ void CMooNView::RemoveImageData(HTREEITEM _item, CDragDropTreeCtrl* pCtrl)
 		sz = T2A(strPName);
 		pCode = getHashCode(sz);
 
-		SINGLETON_DataMng::GetInstance()->PopImageDataSet(pCode);
+
+//		SINGLETON_DataMng::GetInstance()->PopImageDataSet(pCode);
+		if (m_pViewImage) {
+			m_pViewImage->RemoveImageGroup(pCode);
+		}
 	}
 }
 
@@ -407,6 +411,7 @@ void CMooNView::SetPositionByList(CString strPid, CString strMid, bool IsCameraM
 		int mid = _ttoi(strMid);
 		if(pPage->GetPosByMatchID(mid, tPos)){
 			pPage->SetSelMatchItem(mid);
+			m_pViewImage->SetCurrPage(pPage);
 			if(IsCameraMove)
 				m_pViewImage->MoveCameraPos(tPos, 200);
 		}

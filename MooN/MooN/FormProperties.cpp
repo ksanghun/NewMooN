@@ -686,7 +686,8 @@ void CFormProperties::OnBnClickedBnMatchFromDb()
 {
 	// TODO: Add your control notification handler code here
 	CMNView* pImgView = pView->GetImageView();
-	pImgView->DoOCRFromMooN();
+//	pImgView->DoOCRFromMooN();
+	pImgView->ProcOCRFromMooN();
 }
 
 

@@ -38,7 +38,7 @@ bool COCRMng::InitOCRMng()
 	m_tess[__ENG].Init("./tessdata/", "eng");
 	m_tess[__CHI].Init("./tessdata/", "chi_tra");
 	m_tess[__KOR].Init("./tessdata/", "kor");
-//	m_tess[__JAP].Init("./tessdata/", "jap");
+	m_tess[__JAP].Init("./tessdata/", "jpn");
 
 
 //	m_tessEng.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);

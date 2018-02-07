@@ -15,6 +15,7 @@ static UINT ThreadDoSearch(LPVOID lpParam);
 static UINT ThreadDoSearchSegment(LPVOID lpParam);
 static UINT ThreadDoExtraction(LPVOID lpParam);
 static UINT ThreadDoOCR(LPVOID lpParam);
+static UINT ThreadDoOCRByMooN(LPVOID lpParam);
 static UINT ThreadDoExportDB(LPVOID lpParam);
 static UINT ThreadDoExportDBHtml(LPVOID lpParam);
 static UINT ThreadCNSSegments(LPVOID lpParam);
@@ -44,6 +45,7 @@ public:
 	void ProcTrainingOCRResbyConfidence(float fConfi);
 	void ProcCNSSegments();
 	void ProcAddListToTraining();
+	void ProcOCRFromMooN();
 	void AddListToTraining();
 
 
@@ -51,6 +53,7 @@ public:
 	bool DoSearch();
 	bool DoSearchSegment();
 	void DoExtractBoundaryAuto();
+	void ExtractBoundaryForPage(CMNPageObject* pPage, bool IsAuto);
 	void DoOCR();
 	void DoOCRForPage(CMNPageObject* pPage);
 	void DoOCRFromMooN();
@@ -67,11 +70,14 @@ public:
 	//void OcrKorChar();
 	void OcrFromTextBox(_LANGUAGE_TYPE langType, int searchType);  // search type 0: character, 1: word
 	void RemoveNoise();
+	void RemoveImageData(unsigned int pCode, unsigned int code);
+	void RemoveImageGroup(unsigned int pCode);
+	void RemoveSelectedPage();
 
 	void DoOCRForCutImg(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, int lineId);
 	
 	void DoOCinResults(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, tesseract::TessBaseAPI& tess, tesseract::PageIteratorLevel level, float fScale, int langType);
-	void DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes);
+	void DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, int& addCnt);
 	bool MeargingtTextBox(std::vector<_stOCRResult>& vecBox, int& depth);
 	bool MeargingtLineBox(std::vector<stParapgraphInfo>& vecBox, int& depth);
 	void TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect);
@@ -115,6 +121,7 @@ public:
 	//void SetThreshold(float _th) {		m_fThreshold = _th;	}
 	//void SetResColor(POINT3D _color) { m_resColor.r = _color.x; m_resColor.g = _color.y; m_resColor.b = _color.z;  m_resColor.a = 1.0f; }
 	void MoveCameraPos(POINT3D target, int zoom);
+	void SetCurrPage(CMNPageObject* pPage) { m_pSelectPageForCNS = pPage; }
 
 	void MovePrePage();
 	void MoveNextPage();
@@ -159,6 +166,9 @@ public:
 	int m_addImgCnt;
 	int m_loadedImgCnt;
 	//==================================//
+
+	bool m_IsTypeMode;
+	void SetTypeMode(bool IsEnable) { m_IsTypeMode = IsEnable; }
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;

@@ -224,7 +224,68 @@ void CMNDataManager::InitData()
 	LoadSDBFiles();
 }
 
-void CMNDataManager::PopImageDataSet(unsigned long _pcode)
+
+void CMNDataManager::PopImageData(unsigned long _pcode, unsigned long _code)
+{
+	// Remove from map image data
+	std::map<unsigned long, CMNPageObject*>::iterator iter_map = m_mapImageData.begin();
+	for (; iter_map != m_mapImageData.end();) {
+		if ((iter_map->second->GetPCode() == _pcode)&&(iter_map->second->GetCode() == _code)) {
+			m_mapImageData.erase(iter_map++);
+			break;
+		}
+		else {
+			++iter_map;
+		}
+	}
+
+	// Remove from map group image data
+	std::map<unsigned long, stPageGroup>::iterator iter_gr;
+	iter_gr = m_mapGrupImg.find(_pcode);
+	if (iter_gr != m_mapGrupImg.end()) {
+		if (iter_gr->second.nSlot != -1) {
+			SelectPages(_pcode);
+		}
+
+		for (auto i = 0; i < iter_gr->second.imgVec.size(); i++) {
+			if (iter_gr->second.imgVec[i]->GetCode() == _code) {
+				iter_gr->second.imgVec.erase(iter_gr->second.imgVec.begin()+i);
+				break;
+			}
+		}
+
+		if (iter_gr->second.imgVec.size() == 0) {
+			iter_gr->second.nSlot = -1;
+			iter_gr->second.imgVec.swap(stVecPageObj());
+			m_mapGrupImg.erase(iter_gr);
+		}
+		//	iter_gr->second.imgVec.clear();		
+	}
+
+	// Remove from vector <- real data!
+	std::vector<CMNPageObject*>::iterator iter_vec = m_vecImgData.begin();
+	for (; iter_vec != m_vecImgData.end();) {
+		if (((*iter_vec)->GetPCode() == _pcode) && ((*iter_vec)->GetCode() == _code)) {
+			//			GLuint texth = (*iter_vec)->GetThumbnailTex();
+			GLuint texfull = (*iter_vec)->GetTexId();
+			//if (texth > 0) {
+			//	glDeleteTextures(1, &texth);
+			//}
+			if (texfull > 0) {
+				glDeleteTextures(1, &texfull);
+			}
+			delete (*iter_vec);
+			iter_vec = m_vecImgData.erase(iter_vec);
+			break;
+		}
+		else {
+			++iter_vec;
+		}
+	}
+}
+
+
+void CMNDataManager::PopImageDataGroup(unsigned long _pcode)
 {
 	// Remove from map image data
 	std::map<unsigned long, CMNPageObject*>::iterator iter_map = m_mapImageData.begin();
@@ -815,6 +876,9 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		
 		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+
 		int clen = m_refImgClass[classid].maxCharLen;
 //		float confi = TemplateMatching(cutimg, imgword)+0.1f;
 		
@@ -843,6 +907,7 @@ float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
 
 	float th = 0.0f;
 	float fD = 0.0f;
+//	th = result.at<float>(0, 0);
 	for (int y = 0; y < result.rows; y++) {
 		for (int x = 0; x < result.cols; x++) {
 			fD = result.at<float>(y, x);
@@ -874,6 +939,8 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (fAccuracy > 0.99f) {	// Same cut //
 			if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) != 0) {
@@ -886,6 +953,8 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 				break;
 			}
 		}
+
+		imgword.release();
 	}
 	return res;
 }
@@ -893,7 +962,7 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int classid, float addTh)
 {
 	DB_CHK res = SDB_ADD;
-	addTh = DB_ADD_TH;
+//	addTh = DB_ADD_TH;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
@@ -909,15 +978,19 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+
 		//float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
 			float fAccuracy = TemplateMatching(cutimg, imgword);
-			if (fAccuracy > 0.7f) {
+			if (fAccuracy > addTh) {
 				res = SDB_SKIP;
-				addTh = fAccuracy;			
+			//	addTh = fAccuracy;			
 				break;
 			}
 		}
+
+		imgword.release();
 	}
 	return res;
 }
@@ -942,11 +1015,13 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
 		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
 			if (fAccuracy > addTh) {
 				res = SDB_SKIP;
-				addTh = fAccuracy;
+			//	addTh = fAccuracy;
 			}
 		}
 		else {
@@ -960,6 +1035,8 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 				break;
 			}
 		}
+
+		imgword.release();
 	}
 	return res;
 }
@@ -1010,7 +1087,7 @@ void CMNDataManager::ProcDBTrainingFromCutSearch()
 			memset(&wstrcode, 0x00, sizeof(wchar_t)*_MAX_WORD_SIZE);
 			wsprintf(wstrcode, iter->second[i].strCode.GetBuffer());
 
-			DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid, 0.8f);
+			DB_CHK IsAdd = IsNeedToAddDB(resimg, wstrcode, classid, DB_ADD_TH);
 
 			if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
 				int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
@@ -1137,10 +1214,10 @@ void CMNDataManager::DBUpdateStrCode(CMNPageObject* pPage, int lineid, int objid
 	//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
 	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
-	DB_CHK IsAdd = IsNeedToUpdateDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.7f);
+	DB_CHK IsAdd = IsNeedToUpdateDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, DB_ADD_TH);
 
 	if (IsAdd == SDB_ADD) {
-		DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.7f);
+		DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.9f);
 
 		if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
 			int totalchar = static_cast<int>(m_refImgClass[classid].vecStr.size());
@@ -1178,7 +1255,7 @@ void CMNDataManager::DBUpdateStrCode(CMNPageObject* pPage, int lineid, int objid
 	}
 }
 
-void CMNDataManager::DBTrainingStrCode(CMNPageObject* pPage, int lineid, int objid)
+void CMNDataManager::DBTrainingStrCode(CMNPageObject* pPage, int lineid, int objid)  // !! USer confrim training //
 {
 	std::vector<stParapgraphInfo> vecLine = pPage->GetVecParagraph();
 
@@ -1192,7 +1269,7 @@ void CMNDataManager::DBTrainingStrCode(CMNPageObject* pPage, int lineid, int obj
 	//cv::resize(cutimg, cutimg, cvSize(norRect.width, norRect.height));
 	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
-	DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.7f);
+	DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[lineid].vecTextBox[objid].strCode, classid, 0.9f);  // 0.9 <-- because of user training
 
 	if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
 		//int wordPosId = static_cast<int>(m_refImgClass[classid].vecStr.size());
@@ -1263,7 +1340,7 @@ void CMNDataManager::DBTrainingForPage(CMNPageObject* pPage)
 
 
 				// Verify to add into DB =====================================//
-				DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[i].vecTextBox[j].strCode, classid, 0.8f);
+				DB_CHK IsAdd = IsNeedToAddDB(resimg, vecLine[i].vecTextBox[j].strCode, classid, DB_ADD_TH);
 				//===========================================================//
 
 				if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
@@ -2586,12 +2663,12 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 	// !!!!!!!!!!
 	int averheight = 0;
 	int cnt = 0;
-	for (auto i = 0; i < m_vecImgData.size(); i++) {
+//	for (auto i = 0; i < m_vecImgData.size(); i++) {
 //		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
 //		if (i != _selImgId)  continue;
 
-	//for (auto k = 0; k<vecSelPage.size(); k++) {
-	//	int i = vecSelPage[k];
+	for (auto k = 0; k<vecSelPage.size(); k++) {
+		int i = vecSelPage[k];
 		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 		for (auto k = 0; k < vecLine.size(); k++) {
 		//	for (auto j = 0; j < ocrRes.size(); j++) {
@@ -2613,11 +2690,11 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 //	float fNormalScale = 32.0f / static_cast<float>(averheight);
 
 	// Initialize Cut & Search Vector==============//
-	for (auto i = 0; i < m_vecImgData.size(); i++) {
+//	for (auto i = 0; i < m_vecImgData.size(); i++) {
 		//		std::vector<_stOCRResult> ocrRes = m_vecImgData[i]->GetVecOCRResult();
 //		if (i != _selImgId)  continue;
-	//for (auto k = 0; k<vecSelPage.size(); k++) {
-	//	int i = vecSelPage[k];
+	for (auto k = 0; k<vecSelPage.size(); k++) {
+		int i = vecSelPage[k];
 
 		std::vector<stParapgraphInfo> vecLine = m_vecImgData[i]->GetVecParagraph();
 
@@ -2682,6 +2759,9 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 				if ((l != k) && (vecCnSResults[k].cutimg.cols == vecCnSResults[l].cutimg.cols)){   // Compare with same size images !!
 					// Cut and Search matching //
 					//cv::Mat result(1, 1, CV_32FC1);
+
+					//float fD1 = TemplateMatching(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg);
+					//float fD2 = TemplateMatching(vecCnSResults[l].cutimg, vecCnSResults[k].cutimg);
 
 					cv::Mat dstimg1 = cv::Mat(vecCnSResults[l].cutimg.rows + 2, vecCnSResults[l].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
 					vecCnSResults[l].cutimg.copyTo(dstimg1(cv::Rect(1, 1, vecCnSResults[l].cutimg.cols, vecCnSResults[l].cutimg.rows)));
