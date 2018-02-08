@@ -100,24 +100,22 @@ void CZListCtrlLog::InitListCtrl()
 	m_Edit.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL , CRect(0, 0, 800, 500), this, NULL);
 	m_Edit.ShowWindow(SW_HIDE);	
 
-	CFont Font;
-
-	Font.CreateFont(16,                // Height
+	m_Font.CreateFont(20,                // Height
 		0,                             // Width
 		0,                             // Escapement
 		0,                             // Orientation
 		FW_BOLD,                       // Weight
 		FALSE,                         // Italic
-		TRUE,                          // Underline
+		FALSE,                          // Underline
 		0,                             // StrikeOut
 		ANSI_CHARSET,                  // CharSet
 		OUT_DEFAULT_PRECIS,            // OutPrecision
 		CLIP_DEFAULT_PRECIS,           // ClipPrecision
 		DEFAULT_QUALITY,               // Quality
 		DEFAULT_PITCH | FF_SWISS,      // PitchAndFamily
-		L"Arial");                     // Facename
+		L"Microsoft Sans Serif");                     // Facename
 
-	m_Edit.SetFont(&Font, 1);
+	
 }
 
 
@@ -823,6 +821,7 @@ void CZListCtrlLog::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 		m_Edit.SetWindowPos(NULL, rect.left + x + 1, rect.top, rect.right - rect.left - 1, rect.bottom - rect.top - 1, NULL);
 		m_Edit.ShowWindow(SW_SHOW);
 		m_Edit.SetFocus();
+		m_Edit.SetFont(&m_Font, 1);
 		::Rectangle(::GetDC(temp->hdr.hwndFrom), rect.left, rect.top - 1, rect.right, rect.bottom);
 		m_Edit.SetWindowTextW(str);
 		

@@ -17,6 +17,62 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
+// Chinese (Traditional, Taiwan) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+#pragma code_page(950)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "Save All",                    ID_FILE_SAVEALL
+        MENUITEM SEPARATOR
+        MENUITEM "Exit",                        ID_APP_EXIT
+        MENUITEM SEPARATOR
+        MENUITEM "Export Database",             ID_FILE_EXPORTDATABASE
+        MENUITEM SEPARATOR
+        MENUITEM "Configuration",               ID_PROJECT_CONFIGURATION
+    END
+    POPUP "View(иг)"
+    BEGIN
+        MENUITEM "Initialize View",             ID_VIEW_INITIALIZE
+    END
+    POPUP "Project"
+    BEGIN
+        MENUITEM "Add Image",                   ID_PROJECT_ADDIMAGE
+        MENUITEM "Remove Image",                ID_PROJECT_REMOVEIMAGE
+    END
+    POPUP "Tools"
+    BEGIN
+        MENUITEM "Cut Area",                    ID_TOOLS_CUTAREA
+        MENUITEM "Search",                      ID_TOOLS_SEARCH
+        MENUITEM SEPARATOR
+        MENUITEM "Keyword Search",              ID_TOOLS_KEYWORDSEARCH
+        MENUITEM SEPARATOR
+        MENUITEM "Clear Result",                ID_TOOLS_CLEARRESULT
+    END
+    POPUP "Analysis"
+    BEGIN
+        MENUITEM "Data Training",               ID_ANALYSIS_DATATRAINING
+    END
+    POPUP "Help"
+    BEGIN
+        MENUITEM "About",                       ID_APP_ABOUT
+    END
+END
+
+#endif    // Chinese (Traditional, Taiwan) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -310,46 +366,6 @@ BEGIN
     MENUITEM "Office 2007 (&Silver Style)", ID_VIEW_APPLOOK_OFF_2007_SILVER
     MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
     MENUITEM "Win&dows 7",                  ID_VIEW_APPLOOK_WINDOWS_7
-END
-
-IDR_MAINMENU MENU
-BEGIN
-    POPUP "File"
-    BEGIN
-        MENUITEM "Save All",                    ID_FILE_SAVEALL
-        MENUITEM SEPARATOR
-        MENUITEM "Exit",                        ID_APP_EXIT
-        MENUITEM SEPARATOR
-        MENUITEM "Export Database",             ID_FILE_EXPORTDATABASE
-        MENUITEM SEPARATOR
-        MENUITEM "Configuration",               ID_PROJECT_CONFIGURATION
-    END
-    POPUP "View"
-    BEGIN
-        MENUITEM "Initialize View",             ID_VIEW_INITIALIZE
-    END
-    POPUP "Project"
-    BEGIN
-        MENUITEM "Add Image",                   ID_PROJECT_ADDIMAGE
-        MENUITEM "Remove Image",                ID_PROJECT_REMOVEIMAGE
-    END
-    POPUP "Tools"
-    BEGIN
-        MENUITEM "Cut Area",                    ID_TOOLS_CUTAREA
-        MENUITEM "Search",                      ID_TOOLS_SEARCH
-        MENUITEM SEPARATOR
-        MENUITEM "Keyword Search",              ID_TOOLS_KEYWORDSEARCH
-        MENUITEM SEPARATOR
-        MENUITEM "Clear Result",                ID_TOOLS_CLEARRESULT
-    END
-    POPUP "Analysis"
-    BEGIN
-        MENUITEM "Data Training",               ID_ANALYSIS_DATATRAINING
-    END
-    POPUP "Help"
-    BEGIN
-        MENUITEM "About",                       ID_APP_ABOUT
-    END
 END
 
 IDR_MENU_OCR MENU

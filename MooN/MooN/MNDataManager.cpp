@@ -874,10 +874,10 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		rect.width = w;
 		rect.height = h;
 		
-		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
-//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		int clen = m_refImgClass[classid].maxCharLen;
 //		float confi = TemplateMatching(cutimg, imgword)+0.1f;
@@ -892,7 +892,7 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 			//	ocrres.fConfidence = 1.0f;
 		}
 
-		imgword.release();
+//		imgword.release();
 	}
 }
 float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
@@ -936,10 +936,10 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 		rect.width = w;
 		rect.height = h;
 
-		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
-//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (fAccuracy > 0.99f) {	// Same cut //
@@ -954,7 +954,7 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 			}
 		}
 
-		imgword.release();
+//		imgword.release();
 	}
 	return res;
 }
@@ -975,10 +975,10 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 		rect.width = w;
 		rect.height = h;
 
-		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
-//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		//float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
@@ -989,8 +989,7 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 				break;
 			}
 		}
-
-		imgword.release();
+//		imgword.release();
 	}
 	return res;
 }
@@ -1012,10 +1011,10 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 		rect.width = w;
 		rect.height = h;
 
-		cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
+		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
 
-//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
@@ -1036,7 +1035,7 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 			}
 		}
 
-		imgword.release();
+	//	imgword.release();
 	}
 	return res;
 }
@@ -1452,10 +1451,10 @@ void CMNDataManager::UpdateImgClassDB()
 				sz = T2A(strFile);
 				cv::imwrite(sz, m_refImgClass[i].img[imgid]);
 
-				strFile.Format(L"%s\\class%02d_%02d.jpg", m_strUserDataFolder, i, imgid);
-				sz = T2A(strFile);
-				cv::imwrite(sz, m_refImgClass[i].img[imgid]);				
-				m_refImgClass[i].IsNeedToUpdate[j] = false;
+				//strFile.Format(L"%s\\class%02d_%02d.jpg", m_strUserDataFolder, i, imgid);
+				//sz = T2A(strFile);
+				//cv::imwrite(sz, m_refImgClass[i].img[imgid]);				
+				//m_refImgClass[i].IsNeedToUpdate[j] = false;
 				bImgUpdate = true;
 			}
 		}
@@ -2760,20 +2759,20 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 					// Cut and Search matching //
 					//cv::Mat result(1, 1, CV_32FC1);
 
-					//float fD1 = TemplateMatching(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg);
-					//float fD2 = TemplateMatching(vecCnSResults[l].cutimg, vecCnSResults[k].cutimg);
+					float fD1 = TemplateMatching(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg);
+					float fD2 = TemplateMatching(vecCnSResults[l].cutimg, vecCnSResults[k].cutimg);
 
-					cv::Mat dstimg1 = cv::Mat(vecCnSResults[l].cutimg.rows + 2, vecCnSResults[l].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
-					vecCnSResults[l].cutimg.copyTo(dstimg1(cv::Rect(1, 1, vecCnSResults[l].cutimg.cols, vecCnSResults[l].cutimg.rows)));
+					//cv::Mat dstimg1 = cv::Mat(vecCnSResults[l].cutimg.rows + 2, vecCnSResults[l].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
+					//vecCnSResults[l].cutimg.copyTo(dstimg1(cv::Rect(1, 1, vecCnSResults[l].cutimg.cols, vecCnSResults[l].cutimg.rows)));
 
-					cv::Mat dstimg2 = cv::Mat(vecCnSResults[k].cutimg.rows + 2, vecCnSResults[k].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
-					vecCnSResults[k].cutimg.copyTo(dstimg2(cv::Rect(1, 1, vecCnSResults[k].cutimg.cols, vecCnSResults[k].cutimg.rows)));
+					//cv::Mat dstimg2 = cv::Mat(vecCnSResults[k].cutimg.rows + 2, vecCnSResults[k].cutimg.cols + 2, CV_8UC1, cv::Scalar(255));
+					//vecCnSResults[k].cutimg.copyTo(dstimg2(cv::Rect(1, 1, vecCnSResults[k].cutimg.cols, vecCnSResults[k].cutimg.rows)));
 
-					//cv::matchTemplate(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg, result, CV_TM_CCOEFF_NORMED);
-					//float fD1 = result.at<float>(0, 0);
+					////cv::matchTemplate(vecCnSResults[k].cutimg, vecCnSResults[l].cutimg, result, CV_TM_CCOEFF_NORMED);
+					////float fD1 = result.at<float>(0, 0);
 
-					float fD1 = TemplateMatching(vecCnSResults[k].cutimg, dstimg1);		
-					float fD2 = TemplateMatching(vecCnSResults[l].cutimg, dstimg2);
+					//float fD1 = TemplateMatching(vecCnSResults[k].cutimg, dstimg1);		
+					//float fD2 = TemplateMatching(vecCnSResults[l].cutimg, dstimg2);
 
 					//if (fD1 > 0.99f) {
 					//	cv::imshow("src", vecCnSResults[k].cutimg);

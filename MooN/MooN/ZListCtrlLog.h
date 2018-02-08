@@ -54,6 +54,7 @@ public:
 	bool	m_bIsAutoFill;
 	bool	m_bMoveCamera;
 
+	CFont m_Font;
 protected:
 
 	virtual void PreSubclassWindow();

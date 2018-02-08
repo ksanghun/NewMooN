@@ -118,7 +118,7 @@ bool CMainFrame::checkMacAddr()
 	arrAutho[5] = L"00:FF:19:CC:CE:96";		// Wayne's Destop
 	arrAutho[6] = L"00-0D-3A-A0-1C-A5";		// Azura VM 01
 	arrAutho[7] = L"00-0D-3A-A1-AA-7F";		// Azura VM 02
-	arrAutho[8] = L"00:0D:3A:72:7B:89";
+	arrAutho[8] = L"38:D5:47:74:FC:0C";		// FGS  06
 	arrAutho[9] = L"00:0D:3A:72:7B:89";
 	arrAutho[10] = L"00:0D:3A:72:7B:89";
 	arrAutho[11] = L"00:0D:3A:72:7B:89";
