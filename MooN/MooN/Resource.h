@@ -155,6 +155,7 @@
 #define IDC_COMBO_2ND_LANGUAGE          1048
 #define IDC_COMBO_3RD_LANGUAGE          1049
 #define IDC_COMBO_4TH_LANGUAGE          1050
+#define IDC_CHECK1                      1051
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -258,7 +259,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32866
-#define _APS_NEXT_CONTROL_VALUE         1048
+#define _APS_NEXT_CONTROL_VALUE         1052
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

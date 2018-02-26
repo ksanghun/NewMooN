@@ -89,6 +89,7 @@ public:
 	unsigned int GetUUIDbyLineObjId(int lineid, int objid);
 
 	bool IsNear() { return m_bIsNear; }
+	bool IsSelected() { return m_bIsSelected;  }
 
 	// Getter //
 	GLuint GetTexId() { return m_texId; };

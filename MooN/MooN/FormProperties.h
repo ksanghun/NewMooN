@@ -115,6 +115,8 @@ public:
 	afx_msg void OnCbnSelchangeCombo3rdLanguage();
 	afx_msg void OnCbnSelchangeCombo2ndLanguage();
 	afx_msg void OnCbnSelchangeCombo1stLanguage();
+	BOOL m_chkAutoFit;
+	afx_msg void OnBnClickedCheckAutoFit();
 };
 
 

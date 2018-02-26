@@ -186,15 +186,24 @@ void CMNView::Render()
 		//	m_pSelectPageForCNS->DrawSelectedParagraph(iter->second.lineid);
 		//}
 		if (m_pSelectPageForCNS) {
-			m_pSelectPageForCNS->DrawSelectedParagraph(0);
-			DrawOCRRes();
+			std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
+			for (int i = 0; i < (int)vecImg.size(); i++) {
+				if (vecImg[i]->IsSelected()) {
+					vecImg[i]->DrawSelectedParagraph(0);
+					DrawOCRRes(vecImg[i]);
+				}
+			}
+			//m_pSelectPageForCNS->DrawSelectedParagraph(0);
+			//DrawOCRRes();
+
 			glCallList(m_glListIdForDrawOCRRes);			
 			DrawSplitLine(1.0f, 0.0f, 0.0f, 1.0f);
 		}
-		DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
+	//	DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
 	//	glCallList(m_glListIdForDrawOCRRes);
 	}
 
+	DrawCNSRect(rectColor.x, rectColor.y, rectColor.z, 1.0f);
 	Render2D();
 	SwapBuffers(m_CDCPtr->GetSafeHdc());
 }
@@ -270,11 +279,11 @@ void CMNView::DrawBGPageAni()
 //			vecImg[i]->DrawParagraph(m_selParaId);
 			std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 			//if((iter != m_mapSelectionInfo.end())/* && (iter->second.vecTextId.size() >0)*/)
-			if (i == m_selImgId) {
+			//if (i == m_selImgId) {
 				for (; iter != m_mapSelectionInfo.end(); iter++) {
 					vecImg[i]->DrawParagraph(iter->second.lineid, static_cast<bool>(m_spliteType));
 				}
-			}
+			//}
 
 		}
 		else {
@@ -828,6 +837,11 @@ void CMNView::OnLButtonDblClk(UINT nFlags, CPoint point)
 		//SetTimer(_MOVECAMANI, 20, NULL);
 	}
 	m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+
+	for (auto i = 0; i < m_vecSelPage.size(); i++) {
+		SINGLETON_DataMng::GetInstance()->GetPageByOrderID(m_vecSelPage[i])->SetSelection(false);
+	}
+
 	COGLWnd::OnLButtonDblClk(nFlags, point);
 }
 
@@ -856,8 +870,10 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 {
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 
+	SINGLETON_DataMng::GetInstance()->UpdatePageStatus(m_cameraPri.GetEye());
+
 	if (m_pSelectPageForCNS) {
-		m_pSelectPageForCNS->SetSelection(false);
+	//	m_pSelectPageForCNS->SetSelection(false);
 		m_pSelectPageForCNS = NULL;
 		m_selParaId = -1;
 		m_selOCRId = -1;	
@@ -865,9 +881,7 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 		//std::map<int, _stLineTextSelectionInfo>::iterator iter = m_mapSelectionInfo.begin();
 		//for (; iter != m_mapSelectionInfo.end(); iter++) {
 		//	iter->second.vecTextId.swap(std::vector<int>());
-		//}
-
-		m_vecSelPage.swap(std::vector<int>());
+		//}		
 	}
 
 	if (m_IsSearchMatchItems)
@@ -902,22 +916,30 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 	DrawImageByOrderForPicking();
 	if (m_bIsShowParagraph) {
 		DrawParagrphForPicking();
+		DrawOCRForPicking();
 	}
 //	DrawMatchItemForPicking();
-	DrawOCRForPicking();
+	
 	
 	//}
 	//=============================================//
 	hits = glRenderMode(GL_RENDER);
 	int lineid = -1, textid = -1;
-	unsigned int uuid = -1;
+	int uuid = -1;
 
-	if (hits > 0)
-	{		
-		if ((!m_bIsMultiSelectionhMode) &&(hits>1)) {
-			m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+
+//	if ((!m_bIsMultiSelectionhMode) && (hits>1)) {
+	if ((!m_bIsMultiSelectionhMode)) {
+		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
+
+		for (auto i = 0; i < m_vecSelPage.size(); i++) {
+			SINGLETON_DataMng::GetInstance()->GetPageByOrderID(m_vecSelPage[i])->SetSelection(false);
 		}
+		m_vecSelPage.swap(std::vector<int>());
+	}
 
+
+	if (hits > 0){
 		for (int i = 0; i < hits; i++) {
 			int selid = selectBuff[i * 4 + 3];			
 
@@ -928,9 +950,8 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 				if (m_pSelectPageForCNS) {
 
 					m_selImgId = selid;
-
 					m_pSelectPageForCNS->SetSelection(true);
-					m_pSelectPageForCNS->SetIsNear(true);
+				//	m_pSelectPageForCNS->SetIsNear(true);
 				//	DrawOCRRes();					
 					stParapgraphInfo lineInfo = m_pSelectPageForCNS->GetLineBoxInfo(0);
 					if (lineInfo.rect.width > 0) {
@@ -1041,7 +1062,9 @@ void CMNView::DrawParagrphForPicking()
 {
 	std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	for (int i = 0; i < (int)vecImg.size(); i++) {		
-		vecImg[i]->DrawParagraphForPick();
+		if (vecImg[i]->IsNear()) {
+			vecImg[i]->DrawParagraphForPick();
+		}
 	}
 }
 
@@ -1050,7 +1073,9 @@ void CMNView::DrawMatchItemForPicking()
 {
 	std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	for (int i = 0; i < (int)vecImg.size(); i++) {
-		vecImg[i]->DrawMatchItemForPick();
+		if (vecImg[i]->IsNear()) {
+			vecImg[i]->DrawMatchItemForPick();
+		}
 	}
 }
 
@@ -1058,7 +1083,9 @@ void CMNView::DrawOCRForPicking()
 {
 	std::vector<CMNPageObject*> vecImg = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 	for (int i = 0; i < (int)vecImg.size(); i++) {
-		vecImg[i]->DrawOCRResForPick();
+		if (vecImg[i]->IsNear()) {
+			vecImg[i]->DrawOCRResForPick();
+		}
 	}
 }
 
@@ -1260,7 +1287,9 @@ bool CMNView::DoSearch()
 			}
 		}
 		m_addImgCnt++;
-		imgVec[i]->SetFitCurArea();
+		if (m_bIsAutoFitMode) {
+			imgVec[i]->SetFitCurArea();
+		}
 	}
 
 
@@ -1702,7 +1731,9 @@ void CMNView::ProcDoSearch()
 		cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg();;
 		if (srcImg.ptr()) {
 			cv::Rect r = cv::Rect(rect.x1, rect.y1, (rect.x2 - rect.x1), (rect.y2 - rect.y1));
-			SINGLETON_DataMng::GetInstance()->FitCutImageRect(srcImg, r);
+			if (m_bIsAutoFitMode) {
+				SINGLETON_DataMng::GetInstance()->FitCutImageRect(srcImg, r);
+			}
 			m_pCut = srcImg(r).clone();
 		}
 		
@@ -2281,98 +2312,66 @@ void CMNView::MakeList_DrawOCRResText()
 }
 
 
-void CMNView::DrawOCRRes()
+void CMNView::DrawOCRRes(CMNPageObject* pPage)
 {
 //	std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
 //	glLineWidth(2);
 //	for (size_t i = 0; i < imgVec.size(); i++) {
 //	glNewList(m_glListIdForDrawOCRRes, GL_COMPILE);
-	if (m_pSelectPageForCNS) {
-		if (m_pSelectPageForCNS->IsNear()) {
+	if (pPage) {
+	//	if (pPage->IsNear()) {
 
 			glPushMatrix();
-			glTranslatef(m_pSelectPageForCNS->GetPos().x, m_pSelectPageForCNS->GetPos().y, m_pSelectPageForCNS->GetPos().z);
+			glTranslatef(pPage->GetPos().x, pPage->GetPos().y, pPage->GetPos().z);
 
 			glColor4f(0.0f, 0.99f, 0.1f, 0.9f);
 			glPushMatrix();
-			glScalef(m_pSelectPageForCNS->GetfXScale(), m_pSelectPageForCNS->GetfYScale(), 1.0f);
-			glTranslatef(-m_pSelectPageForCNS->GetImgWidth()*0.5f, -m_pSelectPageForCNS->GetImgHeight()*0.5f, 0.0f);
+			glScalef(pPage->GetfXScale(), pPage->GetfYScale(), 1.0f);
+			glTranslatef(-pPage->GetImgWidth()*0.5f, -pPage->GetImgHeight()*0.5f, 0.0f);
 
 			POINT3D tPos, tColor;
 			RECT2D rect;
-			//std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNS->GetVecOCRResult();
-			std::vector<stParapgraphInfo> vecline = m_pSelectPageForCNS->GetVecParagraph();
+			std::vector<stParapgraphInfo> vecline = pPage->GetVecParagraph();
 
 			for (auto i = 0; i < vecline.size(); i++) {
-				// Draw detected position //
-		//if (m_bIsNear){		
-		//glLineWidth(1);
-
 				for (int j = 0; j < vecline[i].vecTextBox.size(); j++) {
 
 					rect.set(vecline[i].vecTextBox[j].rect.x, vecline[i].vecTextBox[j].rect.x + vecline[i].vecTextBox[j].rect.width, 
 						vecline[i].vecTextBox[j].rect.y, vecline[i].vecTextBox[j].rect.y + vecline[i].vecTextBox[j].rect.height);
 
-					//tColor = SINGLETON_DataMng::GetInstance()->GetColor(ocrRes[j].fConfidence);
-					//glColor4f(tColor.x, tColor.y, tColor.z, 0.5f);
-
 					glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
 					glBegin(GL_LINE_STRIP);
-					glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-					glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-					glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-					glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-					glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+					glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
+					glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
+					glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y2, 0.0f);
+					glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y1, 0.0f);
+					glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 					glEnd();
 
-
-					//mtSetPoint3D(&tColor, 0.0f, 1.0f, 0.0f);
 					if (vecline[i].vecTextBox[j].fConfidence > m_dispConfi) {
-
-						// Draw Text //
-						glColor4f(0.0f, 0.0f, 1.0f, 0.99f);
-						if (m_extractionSetting.IsVerti) {
-							mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
-						}
-						else {
-							mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
-						}
-						//gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
-
-						//	mtSetPoint3D(&tColor, 1.0f, 0.0f, 0.0f);						
 
 						if ((vecline[i].vecTextBox[j].type < 3)) {
 							tColor = SINGLETON_DataMng::GetInstance()->GetColor(vecline[i].vecTextBox[j].fConfidence);
 							glColor4f(tColor.x, tColor.y, tColor.z, 0.5f);
 							glBegin(GL_QUADS);
-							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-							//glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
+							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
+							glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y2, 0.0f);
+							glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y1, 0.0f);
+							//glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 							glEnd();
 						}
 						else {
 							glColor4f(0.0f, 0.3f, 1.0f, 0.5f);
 							glBegin(GL_QUADS);
-							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-							glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-							glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
+							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
+							glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y2, 0.0f);
+							glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y1, 0.0f);
+							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 							glEnd();
 						}
 
-						//if ((ocrRes[j].type == 3)) {
-						//	glColor4f(1.0f, 0.0f, 0.0f, 0.99f);
-						//	glBegin(GL_LINE_STRIP);
-						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						//	glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						//	glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						//	glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						//	glEnd();
-						//}
 					}
 
 					glLineWidth(4);
@@ -2380,20 +2379,20 @@ void CMNView::DrawOCRRes()
 
 						glColor4f(0.0f, 0.0f, 1.0f, 0.99f);
 						if (m_extractionSetting.IsVerti) {
-							mtSetPoint3D(&tPos, (rect.x2 + 10), m_pSelectPageForCNS->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
+							mtSetPoint3D(&tPos, (rect.x2 + 10), pPage->GetImgHeight() - (rect.y1 + rect.y2)*0.5f, 1.0f);
 						}
 						else {
-							mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, m_pSelectPageForCNS->GetImgHeight() - rect.y1 + 5, 1.0f);
+							mtSetPoint3D(&tPos, (rect.x1 + rect.x2)*0.5f, pPage->GetImgHeight() - rect.y1 + 5, 1.0f);
 						}
 						gl_DrawText(tPos, vecline[i].vecTextBox[j].strCode, m_LogFont, 1, m_pBmpInfo, m_CDCPtr);
 
 						glColor4f(0.2f, 0.3f, 0.99f, 0.5f);
 						glBegin(GL_LINE_STRIP);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
+						glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
+						glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y2, 0.0f);
+						glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y1, 0.0f);
+						glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 						glEnd();
 					}
 
@@ -2403,11 +2402,11 @@ void CMNView::DrawOCRRes()
 						if((m_spliteDirection != _NONE_DIR) && (m_spliteType == _SPLIT_TEXT))
 							glColor4f(1.0f, 0.0f, 0.0f, 0.9f);
 						glBegin(GL_LINE_STRIP);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y2, 0.0f);
-						glVertex3f(rect.x2, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
-						glVertex3f(rect.x1, m_pSelectPageForCNS->GetImgHeight() - rect.y1, 0.0f);
+						glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
+						glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
+						glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y2, 0.0f);
+						glVertex3f(rect.x2, pPage->GetImgHeight() - rect.y1, 0.0f);
+						glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 						glEnd();
 					}
 					glLineWidth(1);
@@ -2415,7 +2414,7 @@ void CMNView::DrawOCRRes()
 			}
 			glPopMatrix();
 			glPopMatrix();
-		}
+	//	}
 	}
 //	glLineWidth(1);
 //	glEndList();

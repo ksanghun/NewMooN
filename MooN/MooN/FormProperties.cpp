@@ -31,6 +31,7 @@ CFormProperties::CFormProperties()
 	, m_editKeyword(_T(""))
 	, m_editDefaultFontSize(32)
 	, m_editDBth(90)
+	, m_chkAutoFit(TRUE)
 {
 }
 
@@ -80,6 +81,7 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_2ND_LANGUAGE, m_combo2ndLanguage);
 	DDX_Control(pDX, IDC_COMBO_3RD_LANGUAGE, m_combo3rdLanguage);
 	DDX_Control(pDX, IDC_COMBO_4TH_LANGUAGE, m_combo4thLanguage);
+	DDX_Check(pDX, IDC_CHECK1, m_chkAutoFit);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -122,6 +124,7 @@ ON_CBN_SELCHANGE(IDC_COMBO_4TH_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo4t
 ON_CBN_SELCHANGE(IDC_COMBO_3RD_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo3rdLanguage)
 ON_CBN_SELCHANGE(IDC_COMBO_2ND_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo2ndLanguage)
 ON_CBN_SELCHANGE(IDC_COMBO_1ST_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo1stLanguage)
+ON_BN_CLICKED(IDC_CHECK1, &CFormProperties::OnBnClickedCheckAutoFit)
 END_MESSAGE_MAP()
 
 
@@ -187,6 +190,7 @@ void CFormProperties::OnInitialUpdate()
 	pImgView->SetDBTreshold(m_editDBth);
 
 	pImgView->EnableShowLine(true);
+	pImgView->EnableAutoFit(true);
 
 
 
@@ -759,4 +763,18 @@ void CFormProperties::OnCbnSelchangeCombo1stLanguage()
 	case 3:			ltype = __JAP;		break;
 	}
 	SINGLETON_DataMng::GetInstance()->SetOCRDBOrder(0, ltype);	
+}
+
+
+void CFormProperties::OnBnClickedCheckAutoFit()		// AutoFit
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CMNView* pImgView = pView->GetImageView();
+	if (m_chkAutoFit == FALSE) {
+		pImgView->EnableAutoFit(false);
+	}
+	else {
+		pImgView->EnableAutoFit(true);
+	}
 }

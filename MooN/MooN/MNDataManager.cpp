@@ -874,10 +874,10 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 		rect.width = w;
 		rect.height = h;
 		
-		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 
-		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		int clen = m_refImgClass[classid].maxCharLen;
 //		float confi = TemplateMatching(cutimg, imgword)+0.1f;
@@ -892,7 +892,7 @@ void CMNDataManager::MatchingFromDB(cv::Mat& cutimg, _stOCRResult& ocrres)
 			//	ocrres.fConfidence = 1.0f;
 		}
 
-//		imgword.release();
+		imgword.release();
 	}
 }
 float CMNDataManager::TemplateMatching(cv::Mat& src, cv::Mat& dst)
@@ -936,10 +936,10 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 		rect.width = w;
 		rect.height = h;
 
-		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 
-		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (fAccuracy > 0.99f) {	// Same cut //
@@ -954,7 +954,7 @@ DB_CHK CMNDataManager::IsNeedToUpdateDB(cv::Mat& cutimg, wchar_t* strcode, int c
 			}
 		}
 
-//		imgword.release();
+		imgword.release();
 	}
 	return res;
 }
@@ -975,10 +975,10 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 		rect.width = w;
 		rect.height = h;
 
-		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 
-		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		//float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
@@ -989,7 +989,7 @@ DB_CHK CMNDataManager::IsNeedToAddDB(cv::Mat& cutimg, wchar_t* strcode, int clas
 				break;
 			}
 		}
-//		imgword.release();
+		imgword.release();
 	}
 	return res;
 }
@@ -1011,10 +1011,10 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 		rect.width = w;
 		rect.height = h;
 
-		//cv::Mat imgword = cv::Mat(h + 2, w + 2, CV_8UC1, cv::Scalar(255));
-		//m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(1, 1, w, h)));
+		cv::Mat imgword = cv::Mat(h + 4, w + 4, CV_8UC1, cv::Scalar(255));
+		m_refImgClass[classid].img[imgid](rect).copyTo(imgword(cv::Rect(2, 2, w, h)));
 
-		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
+//		cv::Mat imgword = m_refImgClass[classid].img[imgid](rect);
 
 		float fAccuracy = TemplateMatching(cutimg, imgword);
 		if (wcscmp(strcode, m_refImgClass[classid].vecStr[pos]) == 0) {  // same code  --> check shape!!!//
@@ -1035,7 +1035,7 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 			}
 		}
 
-	//	imgword.release();
+		imgword.release();
 	}
 	return res;
 }

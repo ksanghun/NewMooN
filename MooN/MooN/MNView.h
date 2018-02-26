@@ -101,7 +101,7 @@ public:
 	void DrawSplitLine(float r, float g, float b, float a);
 	void DrawBGPageAni();
 	void DrawBGPage();	
-	void DrawOCRRes();
+	void DrawOCRRes(CMNPageObject*pPage);
 	void MakeList_DrawOCRResText();
 
 	void InitCamera(bool movexy = true);
@@ -147,6 +147,7 @@ public:
 
 	RECT2D GetSelectedAreaForCNS();
 	void EnableShowLine(bool Isshow) {		m_bIsShowParagraph = Isshow;	}
+	void EnableAutoFit(bool IsAutofit) { m_bIsAutoFitMode = IsAutofit; }
 	void SetDispConfidence(long nConfi) { m_dispConfi = (float)nConfi*0.01f; }
 	void SetDBTreshold(long nDbth) { m_dbTreshold = (float)nDbth*0.01f; }
 
@@ -198,6 +199,7 @@ private:
 	bool m_IsSearchMatchItems;
 	int m_selMatchItemId;
 	bool m_bIsShowParagraph;
+	bool m_bIsAutoFitMode;
 
 
 	//For Template Matching=====//
