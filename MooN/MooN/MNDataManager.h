@@ -102,7 +102,7 @@ public:
 
 	// TEST //
 	void Test();
-	void Save();
+	void Save(bool IsAuto);
 	POINT3D GetColor(float fvalue);
 	unsigned int GetUUID();
 

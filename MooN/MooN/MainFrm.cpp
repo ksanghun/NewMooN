@@ -80,6 +80,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_SPLITLINEBOX_HORIZONTALY, &CMainFrame::OnSplitlineboxHorizontaly)
 	ON_COMMAND(ID_EXPLORER_ENCODETEXT, &CMainFrame::OnExplorerEncodetext)
 	ON_COMMAND(ID_OCR_REMOVEPAGE, &CMainFrame::OnOcrRemovepage)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -326,6 +327,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Init configuration //
 	InitConfituration();
+
+	// For Auto-Saving //
+	SetTimer(900, 10000, NULL);
 
 	return 0;
 }
@@ -1153,7 +1157,7 @@ void CMainFrame::OnExplorerExportdatabase()
 void CMainFrame::OnFileSaveall()
 {
 	// TODO: Add your command handler code here
-	SINGLETON_DataMng::GetInstance()->Save();
+	SINGLETON_DataMng::GetInstance()->Save(false);
 }
 
 
@@ -1195,6 +1199,20 @@ void CMainFrame::OnOptionsAutofilloff()
 	m_wndFormListView.SetAutoFillOption(false);
 }
 
+void CMainFrame::OptionsTrainingAll()
+{
+	int addNum = 0, totalNum = 0;
+	bool threadEnd = false;
+	m_wndFormListView.AddListToTraining();
+
+	CMNView* pViewImage = pView->GetImageView();
+	pViewImage->ProcAddListToTraining();
+}
+
+void CMainFrame::OptionsTrainingSelection()
+{
+
+}
 
 void CMainFrame::OnOptionsTrainingall()
 {
@@ -1202,13 +1220,8 @@ void CMainFrame::OnOptionsTrainingall()
 	//m_wndFormListView.AddListToTraining();	
 	//CMNView* pViewImage = pView->GetImageView();
 	//pViewImage->ProcAddListToTraining();
-
-	int addNum = 0, totalNum = 0;
-	bool threadEnd = false;
-	m_wndFormListView.AddListToTraining();
-
-	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->ProcAddListToTraining();
+	OptionsTrainingAll();
+	
 }
 
 void CMainFrame::AddListToTraining(int& addNum, int& totalNum, bool& threadEnd)
@@ -1310,4 +1323,21 @@ void CMainFrame::OnOcrRemovepage()
 	// TODO: Add your command handler code here
 	CMNView* pViewImage = pView->GetImageView();
 	pViewImage->RemoveSelectedPage();
+}
+
+
+void CMainFrame::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	if (nIDEvent == 900) {		// Auto-Saving //
+
+
+		CMNView* pViewImage = pView->GetImageView();
+		if (pViewImage->IsThreadEnd() == true) {
+			SINGLETON_DataMng::GetInstance()->Save(true);
+		}
+	}
+
+	CFrameWndEx::OnTimer(nIDEvent);
 }

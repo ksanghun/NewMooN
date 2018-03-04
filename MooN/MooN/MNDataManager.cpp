@@ -102,17 +102,50 @@ unsigned int CMNDataManager::GetUUID()
 	return m_obj_uuid++;
 }
 
-void CMNDataManager::Save()
+void CMNDataManager::Save(bool IsAuto)
 {
-	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
-	pM->AddOutputString(L"Writing Training Data...", false);
+	// Check for saving //
+	bool IsSave = false;
+	for (size_t i = 0; i < m_vecImgData.size(); i++) {
+		if (m_vecImgData[i]->IsNeedToSave() == true) {
+			IsSave = true;
+			break;
+		}
+	}
+
+	bool bImgUpdate = false;
+	for (int i = 0; i < DB_CLASS_NUM; i++) {
+		for (int j = 0; j <= m_refImgClass[i].nCurrImgId; j++) {
+			if (m_refImgClass[i].IsNeedToUpdate[j]) {
+				bImgUpdate = true;
+				break;
+			}
+		}
+	}
+
+	if (IsSave || bImgUpdate) {
+
+		CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+		if (IsAuto) {
+			CTime t = CTime::GetCurrentTime();
+			CString s = t.Format("Auto-Saving training data( %m-%d-%Y %H:%M)");
+			pM->AddOutputString(s, false);
+		}
+		else {
+			pM->AddOutputString(L"Saving training data...", false);
+		}
 
 
-	CDlgFileSaving dlg;
-	int result  = dlg.DoModal();
-//	dlg.SaveAllFiles();
+		CDlgFileSaving dlg;
+		int result  = dlg.DoModal();
+		//dlg.SaveAllFiles();
 
-	pM->AddOutputString(L"Writing Training Data...complete", false);
+		//UpdateAllImgVecData();
+		//UpdateImgClassDB();
+
+
+		pM->AddOutputString(L"Saving training data...done", false);
+	}
 	
 //	dlg
 	//if (dlg.DoModal() == IDOK) {
@@ -1454,17 +1487,17 @@ void CMNDataManager::UpdateImgClassDB()
 				//strFile.Format(L"%s\\class%02d_%02d.jpg", m_strUserDataFolder, i, imgid);
 				//sz = T2A(strFile);
 				//cv::imwrite(sz, m_refImgClass[i].img[imgid]);				
-				//m_refImgClass[i].IsNeedToUpdate[j] = false;
+				m_refImgClass[i].IsNeedToUpdate[j] = false;
 				bImgUpdate = true;
 			}
 		}
 
 		// Write image encode //
-		if (bImgUpdate) {
+		if (bImgUpdate) {			
 			strFile.Format(L"%s\\class%02d.jp3", m_strUserDataFolder, i);
 			sz = T2A(strFile);
 			FILE* fp = 0;
-			fopen_s(&fp, sz, "wb");
+			errno_t err = fopen_s(&fp, sz, "wb");
 
 			int num = static_cast<int>(m_refImgClass[i].vecStr.size());
 			int clen = m_refImgClass[i].maxCharLen;
@@ -2837,10 +2870,10 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 		//mInfo.objid = vecCnSResults[i].objid;
 		mInfo.uuid = vecCnSResults[i].uuid;
 		
-		mInfo.color.r = 100;
-		mInfo.color.g = 255;
-		mInfo.color.b = 100;
-		mInfo.color.a = 255;
+		mInfo.color.r = 0.0f;
+		mInfo.color.g = 0.0f;
+		mInfo.color.b = 1.0f;
+		mInfo.color.a = 0.2f;
 
 		mInfo.IsAdded = false;
 		//mInfo.cutImg = vecCnSResults[i].cutimg.clone();
@@ -2864,7 +2897,6 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 
 	//		uid++;
 	//	}
-
 		addCnt++;
 	}
 	// Add Match result to each page //

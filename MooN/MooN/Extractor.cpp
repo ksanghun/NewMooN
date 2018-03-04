@@ -14,7 +14,7 @@ CExtractor::~CExtractor()
 {
 	InitializeContourVectors();
 	total_lines.swap(std::vector<cv::Vec4i>());
-	points.swap(std::vector<cv::Point>());
+//	points.swap(std::vector<cv::Point>());
 }
 
 void CExtractor::TestFunc()
@@ -33,11 +33,12 @@ float CExtractor::DeSkewImg(cv::Mat& img)
 	//cvtColor(img, tmp, CV_BGR2GRAY);
 	//cv::threshold(tmp, tmp, 125, 255, cv::THRESH_OTSU);
 	//cv::bitwise_not(tmp, tmp);
+//	points.swap(std::vector<cv::Point>());
 
-	points.swap(std::vector<cv::Point>());
-
-	findNonZero(img, points);
-	cv::RotatedRect box = cv::minAreaRect(points);
+	cv::Mat locations;
+	findNonZero(img, locations);
+//	findNonZero(img, points);
+	cv::RotatedRect box = cv::minAreaRect(locations);
 
 	double angle = box.angle;
 	if (angle < -45.)
@@ -152,6 +153,7 @@ void CExtractor::Extraction(cv::Mat& binaryImg, int xMargin, int yMargin, std::v
 {
 	InitializeContourVectors();
 	/// Find contours
+
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles
 	
@@ -235,7 +237,6 @@ bool CExtractor::MeargingtBoundaryBox(std::vector<_extractBox>& vecBox, int& dep
 void CExtractor::ExtractLines(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, _LANGUAGE_TYPE languageType, _ALIGHN_TYPE align)
 {
 	InitializeContourVectors();
-
 	/// Find contours
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles
@@ -571,7 +572,6 @@ void CExtractor::SortBoundaryBox(std::vector<_extractBox>& vecBox)
 void CExtractor::ExtractionText(cv::Mat& binaryImg, int xMargin, int yMargin, std::vector<_extractBox>& vecBox, bool IsVerti)
 {
 	InitializeContourVectors();
-
 	/// Find contours
 	cv::findContours(binaryImg, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, cv::Point(0, 0));
 	/// Approximate contours to polygons + get bounding rects and circles

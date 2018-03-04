@@ -21,7 +21,7 @@ static UINT ThreadDoExportDBHtml(LPVOID lpParam);
 static UINT ThreadCNSSegments(LPVOID lpParam);
 static UINT ThreadListToTraining(LPVOID lpParam);
 
-static bool  m_bIsThreadEnd;
+static bool  m_bIsThreadEnd = true;
 
 
 
@@ -48,6 +48,7 @@ public:
 	void ProcOCRFromMooN();
 	void AddListToTraining();
 
+	bool IsThreadEnd();// { return m_bIsThreadEnd; }
 
 	void GenerateThumbnail();
 	bool DoSearch();

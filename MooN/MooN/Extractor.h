@@ -67,7 +67,7 @@ public:
 
 	
 	std::vector<cv::Vec4i> total_lines;
-	std::vector<cv::Point> points;
+//	std::vector<cv::Point> points;
 	std::vector<std::vector<cv::Point> > contours_poly;
 	std::vector<std::vector<cv::Point> > contours;
 	std::vector<cv::Vec4i> hierarchy;

@@ -60,7 +60,7 @@ void CDlgFileSaving::OnTimer(UINT_PTR nIDEvent)
 
 	if (nIDEvent == 100) {
 		SINGLETON_DataMng::GetInstance()->UpdateAllImgVecData();
-		SINGLETON_DataMng::GetInstance()->UpdateSDBFiles();
+	//	SINGLETON_DataMng::GetInstance()->UpdateSDBFiles();
 		SINGLETON_DataMng::GetInstance()->UpdateImgClassDB();
 		CDialog::OnOK();
 		KillTimer(100);

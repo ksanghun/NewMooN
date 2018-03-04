@@ -705,7 +705,16 @@ void CMNPageObject::DrawMatchItem()
 
 			//	if (m_matched_pos[i].searchId == m_selMatchItemId) {
 			if (i == m_selMatchItemId) {
-				glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
+				glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
+				glBegin(GL_QUADS);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
+				glVertex3f(m_matched_pos[i].rect.x + m_matched_pos[i].rect.width, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
+				glEnd();
+			}
+			else {
+				glColor4f(m_matched_pos[i].color.r, m_matched_pos[i].color.g, m_matched_pos[i].color.b, m_matched_pos[i].color.a);
 				glBegin(GL_QUADS);
 				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - m_matched_pos[i].rect.y, 0.0f);
 				glVertex3f(m_matched_pos[i].rect.x, m_nImgHeight - (m_matched_pos[i].rect.y + m_matched_pos[i].rect.height), 0.0f);
@@ -980,8 +989,16 @@ bool CMNPageObject::IsNeedToExtract()
 }
 void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic)
 {
-	if ((IsVerti) && (rect.width < 10)) return;
-	if ((!IsVerti) && (rect.height < 10)) return;
+	if ((IsVerti) && (rect.width < 32)) return;
+	if ((!IsVerti) && (rect.height < 32)) return;
+
+	for (int j = 0; j < m_paragraph.size(); j++) {
+		cv::Rect andRect_overlap = (m_paragraph[j].rect & rect);
+		if (andRect_overlap.area() >= (rect.area()*0.75f)) { // Duplicated 
+			return;
+		}
+	}
+
 
 	m_IsNeedToSave = true;
 	stParapgraphInfo para;
@@ -1301,7 +1318,7 @@ void CMNPageObject::AddOCRResult(int lineid, _stOCRResult res)
 				bool IsUpdated = false;
 				for (int j = 0; j < m_paragraph[i].vecTextBox.size(); j++) {
 					andRect_overlap = (m_paragraph[i].vecTextBox[j].rect & res.rect);
-					if (andRect_overlap.area() >= (res.rect.area()*0.75f)) { // Update		// Update //
+					if (andRect_overlap.area() >= (res.rect.area()*0.75f)) { // Duplicated !! Update		// Update //
 						m_paragraph[i].vecTextBox[j].fConfidence = res.fConfidence;
 						memcpy(m_paragraph[i].vecTextBox[j].strCode, res.strCode, sizeof(wchar_t)*_MAX_WORD_SIZE);
 						IsUpdated = true;
@@ -1539,6 +1556,10 @@ void CMNPageObject::WriteSearchDBFile()
 	//}
 }
 
+bool CMNPageObject::IsNeedToSave()
+{
+	return m_IsNeedToSave || m_bImageChanged;
+}
 
 void CMNPageObject::UpdateDataBaseFiles()
 {

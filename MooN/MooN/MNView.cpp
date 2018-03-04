@@ -750,6 +750,8 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 
 			str.Format(_T("Training Cut&Search.....done"));
 			pM->AddOutputString(str, true);
+			pM->ClearAllResults();
+			MakeList_DrawOCRResText();
 		}
 	}
 	//else if (nIDEvent == _UPDATE_PAGE) {
@@ -854,6 +856,11 @@ void CMNView::UploadThumbnail()
 	}
 }
 
+bool CMNView::IsThreadEnd()
+{ 
+	return m_bIsThreadEnd; 
+}
+
 void CMNView::GenerateThumbnail()
 {
 	m_addImgCnt = 0;	
@@ -864,6 +871,8 @@ void CMNView::GenerateThumbnail()
 		vecImg[i]->LoadThumbImage(THUMBNAIL_SIZE);
 		m_addImgCnt++;
 	}
+
+	m_bIsThreadEnd = true;
 }
 
 int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int selmode)
@@ -1230,6 +1239,10 @@ void CMNView::DoOCR()
 	m_bIsThreadEnd = true;
 }
 
+
+
+
+
 bool CMNView::DoSearch()
 {
 	if (m_pCut.ptr() == NULL)
@@ -1299,6 +1312,8 @@ bool CMNView::DoSearch()
 	imgVec[i - 1]->SetIsSearched(false);
 
 	m_cnsSearchId++;
+
+	m_bIsThreadEnd = true;
 	return true;
 }
 
@@ -2083,6 +2098,7 @@ void CMNView::AddLineBox(cv::Rect rect)
 
 				para.release();
 			}
+		//	srcImg.release();
 		}
 	}
 }
@@ -2352,7 +2368,7 @@ void CMNView::DrawOCRRes(CMNPageObject* pPage)
 
 						if ((vecline[i].vecTextBox[j].type < 3)) {
 							tColor = SINGLETON_DataMng::GetInstance()->GetColor(vecline[i].vecTextBox[j].fConfidence);
-							glColor4f(tColor.x, tColor.y, tColor.z, 0.5f);
+							glColor4f(tColor.x, tColor.y, tColor.z, 0.3f);
 							glBegin(GL_QUADS);
 							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
@@ -2362,7 +2378,7 @@ void CMNView::DrawOCRRes(CMNPageObject* pPage)
 							glEnd();
 						}
 						else {
-							glColor4f(0.0f, 0.3f, 1.0f, 0.5f);
+							glColor4f(0.0f, 0.3f, 1.0f, 0.3f);
 							glBegin(GL_QUADS);
 							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y1, 0.0f);
 							glVertex3f(rect.x1, pPage->GetImgHeight() - rect.y2, 0.0f);
@@ -3646,7 +3662,7 @@ void CMNView::ProcDoSearchBySelection()
 
 void CMNView::ProcDoSearchBySelectionAll()
 {
-	InitCamera(false);
+//	InitCamera(false);
 	if ((m_pSelectPageForCNS)) {
 
 		m_pSelectPageForCNSAll = m_pSelectPageForCNS;
@@ -3714,7 +3730,7 @@ void CMNView::DoExportDBHtml()
 
 void CMNView::ProcCNSSegments()
 {
-	InitCamera(false);
+//	InitCamera(false);
 	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
 	m_fThreshold = pM->GetThreshold()*0.01f;
 	

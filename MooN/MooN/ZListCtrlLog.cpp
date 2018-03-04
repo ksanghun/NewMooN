@@ -100,7 +100,7 @@ void CZListCtrlLog::InitListCtrl()
 	m_Edit.Create(WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL , CRect(0, 0, 800, 500), this, NULL);
 	m_Edit.ShowWindow(SW_HIDE);	
 
-	m_Font.CreateFont(20,                // Height
+	m_Font.CreateFont(30,                // Height
 		0,                             // Width
 		0,                             // Escapement
 		0,                             // Orientation
@@ -113,7 +113,7 @@ void CZListCtrlLog::InitListCtrl()
 		CLIP_DEFAULT_PRECIS,           // ClipPrecision
 		DEFAULT_QUALITY,               // Quality
 		DEFAULT_PITCH | FF_SWISS,      // PitchAndFamily
-		L"Microsoft Sans Serif");                     // Facename
+		L"Arial");						// Facename
 
 	
 }

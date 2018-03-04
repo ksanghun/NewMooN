@@ -176,7 +176,7 @@ public:
 	void DeleteAllOcrResInLine(int lineid);
 
 	bool IsNeedToExtract();
-
+	bool IsNeedToSave();
 
 	stParapgraphInfo GetLineBoxInfo(int pid);
 	void SortLines(bool IsVerti);

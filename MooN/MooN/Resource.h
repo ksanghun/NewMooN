@@ -100,6 +100,7 @@
 #define IDC_BN_ENG_FONT                 1002
 #define IDC_BN_DESKEW_ALL               1002
 #define IDC_BN_ADD_TO_OCR               1002
+#define IDC_BN_TRAINING_ONE             1002
 #define IDC_LIST1                       1003
 #define IDC_BN_CHI_FONT                 1003
 #define IDC_BUTTON_BROWSER2             1003
@@ -156,6 +157,9 @@
 #define IDC_COMBO_3RD_LANGUAGE          1049
 #define IDC_COMBO_4TH_LANGUAGE          1050
 #define IDC_CHECK1                      1051
+#define IDC_CHECK_AUTOFILL_LIST         1052
+#define IDC_BUTTON2                     1053
+#define IDC_BN_TRAINING_ALL             1053
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -259,7 +263,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32866
-#define _APS_NEXT_CONTROL_VALUE         1052
+#define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

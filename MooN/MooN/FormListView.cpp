@@ -5,7 +5,7 @@
 #include "MooN.h"
 #include "FormListView.h"
 #include "MNDataManager.h"
-
+#include "MainFrm.h"
 // CFormListView
 
 IMPLEMENT_DYNCREATE(CFormListView, CFormView)
@@ -13,6 +13,7 @@ IMPLEMENT_DYNCREATE(CFormListView, CFormView)
 CFormListView::CFormListView()
 	: CFormView(IDD_FORMLISTVIEW)
 //	, m_bIsAutoFill(TRUE)
+, m_checkAutoFillOnOff(TRUE)
 {
 	m_bIsCreated = false;
 	m_cutMaxWidth = _NORMALIZE_SIZE_H;
@@ -30,13 +31,17 @@ void CFormListView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST1, m_ctrlList);
-//	DDX_Check(pDX, IDC_CHECK_AUTOFILL, m_bIsAutoFill);
+	//	DDX_Check(pDX, IDC_CHECK_AUTOFILL, m_bIsAutoFill);
+	DDX_Check(pDX, IDC_CHECK_AUTOFILL_LIST, m_checkAutoFillOnOff);
 }
 
 BEGIN_MESSAGE_MAP(CFormListView, CFormView)
 	ON_WM_SIZE()
 //	ON_BN_CLICKED(IDC_BN_ADD_TO_OCR, &CFormListView::OnBnClickedBnAddToOcr)
 //	ON_BN_CLICKED(IDC_CHECK_AUTOFILL, &CFormListView::OnBnClickedCheckAutofill)
+ON_BN_CLICKED(IDC_CHECK_AUTOFILL_LIST, &CFormListView::OnBnClickedCheckAutofillList)
+ON_BN_CLICKED(IDC_BN_TRAINING_ALL, &CFormListView::OnBnClickedBnTrainingAll)
+ON_BN_CLICKED(IDC_BN_TRAINING_ONE, &CFormListView::OnBnClickedBnTrainingOne)
 END_MESSAGE_MAP()
 
 
@@ -75,7 +80,7 @@ void CFormListView::OnSize(UINT nType, int cx, int cy)
 
 	// TODO: Add your message handler code here
 	if(m_bIsCreated)
-		m_ctrlList.MoveWindow(0, 0, cx, cy);
+		m_ctrlList.MoveWindow(0, 40, cx, cy-40);
 }
 
 void CFormListView::ResizeListColSize(int _maxwidth)
@@ -383,4 +388,31 @@ void CFormListView::AddRecord_CNSAll()
 	//	}
 
 	//}
+}
+
+void CFormListView::OnBnClickedCheckAutofillList()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	if (m_checkAutoFillOnOff) {
+		m_ctrlList.SetAutoFillOption(true);
+	}
+	else {
+		m_ctrlList.SetAutoFillOption(false);
+	}
+
+}
+
+
+void CFormListView::OnBnClickedBnTrainingAll()
+{
+	// TODO: Add your control notification handler code here
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	pM->OptionsTrainingAll();
+}
+
+
+void CFormListView::OnBnClickedBnTrainingOne()
+{
+	// TODO: Add your control notification handler code here
 }

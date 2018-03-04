@@ -61,6 +61,10 @@ public:
 	BOOL m_bIsAutoFill;
 
 
+	BOOL m_checkAutoFillOnOff;
+	afx_msg void OnBnClickedCheckAutofillList();
+	afx_msg void OnBnClickedBnTrainingAll();
+	afx_msg void OnBnClickedBnTrainingOne();
 };
 
 

@@ -41,6 +41,10 @@ public:
 	void DeleteMatchList(int line_text_id);
 	void ClearAllResults();
 	void AddListToTraining(int& addNum, int& totalNum, bool& threadEnd);
+
+	void OptionsTrainingAll();
+	void OptionsTrainingSelection();
+
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);
@@ -48,6 +52,7 @@ private:
 	bool Authorization();
 	bool checkMacAddr();
 	bool checkCurrTime();
+
 
 // Overrides
 public:
@@ -88,6 +93,7 @@ protected:
 	BOOL CreateDockingWindows();
 	void SetDockingWindowIcons(BOOL bHiColorIcons);
 	
+
 public:
 
 	afx_msg void OnViewInitialize();
@@ -142,6 +148,7 @@ public:
 	afx_msg void OnSplitlineboxHorizontaly();
 	afx_msg void OnExplorerEncodetext();
 	afx_msg void OnOcrRemovepage();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
 
 
