@@ -1177,7 +1177,7 @@ void CMNDataManager::DBTrainingFromCutSearch(cv::Mat& cutimg, wchar_t* wstrcode,
 	ResizeCutImageByRatio(resimg, cutimg, norRect.width, norRect.height);
 
 	// Verify to add into DB =====================================//
-	DB_CHK IsAdd = IsNeedToAddDBForCNS(resimg, wstrcode, classid, 0.8f);
+	DB_CHK IsAdd = IsNeedToAddDBForCNS(resimg, wstrcode, classid, 0.85f);
 	//===========================================================//
 
 	if ((classid < 8) && (classid >= 0) && (IsAdd == SDB_ADD)) {
