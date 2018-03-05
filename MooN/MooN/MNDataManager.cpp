@@ -1031,7 +1031,7 @@ DB_CHK CMNDataManager::IsNeedToAddDBForCNS(cv::Mat& cutimg, wchar_t* strcode, in
 {
 	DB_CHK res = SDB_ADD;
 	//	float addTh = 0.95f;
-	addTh = DB_ADD_TH;
+	//addTh = DB_ADD_TH;
 	for (auto pos = 0; pos < m_refImgClass[classid].vecStr.size(); pos++) {
 
 		int imgid = pos / (m_refImgClass[classid].wNum*m_refImgClass[classid].hNum);
