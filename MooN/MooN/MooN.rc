@@ -34,15 +34,15 @@ BEGIN
     BEGIN
         MENUITEM "Save All",                    ID_FILE_SAVEALL
         MENUITEM SEPARATOR
-        MENUITEM "Exit",                        ID_APP_EXIT
-        MENUITEM SEPARATOR
         MENUITEM "Export Database",             ID_FILE_EXPORTDATABASE
         MENUITEM SEPARATOR
         MENUITEM "Configuration",               ID_PROJECT_CONFIGURATION
+        MENUITEM SEPARATOR
+        MENUITEM "Exit",                        ID_APP_EXIT
     END
-    POPUP "View(иг)"
+    POPUP "View"
     BEGIN
-        MENUITEM "Initialize View",             ID_VIEW_INITIALIZE
+        MENUITEM "Initial View",                ID_VIEW_INITIALIZE
     END
     POPUP "Project"
     BEGIN
@@ -78,6 +78,186 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Toolbars and Docking Windows"
+        BEGIN
+            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
+        END
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        POPUP "&Application Look"
+        BEGIN
+            MENUITEM "Windows &2000",               ID_VIEW_APPLOOK_WIN_2000
+            MENUITEM "Office &XP",                  ID_VIEW_APPLOOK_OFF_XP
+            MENUITEM "&Windows XP",                 ID_VIEW_APPLOOK_WIN_XP
+            MENUITEM "Office 200&3",                ID_VIEW_APPLOOK_OFF_2003
+            MENUITEM "Visual Studio 200&5",         ID_VIEW_APPLOOK_VS_2005
+            MENUITEM "Visual Studio 200&8",         ID_VIEW_APPLOOK_VS_2008
+            POPUP "Office 200&7"
+            BEGIN
+                MENUITEM "&Blue Style",                 ID_VIEW_APPLOOK_OFF_2007_BLUE
+                MENUITEM "B&lack Style",                ID_VIEW_APPLOOK_OFF_2007_BLACK
+                MENUITEM "&Silver Style",               ID_VIEW_APPLOOK_OFF_2007_SILVER
+                MENUITEM "&Aqua Style",                 ID_VIEW_APPLOOK_OFF_2007_AQUA
+            END
+        END
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About MooN...",              ID_APP_ABOUT
+    END
+END
+
+IDR_POPUP_EDIT MENU
+BEGIN
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+    END
+END
+
+IDR_POPUP_SORT MENU
+BEGIN
+    POPUP "Sorting"
+    BEGIN
+        MENUITEM "&Sort Alphabeticaly",         ID_SORTING_SORTALPHABETIC
+        MENUITEM "Sort by &Type",               ID_SORTING_SORTBYTYPE
+        MENUITEM "Sort by Acc&ess",             ID_SORTING_SORTBYACCESS
+        MENUITEM "Group by t&ype",              ID_SORTING_GROUPBYTYPE
+    END
+END
+
+IDR_POPUP_EXPLORER MENU
+BEGIN
+    POPUP "Explorer"
+    BEGIN
+        MENUITEM "Export Mo?oN Data",           ID_EXPLORER_EXPORTDATABASE
+        MENUITEM "Export Mo?oN Data (Html)",    ID_EXPLORER_EXPORTDATABASE_HTML
+        MENUITEM SEPARATOR
+        MENUITEM "Export Encoded Text",         ID_EXPLORER_ENCODETEXT
+    END
+END
+
+IDR_OUTPUT_POPUP MENU
+BEGIN
+    POPUP "Popup"
+    BEGIN
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Clear",                      ID_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Hide",                       ID_VIEW_OUTPUTWND
+    END
+END
+
+IDR_HELP_MENU MENU
+BEGIN
+    MENUITEM "&About MooN...",              ID_APP_ABOUT
+END
+
+IDR_THEME_MENU MENU
+BEGIN
+    MENUITEM "Office 2007 (&Blue Style)",   ID_VIEW_APPLOOK_OFF_2007_BLUE
+    MENUITEM "Office 2007 (B&lack Style)",  ID_VIEW_APPLOOK_OFF_2007_BLACK
+    MENUITEM "Office 2007 (&Silver Style)", ID_VIEW_APPLOOK_OFF_2007_SILVER
+    MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
+    MENUITEM "Win&dows 7",                  ID_VIEW_APPLOOK_WINDOWS_7
+END
+
+IDR_MENU_OCR MENU
+BEGIN
+    POPUP "OCR"
+    BEGIN
+        MENUITEM "Confirm  text",               ID_OCR_TRAIN_TEXT
+        MENUITEM SEPARATOR
+        POPUP "Recognize Text (English)"
+        BEGIN
+            MENUITEM "Word",                        ID_OCR_ENGLISHWORD
+            MENUITEM "Letter",                      ID_OCR_ENGLISHCHARACTER
+        END
+        POPUP "Recognize Text (Korean)"
+        BEGIN
+            MENUITEM "Word",                        ID_OCR_KOREANWO
+            MENUITEM "Syllable",                    ID_OCR_KOREANCHARACTER
+        END
+        POPUP "Recognize Text (Chinese)"
+        BEGIN
+            MENUITEM "Compound",                    ID_OCR_CHINESEWORD
+            MENUITEM "Character",                   ID_OCR_CHINESECHARACTER
+        END
+        MENUITEM "Recognize Text ( MooN)",      ID_RECOGNIZETEXT_FROMUSERDB
+        MENUITEM SEPARATOR
+        MENUITEM "Cut and Search Segment",      ID_OCR_CUTSEARCH
+        MENUITEM "Cut and Search All Segments ", ID_OCR_CUTANDSEARCHALL
+        MENUITEM SEPARATOR
+        MENUITEM "Search text",                 ID_OCR_SEARCH_SELECTION
+        MENUITEM SEPARATOR
+        MENUITEM "Remove Page",                 ID_OCR_REMOVEPAGE
+        MENUITEM SEPARATOR
+        MENUITEM "Remove Noise",                ID_OCR_REMOVENOISE
+        MENUITEM SEPARATOR
+        MENUITEM "Add Line Box",                ID_OCR_ADD_LINEBOX
+        MENUITEM "Delete Line Box",             ID_OCR_DELETEL_INEBOX
+        MENUITEM "Rotate Line Box",             ID_OCR_ROTATE_LINE
+        MENUITEM "Undo Rotation of Line Box",   ID_OCR_UNDOROTAION_LINE
+        MENUITEM "Merge Line Box",              ID_OCR_MERGELINEBOX
+        POPUP "Split Line Box"
+        BEGIN
+            MENUITEM "Vertically",                  ID_SPLITLINEBOX_VERTICALLY
+            MENUITEM "Horizontally",                ID_SPLITLINEBOX_HORIZONTALY
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Add Text Box",                ID_OCR_ADD_TEXTBOX
+        MENUITEM "Delete Text Box",             ID_OCR_DELETETE_XTBOX32820
+        MENUITEM "Merge Text Box",              ID_OCR_MERGE_BOX
+        POPUP "Split Text Box"
+        BEGIN
+            MENUITEM "Vertically",                  ID_SPLITETEXTBOX_VERTICALLY
+            MENUITEM "Horizontally",                ID_SPLITETEXTBOX_HORIZONTALL
+        END
+    END
+END
+
+IDR_POPUP_LIST MENU
+BEGIN
+    POPUP "options"
+    BEGIN
+        MENUITEM "Auto Fill On",                ID_OPTIONS_AUTOFILLON
+        MENUITEM "Auto Fill Off",               ID_OPTIONS_AUTOFILLOFF
+        MENUITEM SEPARATOR
+        MENUITEM "Training All",                ID_OPTIONS_TRAININGALL
+        MENUITEM "Training Selection",          ID_OPTIONS_TRAININGSELECTION
+    END
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -257,186 +437,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDR_MAINFRAME MENU
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
-        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
-        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
-        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
-        MENUITEM SEPARATOR
-        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
-        MENUITEM SEPARATOR
-        MENUITEM "E&xit",                       ID_APP_EXIT
-    END
-    POPUP "&Edit"
-    BEGIN
-        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
-        MENUITEM SEPARATOR
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
-    END
-    POPUP "&View"
-    BEGIN
-        POPUP "&Toolbars and Docking Windows"
-        BEGIN
-            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
-        END
-        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
-        POPUP "&Application Look"
-        BEGIN
-            MENUITEM "Windows &2000",               ID_VIEW_APPLOOK_WIN_2000
-            MENUITEM "Office &XP",                  ID_VIEW_APPLOOK_OFF_XP
-            MENUITEM "&Windows XP",                 ID_VIEW_APPLOOK_WIN_XP
-            MENUITEM "Office 200&3",                ID_VIEW_APPLOOK_OFF_2003
-            MENUITEM "Visual Studio 200&5",         ID_VIEW_APPLOOK_VS_2005
-            MENUITEM "Visual Studio 200&8",         ID_VIEW_APPLOOK_VS_2008
-            POPUP "Office 200&7"
-            BEGIN
-                MENUITEM "&Blue Style",                 ID_VIEW_APPLOOK_OFF_2007_BLUE
-                MENUITEM "B&lack Style",                ID_VIEW_APPLOOK_OFF_2007_BLACK
-                MENUITEM "&Silver Style",               ID_VIEW_APPLOOK_OFF_2007_SILVER
-                MENUITEM "&Aqua Style",                 ID_VIEW_APPLOOK_OFF_2007_AQUA
-            END
-        END
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&About MooN...",              ID_APP_ABOUT
-    END
-END
-
-IDR_POPUP_EDIT MENU
-BEGIN
-    POPUP "Edit"
-    BEGIN
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
-    END
-END
-
-IDR_POPUP_SORT MENU
-BEGIN
-    POPUP "Sorting"
-    BEGIN
-        MENUITEM "&Sort Alphabeticaly",         ID_SORTING_SORTALPHABETIC
-        MENUITEM "Sort by &Type",               ID_SORTING_SORTBYTYPE
-        MENUITEM "Sort by Acc&ess",             ID_SORTING_SORTBYACCESS
-        MENUITEM "Group by t&ype",              ID_SORTING_GROUPBYTYPE
-    END
-END
-
-IDR_POPUP_EXPLORER MENU
-BEGIN
-    POPUP "Explorer"
-    BEGIN
-        MENUITEM "Export Database",             ID_EXPLORER_EXPORTDATABASE
-        MENUITEM "Export Database (Html)",      ID_EXPLORER_EXPORTDATABASE_HTML
-        MENUITEM SEPARATOR
-        MENUITEM "Encode Text",                 ID_EXPLORER_ENCODETEXT
-    END
-END
-
-IDR_OUTPUT_POPUP MENU
-BEGIN
-    POPUP "Popup"
-    BEGIN
-        MENUITEM "&Copy",                       ID_EDIT_COPY
-        MENUITEM "&Clear",                      ID_EDIT_CLEAR
-        MENUITEM SEPARATOR
-        MENUITEM "&Hide",                       ID_VIEW_OUTPUTWND
-    END
-END
-
-IDR_HELP_MENU MENU
-BEGIN
-    MENUITEM "&About MooN...",              ID_APP_ABOUT
-END
-
-IDR_THEME_MENU MENU
-BEGIN
-    MENUITEM "Office 2007 (&Blue Style)",   ID_VIEW_APPLOOK_OFF_2007_BLUE
-    MENUITEM "Office 2007 (B&lack Style)",  ID_VIEW_APPLOOK_OFF_2007_BLACK
-    MENUITEM "Office 2007 (&Silver Style)", ID_VIEW_APPLOOK_OFF_2007_SILVER
-    MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
-    MENUITEM "Win&dows 7",                  ID_VIEW_APPLOOK_WINDOWS_7
-END
-
-IDR_MENU_OCR MENU
-BEGIN
-    POPUP "OCR"
-    BEGIN
-        MENUITEM "Confirm  text",               ID_OCR_TRAIN_TEXT
-        MENUITEM SEPARATOR
-        POPUP "Recognize Text (English)"
-        BEGIN
-            MENUITEM "Word",                        ID_OCR_ENGLISHWORD
-            MENUITEM "Letter",                      ID_OCR_ENGLISHCHARACTER
-        END
-        POPUP "Recognize Text (Korean)"
-        BEGIN
-            MENUITEM "Word",                        ID_OCR_KOREANWO
-            MENUITEM "Syllable",                    ID_OCR_KOREANCHARACTER
-        END
-        POPUP "Recognize Text (Chinese)"
-        BEGIN
-            MENUITEM "Compound",                    ID_OCR_CHINESEWORD
-            MENUITEM "Character",                   ID_OCR_CHINESECHARACTER
-        END
-        MENUITEM "Recognize Text ( MooN)",      ID_RECOGNIZETEXT_FROMUSERDB
-        MENUITEM SEPARATOR
-        MENUITEM "Cut and Search",              ID_OCR_CUTSEARCH
-        MENUITEM "Cut and Search All",          ID_OCR_CUTANDSEARCHALL
-        MENUITEM SEPARATOR
-        MENUITEM "Search text",                 ID_OCR_SEARCH_SELECTION
-        MENUITEM SEPARATOR
-        MENUITEM "Remove Page",                 ID_OCR_REMOVEPAGE
-        MENUITEM SEPARATOR
-        MENUITEM "Remove Noise",                ID_OCR_REMOVENOISE
-        MENUITEM SEPARATOR
-        MENUITEM "Add Line Box",                ID_OCR_ADD_LINEBOX
-        MENUITEM "Delete Line Box",             ID_OCR_DELETEL_INEBOX
-        MENUITEM "Rotate Line Box",             ID_OCR_ROTATE_LINE
-        MENUITEM "Undo Rotaion Line Box",       ID_OCR_UNDOROTAION_LINE
-        MENUITEM "Merge Line Box",              ID_OCR_MERGELINEBOX
-        POPUP "Split Line Box"
-        BEGIN
-            MENUITEM "Vertically",                  ID_SPLITLINEBOX_VERTICALLY
-            MENUITEM "Horizontally",                ID_SPLITLINEBOX_HORIZONTALY
-        END
-        MENUITEM SEPARATOR
-        MENUITEM "Add Text Box",                ID_OCR_ADD_TEXTBOX
-        MENUITEM "Delete Text Box",             ID_OCR_DELETETE_XTBOX32820
-        MENUITEM "Merge Text Box",              ID_OCR_MERGE_BOX
-        POPUP "Splite Text Box"
-        BEGIN
-            MENUITEM "Vertically",                  ID_SPLITETEXTBOX_VERTICALLY
-            MENUITEM "Horizontally",                ID_SPLITETEXTBOX_HORIZONTALL
-        END
-    END
-END
-
-IDR_POPUP_LIST MENU
-BEGIN
-    POPUP "options"
-    BEGIN
-        MENUITEM "Auto Fill On",                ID_OPTIONS_AUTOFILLON
-        MENUITEM "Auto Fill Off",               ID_OPTIONS_AUTOFILLOFF
-        MENUITEM SEPARATOR
-        MENUITEM "Training All",                ID_OPTIONS_TRAININGALL
-        MENUITEM "Training Selection",          ID_OPTIONS_TRAININGSELECTION
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Accelerator
 //
 
@@ -469,7 +469,7 @@ CAPTION "About MooN"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
-    LTEXT           "MooN, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Mo?oN, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2017-2018",IDC_STATIC,42,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
 END
@@ -489,25 +489,25 @@ BEGIN
     PUSHBUTTON      "Browser...",IDC_BUTTON_BROWSER2,300,40,48,14
 END
 
-IDD_FORMLISTVIEW DIALOGEX 0, 0, 156, 174
+IDD_FORMLISTVIEW DIALOGEX 0, 0, 156, 240
 STYLE DS_SETFONT | WS_CHILD
 FONT 10, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,41,142,126
-    CONTROL         "Auro-Fill",IDC_CHECK_AUTOFILL_LIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,96,3,39,8
-    PUSHBUTTON      "Training",IDC_BN_TRAINING_ONE,0,0,47,14
-    PUSHBUTTON      "Training All",IDC_BN_TRAINING_ALL,48,0,42,14
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,55,142,175
+    CONTROL         "Auto-Fill",IDC_CHECK_AUTOFILL_LIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,89,7,34,11
+    PUSHBUTTON      "Train",IDC_BN_TRAINING_ONE,7,7,37,10
+    PUSHBUTTON      "Train All",IDC_BN_TRAINING_ALL,52,7,31,11
 END
 
-IDD_FROMPROPERTIES DIALOGEX 0, 0, 190, 546
+IDD_FROMPROPERTIES DIALOGEX 0, 0, 190, 591
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_SLIDER1,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,81,366,105,18
-    CONTROL         "",IDC_MFCCOLORBUTTON1,"MfcColorButton",WS_TABSTOP,15,367,33,15
-    GROUPBOX        "Cut and Search Treshold (0 - 100)",IDC_STATIC,7,357,179,33
-    EDITTEXT        IDC_EDIT1,51,368,28,12,ES_AUTOHSCROLL
-    GROUPBOX        "Text Recognition",IDC_STATIC,6,18,180,113
+    CONTROL         "",IDC_SLIDER1,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,81,372,105,18
+    CONTROL         "",IDC_MFCCOLORBUTTON1,"MfcColorButton",WS_TABSTOP,15,373,33,15
+    GROUPBOX        "Cut and Search Treshold (0 - 100)",IDC_STATIC,7,363,179,33
+    EDITTEXT        IDC_EDIT1,51,374,28,12,ES_AUTOHSCROLL
+    GROUPBOX        "Text Recognition",IDC_STATIC,6,20,180,113
     GROUPBOX        "Page Orientation",IDC_STATIC,6,132,180,121
     LTEXT           "File Name: ",IDC_STATIC,13,151,36,8
     EDITTEXT        IDC_EDIT_FILENAME,52,149,129,12,ES_AUTOHSCROLL | ES_READONLY
@@ -517,6 +517,23 @@ BEGIN
     LTEXT           "Rotate Angle: ",IDC_STATIC,13,186,54,8
     PUSHBUTTON      "Extract Lines",IDC_BN_EXTRACTLINE,13,226,96,18,BS_MULTILINE
     PUSHBUTTON      "Clear All Lines",IDC_BN_DEL_ALLLINBES,115,226,66,18,BS_MULTILINE
+    GROUPBOX        "Training",IDC_STATIC,7,266,179,90
+    EDITTEXT        IDC_EDIT_ENCODE,61,284,120,14,ES_AUTOHSCROLL
+    LTEXT           "Text",IDC_STATIC,19,287,16,8
+    EDITTEXT        IDC_EDIT_CONFIDENCE,61,299,120,14,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Confidence: ",IDC_STATIC,19,301,42,8
+    LTEXT           "Language",IDC_STATIC,19,316,32,8
+    COMBOBOX        IDC_COMBO_LANG,61,314,120,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Train",IDC_BN_ADD_MODIFYOCRRES,61,329,120,18
+    PUSHBUTTON      "Recognition (with OCR)",IDC_BN_RUNOCR,125,32,48,24,BS_MULTILINE
+    EDITTEXT        IDC_EDIT_KEYWORD_SEARCH,14,579,169,12,ES_AUTOHSCROLL
+    CONTROL         "Hide Encoding/Tags",IDC_CHECK_LINEBIOX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,102,7,81,10
+    CONTROL         "",IDC_SLIDER_CONFI,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,36,481,147,33
+    GROUPBOX        "Training Threshold ",IDC_STATIC,7,405,176,102,BS_LEFT
+    EDITTEXT        IDC_EDIT_CONFI,14,482,24,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Delete All Results",IDC_BN_ALL_DEL_OCRRES,125,80,48,24,BS_MULTILINE
+    PUSHBUTTON      "Export Encoded Text",IDC_BN_ENCODE,125,104,48,24,BS_MULTILINE
+    LTEXT           "Keyword Search:",IDC_STATIC,15,562,89,8
     GROUPBOX        "Training",IDC_STATIC,7,259,179,90
     EDITTEXT        IDC_EDIT_ENCODE,61,277,120,14,ES_AUTOHSCROLL
     LTEXT           "Text",IDC_STATIC,19,280,16,8
@@ -538,6 +555,16 @@ BEGIN
     EDITTEXT        IDC_EDIT_DEFAULT_FONT_SIZE,85,166,24,12,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Default Font Size",IDC_BN_SETFONTSIZE,115,166,66,12
     LTEXT           "Default Font Size: ",IDC_STATIC,13,168,60,9
+    CONTROL         "",IDC_SLIDER_DBTH,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,39,531,144,15
+    GROUPBOX        "Dependancy for User DB",IDC_STATIC,7,519,179,40,BS_LEFT
+    EDITTEXT        IDC_EDIT_DBTH,7,532,24,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Recognition (MooN)",IDC_BN_MATCH_FROM_DB,125,56,48,24,BS_MULTILINE
+    LTEXT           "Encoding Order",IDC_STATIC,17,32,78,8
+    LTEXT           "1st: ",IDC_STATIC,17,46,16,8
+    LTEXT           "2nd:",IDC_STATIC,17,64,16,8
+    LTEXT           "3rd:",IDC_STATIC,17,82,14,8
+    LTEXT           "4th:",IDC_STATIC,17,100,14,8
+    COMBOBOX        IDC_COMBO_1ST_LANGUAGE,35,44,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "",IDC_SLIDER_DBTH,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,36,455,147,15
     GROUPBOX        "DB Quality",IDC_STATIC,6,443,180,49,BS_LEFT
     EDITTEXT        IDC_EDIT_DBTH,12,456,24,14,ES_AUTOHSCROLL
@@ -549,6 +576,10 @@ BEGIN
     LTEXT           "4th:",IDC_STATIC,17,98,14,8
     COMBOBOX        IDC_COMBO_1ST_LANGUAGE,35,42,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COMBO_2ND_LANGUAGE,35,60,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_3RD_LANGUAGE,35,80,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_4TH_LANGUAGE,35,97,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Autofit Boundary",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,7,71,10
+    LTEXT           "A high value here creates a large database, which increases recognition accuracy but reduces recognition speeds. A low value here creates a smaller database, which improves recognition speeds but reduces recognition accuracy. ",IDC_STATIC,16,422,155,51
     COMBOBOX        IDC_COMBO_3RD_LANGUAGE,35,78,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COMBO_4TH_LANGUAGE,35,95,72,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Autofit Boundary",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,71,10
@@ -563,7 +594,7 @@ IDD_DIG_SAVEFILES DIALOGEX 0, 0, 94, 34
 STYLE DS_SETFONT | WS_POPUP | WS_SYSMENU
 FONT 12, "Microsoft Sans Serif", 700, 1, 0x0
 BEGIN
-    LTEXT           "Writing Files...",IDC_STATIC,24,12,63,8
+    LTEXT           "Writing Data...",IDC_STATIC,24,12,63,8
 END
 
 
@@ -635,7 +666,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 149
         TOPMARGIN, 7
-        BOTTOMMARGIN, 167
+        BOTTOMMARGIN, 174
     END
 
     IDD_FROMPROPERTIES, DIALOG
@@ -643,8 +674,8 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 183
         TOPMARGIN, 7
-        BOTTOMMARGIN, 510
-        HORZGUIDE, 520
+        BOTTOMMARGIN, 546
+        HORZGUIDE, 527
     END
 
     IDD_DIG_SAVEFILES, DIALOG
