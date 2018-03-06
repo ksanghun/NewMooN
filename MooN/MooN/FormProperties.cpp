@@ -180,14 +180,19 @@ void CFormProperties::OnInitialUpdate()
 	m_sliderConfi.SetTicFreq(100);
 	m_sliderConfi.SetPos(m_editConfi);
 
-	m_sliderForDBTh.SetRange(1, 100, TRUE);
-	m_sliderForDBTh.SetTicFreq(100);
+	//m_sliderForDBTh.SetRange(1, 100, TRUE);
+	//m_sliderForDBTh.SetTicFreq(100);
+	//m_sliderForDBTh.SetPos(m_editDBth);
+
+	m_sliderForDBTh.SetRange(70, 90, TRUE);
+	m_sliderForDBTh.SetTicFreq(20);
 	m_sliderForDBTh.SetPos(m_editDBth);
 
 
 	CMNView* pImgView = pView->GetImageView();
 	pImgView->SetDispConfidence(m_editConfi);
-	pImgView->SetDBTreshold(m_editDBth);
+//	pImgView->SetDBTreshold(m_editDBth);
+	SINGLETON_DataMng::GetInstance()->SetDBQuality(static_cast<float>(m_editDBth)*0.01f);
 
 	pImgView->EnableShowLine(true);
 	pImgView->EnableAutoFit(true);
@@ -680,8 +685,9 @@ void CFormProperties::OnNMCustomdrawSliderDbth(NMHDR *pNMHDR, LRESULT *pResult)
 		m_editDBth = pos;
 		UpdateData(FALSE);
 
-		CMNView* pImgView = pView->GetImageView();
-		pImgView->SetDBTreshold(m_editDBth);
+		//CMNView* pImgView = pView->GetImageView();
+		//pImgView->SetDBTreshold(m_editDBth);
+		SINGLETON_DataMng::GetInstance()->SetDBQuality(static_cast<float>(m_editDBth)*0.01f);
 	}
 }
 

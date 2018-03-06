@@ -942,7 +942,10 @@ int CMNView::SelectObject3D(int x, int y, int rect_width, int rect_height, int s
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 
 		for (auto i = 0; i < m_vecSelPage.size(); i++) {
-			SINGLETON_DataMng::GetInstance()->GetPageByOrderID(m_vecSelPage[i])->SetSelection(false);
+		//	SINGLETON_DataMng::GetInstance()->GetPageByOrderID(m_vecSelPage[i])->SetSelection(false);
+			if (SINGLETON_DataMng::GetInstance()->GetPageByOrderID(m_vecSelPage[i])) {
+				SINGLETON_DataMng::GetInstance()->GetPageByOrderID(m_vecSelPage[i])->SetSelection(false);
+			}
 		}
 		m_vecSelPage.swap(std::vector<int>());
 	}
@@ -2334,6 +2337,11 @@ void CMNView::DrawOCRRes(CMNPageObject* pPage)
 //	glLineWidth(2);
 //	for (size_t i = 0; i < imgVec.size(); i++) {
 //	glNewList(m_glListIdForDrawOCRRes, GL_COMPILE);
+
+	if (m_bIsThreadEnd == false)
+		return;
+
+
 	if (pPage) {
 	//	if (pPage->IsNear()) {
 
@@ -2624,6 +2632,7 @@ void CMNView::TrimTextBox(std::vector<_stOCRResult>& ocrRes, cv::Rect _rect)
 
 void CMNView::DoOCCorrection(cv::Mat& img, cv::Rect rect, CMNPageObject* pPage, std::vector<_stOCRResult>& ocrRes, int& addCnt)
 {
+	m_dbTreshold = 0.9f;
 	TRACE(L"OCR correctrion\n");
 	// check duplication of ocr res rect //
 	// Flush OCR Results // !!!!

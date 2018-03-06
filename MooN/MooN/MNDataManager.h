@@ -191,6 +191,7 @@ public:
 	void AddListItemVecForTraiing(int pid, int mid, CString strCode);
 	void ProcAddListToDB(int& addCnt, int& totalCnt, bool& IsEnd);
 
+	void SetDBQuality(float _value) { m_dbQuality = _value; }
 private:
 	CMNPDFConverter m_pdf;
 	int m_maxCutWidth;
@@ -243,9 +244,9 @@ private:
 
 
 	std::vector<cv::Point> points;
-
-
 	_LANGUAGE_TYPE m_ocrDBOrder[_NUM_LANGUAGE_TYPE];
+
+	float m_dbQuality;
 	
 
 };

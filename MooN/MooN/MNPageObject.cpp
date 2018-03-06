@@ -223,13 +223,14 @@ bool CMNPageObject::LoadThumbImage(unsigned short resolution)
 		cv::threshold(m_srcGrayImg, m_srcGrayImg, 100, 255, cv::THRESH_OTSU);
 
 		unsigned short width = 0, height = 0;
-		if (LoadPageInfo(width, height)) {
-			SetSize(width, height, DEFAULT_PAGE_SIZE);
-		}
-		else {
+		LoadPageInfo(width, height);
+		//if (LoadPageInfo(width, height)) {
+		//	SetSize(width, height, DEFAULT_PAGE_SIZE);
+		//}
+		//else {
 			SetSize(m_fullImg.cols, m_fullImg.rows, DEFAULT_PAGE_SIZE);
 		//	cv::resize(m_thumbImg, m_thumbImg, cvSize(resolution, resolution));
-		}
+		//}
 	}
 	return false;
 

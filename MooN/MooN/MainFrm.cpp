@@ -329,7 +329,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	InitConfituration();
 
 	// For Auto-Saving //
-	SetTimer(900, 10000, NULL);
+	SetTimer(900, 5000, NULL);
 
 	return 0;
 }
