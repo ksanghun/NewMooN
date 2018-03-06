@@ -370,13 +370,13 @@ BOOL CMainFrame::CreateDockingWindows()
 	}
 
 	// Create properties window
-	if (!m_wndProperties.Create(L"Properties", this, CRect(0, 0, 300, 300), TRUE, ID_VIEW_PROPERTIESWND, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT))
+	if (!m_wndProperties.Create(L"Setting", this, CRect(0, 0, 300, 300), TRUE, ID_VIEW_PROPERTIESWND, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT))
 	{
 		TRACE0("Failed to create Properties window\n");
 		return FALSE; // failed to create
 	}
 		
-	if (!m_wndFormListView.Create(L"Matching Results", this, CRect(0, 0, 400, 400), TRUE, ID_VIEW_LISTVIEW, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT))
+	if (!m_wndFormListView.Create(L"Encoding /Tagging", this, CRect(0, 0, 400, 400), TRUE, ID_VIEW_LISTVIEW, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT))
 	{
 		TRACE0("Failed to create Properties window\n");
 		return FALSE; // failed to create

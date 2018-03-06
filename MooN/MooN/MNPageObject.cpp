@@ -990,8 +990,8 @@ bool CMNPageObject::IsNeedToExtract()
 }
 void CMNPageObject::AddParagraph(CExtractor& extractor, cv::Mat& paraImg, cv::Rect rect, bool IsVerti, float deskew, bool IsAlphabetic)
 {
-	if ((IsVerti) && (rect.width < 32)) return;
-	if ((!IsVerti) && (rect.height < 32)) return;
+	//if ((IsVerti) && (rect.width < 32)) return;
+	//if ((!IsVerti) && (rect.height < 32)) return;
 
 	for (int j = 0; j < m_paragraph.size(); j++) {
 		cv::Rect andRect_overlap = (m_paragraph[j].rect & rect);
