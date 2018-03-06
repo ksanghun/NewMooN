@@ -171,6 +171,7 @@ public:
 
 	bool m_IsTypeMode;
 	void SetTypeMode(bool IsEnable) { m_IsTypeMode = IsEnable; }
+	void SetAutoSegmentMode(float IsEnable) { m_bIsAutoSegmentMode = IsEnable; }
 private:
 	CPoint m_mousedown;
 	CPoint m_preMmousedown;
@@ -182,7 +183,7 @@ private:
 	LOGFONT		m_LogFont;
 	BITMAPINFO* m_pBmpInfo;
 
-	
+	bool m_bIsAutoSegmentMode;
 
 	// Camera Animation //
 	bool m_isAnimation;

@@ -32,6 +32,7 @@ CFormProperties::CFormProperties()
 	, m_editDefaultFontSize(32)
 	, m_editDBth(90)
 	, m_chkAutoFit(TRUE)
+	, m_checkAutoSegment(FALSE)
 {
 }
 
@@ -82,6 +83,7 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_3RD_LANGUAGE, m_combo3rdLanguage);
 	DDX_Control(pDX, IDC_COMBO_4TH_LANGUAGE, m_combo4thLanguage);
 	DDX_Check(pDX, IDC_CHECK1, m_chkAutoFit);
+	DDX_Check(pDX, IDC_CHECK_AUTOSEGMENT, m_checkAutoSegment);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -125,6 +127,7 @@ ON_CBN_SELCHANGE(IDC_COMBO_3RD_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo3r
 ON_CBN_SELCHANGE(IDC_COMBO_2ND_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo2ndLanguage)
 ON_CBN_SELCHANGE(IDC_COMBO_1ST_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo1stLanguage)
 ON_BN_CLICKED(IDC_CHECK1, &CFormProperties::OnBnClickedCheckAutoFit)
+ON_BN_CLICKED(IDC_CHECK_AUTOSEGMENT, &CFormProperties::OnBnClickedCheckAutosegment)
 END_MESSAGE_MAP()
 
 
@@ -782,5 +785,19 @@ void CFormProperties::OnBnClickedCheckAutoFit()		// AutoFit
 	}
 	else {
 		pImgView->EnableAutoFit(true);
+	}
+}
+
+
+void CFormProperties::OnBnClickedCheckAutosegment()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CMNView* pImgView = pView->GetImageView();
+	if (m_checkAutoSegment == FALSE) {
+		pImgView->SetAutoSegmentMode(false);
+	}
+	else {
+		pImgView->SetAutoSegmentMode(true);
 	}
 }

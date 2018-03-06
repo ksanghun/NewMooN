@@ -119,7 +119,7 @@ public:
 	afx_msg void OnAnalysisDatatraining();
 	afx_msg void OnOcrRemovenoise();
 	afx_msg void OnFileExportdatabase();
-	afx_msg void OnOcrSearchSelection();
+//	afx_msg void OnOcrSearchSelection();
 	afx_msg void OnOcrAddLinebox();
 	afx_msg void OnOcrDeletelInebox();
 	afx_msg void OnOcrRotateLine();

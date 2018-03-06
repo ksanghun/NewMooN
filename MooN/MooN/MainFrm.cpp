@@ -51,7 +51,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_ANALYSIS_DATATRAINING, &CMainFrame::OnAnalysisDatatraining)
 	ON_COMMAND(ID_OCR_REMOVENOISE, &CMainFrame::OnOcrRemovenoise)
 	ON_COMMAND(ID_FILE_EXPORTDATABASE, &CMainFrame::OnFileExportdatabase)
-	ON_COMMAND(ID_OCR_SEARCH_SELECTION, &CMainFrame::OnOcrSearchSelection)
+//	ON_COMMAND(ID_OCR_SEARCH_SELECTION, &CMainFrame::OnOcrSearchSelection)
 	ON_COMMAND(ID_OCR_ADD_LINEBOX, &CMainFrame::OnOcrAddLinebox)
 	ON_COMMAND(ID_OCR_DELETEL_INEBOX, &CMainFrame::OnOcrDeletelInebox)
 	ON_COMMAND(ID_OCR_ROTATE_LINE, &CMainFrame::OnOcrRotateLine)
@@ -370,7 +370,7 @@ BOOL CMainFrame::CreateDockingWindows()
 	}
 
 	// Create properties window
-	if (!m_wndProperties.Create(L"Setting", this, CRect(0, 0, 300, 300), TRUE, ID_VIEW_PROPERTIESWND, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT))
+	if (!m_wndProperties.Create(L"Settings", this, CRect(0, 0, 300, 300), TRUE, ID_VIEW_PROPERTIESWND, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT))
 	{
 		TRACE0("Failed to create Properties window\n");
 		return FALSE; // failed to create
@@ -1036,13 +1036,13 @@ void CMainFrame::OnFileExportdatabase()
 }
 
 
-void CMainFrame::OnOcrSearchSelection()
-{
-	// TODO: Add your command handler code here
-	CMNView* pViewImage = pView->GetImageView();
-	pViewImage->ProcDoSearchSelection();
-	
-}
+//void CMainFrame::OnOcrSearchSelection()
+//{
+//	// TODO: Add your command handler code here
+//	CMNView* pViewImage = pView->GetImageView();
+//	pViewImage->ProcDoSearchSelection();
+//	
+//}
 
 
 void CMainFrame::OnOcrAddLinebox()

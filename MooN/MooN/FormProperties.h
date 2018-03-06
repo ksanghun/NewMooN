@@ -117,6 +117,8 @@ public:
 	afx_msg void OnCbnSelchangeCombo1stLanguage();
 	BOOL m_chkAutoFit;
 	afx_msg void OnBnClickedCheckAutoFit();
+	BOOL m_checkAutoSegment;
+	afx_msg void OnBnClickedCheckAutosegment();
 };
 
 

@@ -70,6 +70,7 @@ CMNView::CMNView()
 
 	m_selImgId = -1;
 	m_IsTypeMode = false;
+	m_bIsAutoSegmentMode = false;
 }
 
 
@@ -573,7 +574,10 @@ void CMNView::OnTimer(UINT_PTR nIDEvent)
 			InitCamera();
 
 			// new thread for extract boundary //
-		//	ProcExtractBoundary();
+
+			if (m_bIsAutoSegmentMode) {
+				ProcExtractBoundary();
+			}
 		}
 	}
 	else if (nIDEvent == _DO_SEARCH) {
