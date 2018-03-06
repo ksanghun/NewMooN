@@ -160,7 +160,6 @@
 #define IDC_CHECK_AUTOFILL_LIST         1052
 #define IDC_BUTTON2                     1053
 #define IDC_BN_TRAINING_ALL             1053
-#define IDC_CHECK2                      1054
 #define IDC_CHECK_AUTOSEGMENT           1054
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
@@ -258,13 +257,14 @@
 #define ID_SPLITLINEBOX_HORIZONTALY     32863
 #define ID_EXPLORER_ENCODETEXT          32864
 #define ID_OCR_REMOVEPAGE               32865
+#define ID_OCR_SEARCH_SLECTION          32866
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
-#define _APS_NEXT_COMMAND_VALUE         32866
+#define _APS_NEXT_COMMAND_VALUE         32867
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
