@@ -97,6 +97,8 @@ CMainFrame::CMainFrame()
 {
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), ID_VIEW_APPLOOK_VS_2008);
+
+	m_IsAutoSavingOn = false;
 }
 
 CMainFrame::~CMainFrame()
@@ -171,7 +173,7 @@ bool CMainFrame::checkMacAddr()
 bool CMainFrame::checkCurrTime()
 {
 	WORD eYear = 2018;
-	WORD eMonth = 12;
+	WORD eMonth = 4;
 	WORD eDay = 30;
 
 	SYSTEMTIME st;
@@ -1331,10 +1333,8 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 	// TODO: Add your message handler code here and/or call default
 
 	if (nIDEvent == 900) {		// Auto-Saving //
-
-
 		CMNView* pViewImage = pView->GetImageView();
-		if (pViewImage->IsThreadEnd() == true) {
+		if ((pViewImage->IsThreadEnd() == true) && (m_IsAutoSavingOn)){
 			SINGLETON_DataMng::GetInstance()->Save(true);
 		}
 	}

@@ -45,6 +45,8 @@ public:
 	void OptionsTrainingAll();
 	void OptionsTrainingSelection();
 
+	void SetAutoSaving(bool IsOn) {		m_IsAutoSavingOn = IsOn;	}
+
 private:
 	void InitConfituration();
 	void GetImgFilePath(CString strPath);
@@ -53,6 +55,7 @@ private:
 	bool checkMacAddr();
 	bool checkCurrTime();
 
+	bool m_IsAutoSavingOn;
 
 // Overrides
 public:

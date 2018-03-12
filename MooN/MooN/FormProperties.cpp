@@ -6,7 +6,7 @@
 #include "FormProperties.h"
 #include "MooNView.h"
 #include "MNDataManager.h"
-
+#include "MainFrm.h"
 
 // CFromProperties
 
@@ -33,6 +33,7 @@ CFormProperties::CFormProperties()
 	, m_editDBth(90)
 	, m_chkAutoFit(TRUE)
 	, m_checkAutoSegment(FALSE)
+	, m_bAutoSaving(FALSE)
 {
 }
 
@@ -84,6 +85,7 @@ void CFormProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_4TH_LANGUAGE, m_combo4thLanguage);
 	DDX_Check(pDX, IDC_CHECK1, m_chkAutoFit);
 	DDX_Check(pDX, IDC_CHECK_AUTOSEGMENT, m_checkAutoSegment);
+	DDX_Check(pDX, IDC_CHECK_AUTOSAVING, m_bAutoSaving);
 }
 
 BEGIN_MESSAGE_MAP(CFormProperties, CFormView)
@@ -128,6 +130,7 @@ ON_CBN_SELCHANGE(IDC_COMBO_2ND_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo2n
 ON_CBN_SELCHANGE(IDC_COMBO_1ST_LANGUAGE, &CFormProperties::OnCbnSelchangeCombo1stLanguage)
 ON_BN_CLICKED(IDC_CHECK1, &CFormProperties::OnBnClickedCheckAutoFit)
 ON_BN_CLICKED(IDC_CHECK_AUTOSEGMENT, &CFormProperties::OnBnClickedCheckAutosegment)
+ON_BN_CLICKED(IDC_CHECK_AUTOSAVING, &CFormProperties::OnBnClickedCheckAutosaving)
 END_MESSAGE_MAP()
 
 
@@ -199,8 +202,8 @@ void CFormProperties::OnInitialUpdate()
 
 	pImgView->EnableShowLine(true);
 	pImgView->EnableAutoFit(true);
-
-
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	pM->SetAutoSaving(false);
 
 	m_combo1stLanguage.AddString(L"--None--");
 	m_combo1stLanguage.AddString(L"English");
@@ -799,5 +802,20 @@ void CFormProperties::OnBnClickedCheckAutosegment()
 	}
 	else {
 		pImgView->SetAutoSegmentMode(true);
+	}
+}
+
+
+void CFormProperties::OnBnClickedCheckAutosaving()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);
+	CMainFrame* pM = (CMainFrame*)AfxGetMainWnd();
+	pM->SetAutoSaving(false);
+	if (m_bAutoSaving == FALSE) {
+		pM->SetAutoSaving(false);
+	}
+	else {
+		pM->SetAutoSaving(true);
 	}
 }

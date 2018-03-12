@@ -161,6 +161,8 @@
 #define IDC_BUTTON2                     1053
 #define IDC_BN_TRAINING_ALL             1053
 #define IDC_CHECK_AUTOSEGMENT           1054
+#define IDC_CHECK2                      1055
+#define IDC_CHECK_AUTOSAVING            1055
 #define ID_FILE_EXIT                    32771
 #define ID_VIEW_INITIALIZE              32772
 #define ID_PROJECT_ADDIMAGE             32773
@@ -265,7 +267,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         32867
-#define _APS_NEXT_CONTROL_VALUE         1055
+#define _APS_NEXT_CONTROL_VALUE         1056
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

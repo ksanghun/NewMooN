@@ -119,6 +119,8 @@ public:
 	afx_msg void OnBnClickedCheckAutoFit();
 	BOOL m_checkAutoSegment;
 	afx_msg void OnBnClickedCheckAutosegment();
+	BOOL m_bAutoSaving;
+	afx_msg void OnBnClickedCheckAutosaving();
 };
 
 
