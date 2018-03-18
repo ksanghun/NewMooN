@@ -340,6 +340,9 @@ _stOCRResult COCRMng::getOcrResFromSingleCut(cv::Mat& image, tesseract::TessBase
 
 	_stOCRResult res;
 	tesseract::ResultIterator* ri = tess.GetIterator();
+
+	CString strWord;
+	wchar_t wstr[32];
 	if (ri != 0) {
 		do {
 			char* word = ri->GetUTF8Text(level);
@@ -354,13 +357,17 @@ _stOCRResult COCRMng::getOcrResFromSingleCut(cv::Mat& image, tesseract::TessBase
 			res.fConfidence = conf*0.01f;
 
 			if ((word)) {
-				Utf8ToUnicode(word, res.strCode);
+				
+				Utf8ToUnicode(word, wstr);
+				strWord += wstr;
 				delete[] word;
 			}
 		} while (ri->Next(level));
 
 		delete ri;
 	}
+
+	wsprintf(res.strCode, strWord.GetBuffer());
 
 	tess.Clear();
 	return res;

@@ -136,6 +136,7 @@ public:
 	void DeleteAllOCRRes();
 	void AddNewTextBox(cv::Rect rect);
 	void AddNewLineBox(cv::Rect rect);
+	void AddEditedLineBox(cv::Rect rect);
 	void AddLineBox(cv::Rect rect);
 	void DeskewParagraph(float fAngle);
 	void UndoDeskewParagraph();
@@ -155,7 +156,7 @@ public:
 	void IncreseAddImgCnt() { m_addImgCnt++; };
 	void SetThreadEnd(bool IsEnd);// { m_bIsThreadEnd = IsEnd; }
 
-	_stOCRResult GetCORResult(cv::Mat& cutImg);
+	_stOCRResult GetCORResult(cv::Mat& cutImg, bool IsMooN);
 
 
 	// editing selection box (line, text) //

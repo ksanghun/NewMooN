@@ -167,7 +167,7 @@ public:
 	void WriteSearchDBFile();
 	void UpdateDataBaseFiles();
 	bool LoadPageInfo(unsigned short& width, unsigned short& height);
-	void EncodeTexBoxHori();
+	void EncodeTexBoxHori(CFile& cfile);
 	void EncodeTexBoxVerti(CFile& cfile);
 
 	void ClearParagraph();

@@ -2883,7 +2883,7 @@ void CMNDataManager::CutNSearchMatching(int& addCnt, int& totalCnt, float _fTh, 
 		mInfo.cInfo = cutInfo;
 
 		// Get character code value from both OCR and DB, DB first.
-		_stOCRResult ocrres = pViewImage->GetCORResult(vecCnSResults[i].cutimg);
+		_stOCRResult ocrres = pViewImage->GetCORResult(vecCnSResults[i].cutimg, true);
 
 		mInfo.accuracy = ocrres.fConfidence * 100;
 		mInfo.strCode = ocrres.strCode;

@@ -1184,12 +1184,6 @@ RECT2D CMNView::GetSelectedAreaForCNS()
 void CMNView::DoOCR()
 {
 	if (m_extractionSetting.IsVerti) {
-		//m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-		//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_AUTO_OSD);
-		//m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_AUTO_OSD);
-		//if (m_extractionSetting.isKor) {
-		//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		//}
 		m_OCRMng.SetOCRDetectMode(__ENG, tesseract::PSM_SINGLE_BLOCK);
 		m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_AUTO_OSD);
 		m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_AUTO_OSD);
@@ -1200,16 +1194,7 @@ void CMNView::DoOCR()
 		m_OCRMng.SetOCRDetectMode(__CHI, tesseract::PSM_SINGLE_BLOCK);
 		m_OCRMng.SetOCRDetectMode(__KOR, tesseract::PSM_SINGLE_BLOCK);
 		m_OCRMng.SetOCRDetectMode(__JAP, tesseract::PSM_SINGLE_BLOCK);
-		//m_OCRMng.SetOCRDetectModeEng(tesseract::PSM_SINGLE_BLOCK);
-		//m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_BLOCK);
-		//m_OCRMng.SetOCRDetectModeKor(tesseract::PSM_SINGLE_BLOCK);
-
-		//if (m_extractionSetting.isKor) {
-		//	m_OCRMng.SetOCRDetectModeChi(tesseract::PSM_SINGLE_CHAR);
-		//}
 	}
-
-	
 
 	if (m_bIsAllOCR) {
 		std::vector<CMNPageObject*> imgVec = SINGLETON_DataMng::GetInstance()->GetVecImgData();
@@ -1218,10 +1203,6 @@ void CMNView::DoOCR()
 
 		size_t i = 0;
 		for (i = 0; i < imgVec.size(); i++) {
-
-			//if (imgVec[i]->GetVecOCRResult().size() > 0) {
-			//	continue;
-			//}
 
 			DoOCRForPage(imgVec[i]);
 
@@ -2047,6 +2028,39 @@ void CMNView::AddNewTextBox(cv::Rect rect)
 }
 
 
+void CMNView::AddEditedLineBox(cv::Rect rect)
+{
+	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
+	//	RECT2D rect = GetSelectedAreaForCNS();
+	if ((m_pSelectPageForCNS)) {
+		if ((rect.width > 0) && (rect.height > 0)) {
+			cv::Mat srcImg = m_pSelectPageForCNS->GetSrcPageGrayImg().clone();
+			if (srcImg.ptr()) {
+
+				cv::Mat para = srcImg(rect);
+				cv::bitwise_not(para, para);
+				std::vector<_extractBox> vecLines;
+				_extractBox addlinebox;
+				addlinebox.init();
+				addlinebox.textbox = rect;
+				vecLines.push_back(addlinebox);
+					// Calculate Deskew //
+		//		cv::Mat imgLine = para(vecLines[0].textbox);
+				float deskew = m_Extractor.DeSkewImg(para);
+
+				//vecLines[0].textbox.x += rect.x;
+				//vecLines[0].textbox.y += rect.y;
+
+				bool IsAlphabetic = false;
+				if (m_extractionSetting.isEng)	IsAlphabetic = true;
+				m_pSelectPageForCNS->AddParagraph(m_Extractor, para, vecLines[0].textbox, m_extractionSetting.IsVerti, deskew, IsAlphabetic);
+
+				para.release();
+			}
+		}
+	}
+}
+
 void CMNView::AddNewLineBox(cv::Rect rect)
 {
 	m_extractionSetting = SINGLETON_DataMng::GetInstance()->GetExtractionSetting();
@@ -2125,7 +2139,7 @@ void CMNView::EncodePage()
 			m_pSelectPageForCNS->EncodeTexBoxVerti(cfile);
 		}
 		else {
-			m_pSelectPageForCNS->EncodeTexBoxHori();
+			m_pSelectPageForCNS->EncodeTexBoxHori(cfile);
 		}
 
 		cfile.Close();
@@ -2342,8 +2356,8 @@ void CMNView::DrawOCRRes(CMNPageObject* pPage)
 //	for (size_t i = 0; i < imgVec.size(); i++) {
 //	glNewList(m_glListIdForDrawOCRRes, GL_COMPILE);
 
-	if (m_bIsThreadEnd == false)
-		return;
+	//if (m_bIsThreadEnd == false)
+	//	return;
 
 
 	if (pPage) {
@@ -3196,65 +3210,61 @@ bool CMNView::MeargingtLineBox(std::vector<stParapgraphInfo>& vecBox, int& depth
 void CMNView::DoOCRForPage(CMNPageObject* pPage)
 {
 	if (pPage) {
-		cv::Mat gray = pPage->GetSrcPageGrayImg().clone();
+	//	cv::Mat gray = pPage->GetSrcPageGrayImg().clone();
 		std::vector<stParapgraphInfo> vecline = pPage->GetVecParagraph();
-//		pPage->DeleteAllOcrRes();
-//		if (pPage->GetVecOCRResult().size() > 0) {
-//			std::vector<_stOCRResult> ocrRes = m_pSelectPageForCNS->GetVecOCRResult();
-		for (auto i = 0; i < vecline.size(); i++) {
-//			for (int j = 0; j < ocrRes.size(); j++) {  // except previous results //
-			for (auto j = 0; j < vecline[i].vecTextBox.size(); j++) {
 
-				// recognized by rect --> dont chanage rect size here!!! //
-				if (vecline[i].vecTextBox[j].fConfidence > 0.8f) {
-					gray(vecline[i].vecTextBox[j].rect).setTo(cv::Scalar(255));
-				}
-				else {
-					pPage->UpdateOCRResStatus(i, j, false, 100);
+		if (vecline.size() > 0) {		// segmented !!
+			for (auto i = 0; i < vecline.size(); i++) {
+				for (auto j = 0; j < vecline[i].vecTextBox.size(); j++) {
+					cv::Rect r = vecline[i].vecTextBox[j].rect;
+					cv::Mat imgword = pPage->GetSrcPageGrayImg()(r);
+				
+					_stOCRResult ocrres = GetCORResult(imgword, false);
+					//
+					//vecline[i].vecTextBox[j].fConfidence = ocrres.fConfidence;
+					//memcpy(vecline[i].vecTextBox[j].strCode, ocrres.strCode, sizeof(ocrres.strCode));
+					pPage->UpdateOCRCode(ocrres.strCode, ocrres.fConfidence, i, j);
+
+					imgword.release();
 				}
 			}
 		}
 
-		pPage->CleanUpOCRres();
-		
-//		}
-		
-			
-		std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
-		if (para.size() == 0)
-			return;
+
+		//else {		// without segmentation //
+
+		//	for (auto i = 0; i < vecline.size(); i++) {
+		//		for (auto j = 0; j < vecline[i].vecTextBox.size(); j++) {
+		//			// recognized by rect --> dont chanage rect size here!!! //
+		//			if (vecline[i].vecTextBox[j].fConfidence > 0.9f) {
+		//				gray(vecline[i].vecTextBox[j].rect).setTo(cv::Scalar(255));
+		//			}
+		//			else {
+		//				pPage->UpdateOCRResStatus(i, j, false, 100);
+		//			}
+		//		}
+		//	}
+		//	pPage->CleanUpOCRres();
+
+		//	std::vector<stParapgraphInfo> para = pPage->GetVecParagraph();
+		//	if (para.size() == 0)
+		//		return;
 
 
-		m_addImgCnt = 0;
-		m_loadedImgCnt = static_cast<int>(para.size());
-		int x1 = 9999, y1 = 9999, x2 = 0, y2 = 0;
-		for (int i = 0; i < para.size(); i++) {
+		//	m_addImgCnt = 0;
+		//	m_loadedImgCnt = static_cast<int>(para.size());
+		//	int x1 = 9999, y1 = 9999, x2 = 0, y2 = 0;
+		//	for (int i = 0; i < para.size(); i++) {
 
-			//if (m_extractionSetting.IsVerti == false) {
-			cv::Mat pimg = gray(para[i].rect).clone();
-			DoOCRForCutImg(pimg, para[i].rect, pPage, i);
-			pimg.release();
-
-			m_addImgCnt++;
-			//}
-			//else {
-			//	if (x1 > para[i].rect.x)		x1 = para[i].rect.x;
-			//	if (y1 > para[i].rect.y)		y1 = para[i].rect.y;
-			//	if (x2 < (para[i].rect.x + para[i].rect.width))		x2 = para[i].rect.x + para[i].rect.width;
-			//	if (y2 < (para[i].rect.y + para[i].rect.height))	y2 = para[i].rect.y + para[i].rect.height;
-			//}
-		}
-		//if (m_extractionSetting.IsVerti) {
-		//	cv::Rect maxRect;
-		//	maxRect.x = x1;
-		//	maxRect.y = y1;
-		//	maxRect.width = x2 - x1;
-		//	maxRect.height = y2 - y1;
-		//	cv::Mat pimg = gray(maxRect).clone();
-		//	DoOCRForCutImg(pimg, maxRect, pPage);
-		//	pimg.release();
+		//		//if (m_extractionSetting.IsVerti == false) {
+		//		cv::Mat pimg = gray(para[i].rect).clone();
+		//		DoOCRForCutImg(pimg, para[i].rect, pPage, i);
+		//		pimg.release();
+		//		m_addImgCnt++;
+		//	}
 		//}
-	}	
+	}
+		
 }
 
 void CMNView::DoExtractBoundaryForSelected()
@@ -3978,15 +3988,17 @@ bool CMNView::DoCNSSegments()
 }
 
 
-_stOCRResult CMNView::GetCORResult(cv::Mat& cutImg)
+_stOCRResult CMNView::GetCORResult(cv::Mat& cutImg, bool IsMooN)
 {
 	_stOCRResult ocrres;
 	ocrres.init();	
 	
 	// Seach DB First //
-	SINGLETON_DataMng::GetInstance()->MatchingFromDB(cutImg, ocrres);
-	if (ocrres.fConfidence > 0.9f) {
-		return ocrres;
+	if (IsMooN) {
+		SINGLETON_DataMng::GetInstance()->MatchingFromDB(cutImg, ocrres);
+		if (ocrres.fConfidence > 0.9f) {
+			return ocrres;
+		}
 	}
 
 	// Search OCR //
@@ -4000,7 +4012,7 @@ _stOCRResult CMNView::GetCORResult(cv::Mat& cutImg)
 				ocrtmp.type = __ENG;
 			}
 			else {
-				m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_CHAR);
+				m_OCRMng.SetOCRDetectMode(pOrder[i], tesseract::PSM_SINGLE_WORD);
 				ocrtmp = m_OCRMng.getOcrResFromSingleCut(cutImg, m_OCRMng.GetTess(pOrder[i]), tesseract::RIL_SYMBOL, 1.0f, pOrder[i]);
 				ocrtmp.type = pOrder[i];
 			}	
@@ -4140,7 +4152,7 @@ void CMNView::MergeSelectedLineBox()
 		}
 
 			// Add a merge box as a new box //
-		AddNewLineBox(mergeRect);
+		AddEditedLineBox(mergeRect);
 
 		m_mapSelectionInfo.swap(std::map<int, _stLineTextSelectionInfo>());
 		m_pSelectPageForCNS->SetSelMatchItem(-1);
